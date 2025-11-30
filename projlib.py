@@ -729,6 +729,32 @@ def gen_dirs_norms(L, Lr, uvws,hkls, R2Proj=np.eye(3),symops=None,recsymops=None
 
 
 def fullcirc_hist(Mats, Dr=[0,0,1], symops=None, equalarea=False, scale='sqrt', nlevels=10, lvls=None,bins=128, ax=None, title=None, ret=False, 
+    """
+    Create a pole figure with density contours from orientation matrices.
+    
+    Generates inverse pole figures showing the distribution of a specific crystal
+    direction in the sample reference frame. Supports stereographic and equal-area
+    projections with optional kernel density estimation.
+    
+    Input:
+        Mats: numpy array (N, 3, 3) - Orientation matrices (crystal→sample)
+        Dr: list/array (3,) - Reference direction in sample frame (default: [0,0,1])
+        symops: numpy array (Ns, 3, 3) - Crystal symmetry operations (default: None)
+        equalarea: bool - Use equal-area if True, stereographic if False
+        bins: int - Histogram bins for density (default: 128)
+        kernel: bool - Use spherical KDE instead of histogram (default: False)
+        bandwidth: float - KDE bandwidth (default: None, auto)
+        **kwargs: Additional arguments
+    
+    Output:
+        fig, ax: matplotlib figure and axis objects
+    
+    Usage Example:
+        >>> from orilib import np_eulers_matrices
+        >>> euler = np.random.rand(1000, 3) * [360, 180, 360]
+        >>> Mats = np_eulers_matrices(euler, deg=True)
+        >>> fig, ax = fullcirc_hist(Mats, Dr=[0,0,1], equalarea=True)
+    """
                   kernel=False,  weights=None,Lim=None,interp=True,interpn=1000, smooth=False, vmin=None, 
                   bandwidth=None, vmax=None,colorbar=True,ticks=None, R2Proj=None,contour=True, mrd=False, **kwargs):
     #generating inverse poles of Dr from orientation matrices Mats
@@ -954,6 +980,16 @@ def fullcirc_hist(Mats, Dr=[0,0,1], symops=None, equalarea=False, scale='sqrt', 
         return hist, xedges, yedges, fig, ax
 #convert projected points into xyz
 def rp2xyz(r,p):
+    """
+    Convert polar coordinates (r, phi) to 3D Cartesian coordinates.
+    
+    Input:
+        r: float/array - Polar angle in degrees (0-180)
+        p: float/array - Azimuthal angle in degrees (0-360)
+    
+    Output:
+        x, y, z: tuple - Cartesian coordinates
+    """
     npatan2d = lambda x,y: 180.*np.arctan2(x,y)/np.pi
     z = npcosd(r)
     xy = np.sqrt(1.-z**2)
@@ -1052,6 +1088,18 @@ def stereoprojection_directions(dirs):
 
 
 def equalarea_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
+    """
+    Project plane traces onto equal-area (Schmidt) net.
+    
+    Input:
+        normals: numpy array (3, N) - Plane normal vectors
+        arclength: float - Arc length in degrees (default: 360)
+        iniangle: float - Starting angle in degrees (default: 0)
+        hemisphere: str - 'both', 'upper', or 'lower' (default: 'both')
+    
+    Output:
+        traces: list of arrays - Trace points for each plane
+    """
     #%normals = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
     #%varargin{1} arclength in deg
     #normals = np.transpose(np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]))
@@ -1104,12 +1152,34 @@ def equalarea_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
     else:          
         return proj_planes
 def stereo2xyz(projdir):
+    """
+    Convert 2D stereographic projection to 3D unit vectors.
+    
+    Inverse of stereoprojection_directions().
+    
+    Input:
+        projdir: numpy array (2, N) - Projection coordinates [X, Y]
+    
+    Output:
+        dirs: numpy array (3, N) - Unit direction vectors
+    """
     r,p = 2.*np.arctan(np.sqrt(projdir[0]**2+projdir[1]**2)),np.arctan2(projdir[1],projdir[0])
     z = np.cos(r)
     xy = np.sqrt(1.-z**2)
     return xy*np.cos(p),xy*np.sin(p),z
 
 def equalarea2xyz(projdir):
+    """
+    Convert 2D equal-area projection to 3D unit vectors.
+    
+    Inverse of equalarea_directions().
+    
+    Input:
+        projdir: numpy array (2, N) - Projection coordinates
+    
+    Output:
+        dirs: numpy array (3, N) - Unit direction vectors
+    """
     if projdir[0]==0:
         an=np.pi/2
     else:
@@ -1252,6 +1322,17 @@ def equalarea_directions(dirs):
 
 
 def wulffnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
+    """
+    Draw stereographic (Wulff) net - full circle.
+    
+    Input:
+        ax: matplotlib axis - Existing axis (default: None)
+        basedirs: bool - Plot base directions (default: False)
+        facecolor: tuple - Background color RGB
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     if ax==None:
         fig, ax = plt.subplots()
     else:
@@ -1330,6 +1411,17 @@ def wulffnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
     return fig,ax
 
 def wulffnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
+    """
+    Draw stereographic (Wulff) net - upper hemisphere.
+    
+    Input:
+        ax: matplotlib axis - Existing axis (default: None)
+        basedirs: bool - Plot base directions (default: False)
+        facecolor: tuple - Background color RGB
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     if ax==None:
         fig, ax = plt.subplots()
     else:
@@ -1420,6 +1512,16 @@ def wulffnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255
 
     return fig,ax
 def wulffnet_quarter(ax=None,basedirs=False):
+    """
+    Draw quarter stereographic (Wulff) net.
+    
+    Input:
+        ax: matplotlib axis - Existing axis (default: None)
+        basedirs: bool - Plot base directions (default: False)
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     if ax==None:
         fig, ax = plt.subplots()
     else:
@@ -1504,6 +1606,17 @@ def wulffnet_quarter(ax=None,basedirs=False):
     return fig,ax
 
 def schmidtnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
+    """
+    Draw equal-area (Schmidt) net - full circle.
+    
+    Input:
+        ax: matplotlib axis - Existing axis (default: None)
+        basedirs: bool - Plot base directions (default: False)
+        facecolor: tuple - Background color RGB
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     if ax==None:
         fig, ax = plt.subplots()
     else:
@@ -1579,6 +1692,18 @@ def schmidtnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.))
 
 
 def wulffnet_regular_grid(ax,dangle,dirout=False, plot=True):
+    """
+    Create regular angular grid on Wulff net.
+    
+    Input:
+        ax: matplotlib axis
+        dangle: float - Angular spacing in degrees
+        dirout: bool - Return directions if True (default: False)
+        plot: bool - Plot grid if True (default: True)
+    
+    Output:
+        If dirout=True: numpy array (3, N) - Grid directions
+    """
     #dphi=10.deg
     #dtheta=10.deg
     #dangle = 10.
@@ -1610,6 +1735,17 @@ def wulffnet_regular_grid(ax,dangle,dirout=False, plot=True):
         return GridX,GridY
 
 def schmidtnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
+    """
+    Draw equal-area (Schmidt) net - upper hemisphere.
+    
+    Input:
+        ax: matplotlib axis - Existing axis (default: None)
+        basedirs: bool - Plot base directions (default: False)
+        facecolor: tuple - Background color RGB
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     if ax==None:
         fig, ax = plt.subplots()
     else:
@@ -1688,6 +1824,18 @@ def schmidtnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./2
 
 
 def wulffnet_regular_grid(ax,dangle):
+    """
+    Create regular angular grid on Wulff net.
+    
+    Input:
+        ax: matplotlib axis
+        dangle: float - Angular spacing in degrees
+        dirout: bool - Return directions if True (default: False)
+        plot: bool - Plot grid if True (default: True)
+    
+    Output:
+        If dirout=True: numpy array (3, N) - Grid directions
+    """
     #dphi=10.deg
     #dtheta=10.deg
     #dangle = 10.
@@ -1713,6 +1861,18 @@ def wulffnet_regular_grid(ax,dangle):
     
     return GridX,GridY
 def schmidt_regular_grid(ax,Na=72,Nr=20,plot=True):
+    """
+    Create regular grid on Schmidt net.
+    
+    Input:
+        ax: matplotlib axis
+        Na: int - Azimuthal divisions (default: 72)
+        Nr: int - Radial divisions (default: 20)
+        plot: bool - Plot grid (default: True)
+    
+    Output:
+        grid: tuple - Grid parameters
+    """
     dphi1=360/Na
     phi1=np.linspace(0,360-dphi1,int(Na))
     R=equalarea_directions(np.array([1,0,0]))[0,0]
@@ -1764,6 +1924,16 @@ def schmidt_regular_grid(ax,Na=72,Nr=20,plot=True):
 def pf_cmap02(GridX,GridY,GridR,GridPhi,AreaRatio,Intensity,NoCont=10,GridSize=1000,cmap='jet',method='cubic'):
     
     
+    """
+    Create contour pole figure with colormap (internal function).
+    
+    Input:
+        GridX, GridY, GridR, GridPhi, AreaRatio, Intensity: Grid and density data
+        NoCont, GridSize, cmap, method: Plotting parameters
+    
+    Output:
+        Contour plot object
+    """
 #    r = [np.sqrt(x**2 + y**2) for x,y in zip(GridX,GridY)]
 #    theta = [np.arctan2(y,x) for x,y in zip(GridX,GridY)]
 #    theta = theta-min(theta)
@@ -1844,6 +2014,18 @@ def pf_cmap02(GridX,GridY,GridR,GridPhi,AreaRatio,Intensity,NoCont=10,GridSize=1
 
 
 def pf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True,s=50,facecolor=(210./255.,235./255.,255./255.),plot=True):
+    """
+    Generate pole figure from Euler angles.
+    
+    Input:
+        gPhi1, gPHI, gPhi2: arrays - Bunge Euler angles (degrees)
+        Dc: array (3,) - Crystal direction [uvw]
+        lattice: str - Crystal system
+        **kwargs: Additional parameters
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     #fig,ax = schmidtnet()
     GridX,GridY,GridR,GridPhi,AreaRatio=schmidt_regular_grid([],Na=Na,Nr=Nr,plot=False)
     
@@ -1910,6 +2092,18 @@ def pf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True,s=50,facecolor=(210./25
 
 def pf_cmap(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True,s=50,NoCont=10,GridSize=1000,cmap='jet',method='cubic'):
     
+    """
+    Generate pole figure with density colormap.
+    
+    Input:
+        gPhi1, gPHI, gPhi2: arrays - Bunge Euler angles (degrees)
+        Dc: array (3,) - Crystal direction [uvw]
+        lattice: str - Crystal system
+        **kwargs: Additional parameters
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     GridX,GridY,GridR,GridPhi,AreaRatio,Intensity=pf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=Na,Nr=Nr,syms=syms,s=s,facecolor="None",plot=False)
     
     r = [np.sqrt(x**2 + y**2) for x,y in zip(GridX,GridY)]
@@ -1974,6 +2168,15 @@ def pf_cmap(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True,s=50,NoCont=10,Gri
     
 
 def pf_cmap_cscale(fig,ax2,cmin,cmax,cmap):
+    """
+    Add colorbar to pole figure.
+    
+    Input:
+        fig, ax2, cmin, cmax, cmap: Figure and colorbar parameters
+    
+    Output:
+        None (modifies figure)
+    """
     #cmin=0
     #cmax=5
     plt.clim(cmin,cmax)
@@ -1987,6 +2190,18 @@ def pf_cmap_cscale(fig,ax2,cmin,cmax,cmap):
 
     
 def ipf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True):
+    """
+    Generate inverse pole figure from Euler angles.
+    
+    Input:
+        gPhi1, gPHI, gPhi2: arrays - Bunge Euler angles (degrees)
+        Dc: array (3,) - Sample direction [xyz]
+        lattice: str - Crystal system
+        **kwargs: Additional parameters
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     #fig,ax = schmidtnet()
     GridX,GridY,GridR,GridPhi,AreaRatio=schmidt_regular_grid([],Na=Na,Nr=Nr,plot=False)
     
@@ -2046,6 +2261,19 @@ def ipf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True):
     return fig,ax,cb,Intensity
         
 def stereotriangle(ax=None,basedirs=False,equalarea=False,grid=False,resolution=None,gridmarkersize=None,gridmarkercol=None,gridzorder=None,mesh=False):
+    """
+    Draw standard stereographic triangle for cubic system.
+    
+    Input:
+        ax: matplotlib axis - Existing axis (default: None)
+        basedirs: bool - Label corners (default: False)
+        equalarea: bool - Use equal-area (default: False)
+        grid: bool - Draw grid (default: False)
+        **kwargs: Additional parameters
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
     if ax is None:
         fig, ax = plt.subplots()
     else:
@@ -2214,6 +2442,17 @@ def stereotriangle(ax=None,basedirs=False,equalarea=False,grid=False,resolution=
     return fig,ax
 
 def colored_stereotriangle(basedirs=False,resolution = 1, markersize=1):
+    """
+    Draw stereographic triangle with IPF coloring.
+    
+    Input:
+        basedirs: bool - Label corners (default: False)
+        resolution: float - Grid resolution (default: 1)
+        markersize: float - Point size (default: 1)
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
 #resolution = 1 
     grid_cub = get_beam_directions_grid("cubic", resolution, mesh="spherified_cube_edge")
     grid_stereo = Rotation.from_euler(np.deg2rad(grid_cub))*Vector3d.zvector()
@@ -2225,6 +2464,15 @@ def colored_stereotriangle(basedirs=False,resolution = 1, markersize=1):
     #plt.show()
     return fig,ax
 def filled_colored_stereotriangle(basedirs=False,resolution = 1, markersize=1,ax=None,**kwargs):
+    """
+    Draw filled triangle with smooth IPF coloring.
+    
+    Input:
+        basedirs, resolution, markersize, ax, **kwargs
+    
+    Output:
+        fig, ax: matplotlib figure and axis
+    """
 #resolution = 1 
     #import matplotlib.tri as tri
     
@@ -2242,6 +2490,15 @@ def filled_colored_stereotriangle(basedirs=False,resolution = 1, markersize=1,ax
     
     return fig,ax
 def colors4stereotriangle(resolution = 1):
+    """
+    Generate RGB colors for IPF coloring.
+    
+    Input:
+        resolution: float - Angular resolution (default: 1)
+    
+    Output:
+        proj, RGB: Projection coordinates and RGB colors
+    """
 #resolution = 1 
     grid_cub = get_beam_directions_grid("cubic", resolution, mesh="spherified_cube_edge")
     grid_stereo = Rotation.from_euler(np.deg2rad(grid_cub))*Vector3d.zvector()
@@ -2251,6 +2508,15 @@ def colors4stereotriangle(resolution = 1):
     return proj_Ds,Colors
 
 def stereotriangle_colors_from_d_IPF(d_IPF):
+    """
+    Get IPF colors for crystal directions.
+    
+    Input:
+        d_IPF: numpy array (3, N) - Directions in crystal frame
+    
+    Output:
+        RGB: numpy array (N, 3) - RGB colors
+    """
     #d - list of ipf directions shape=(3,N)
     d_IPF = np.abs(d_IPF)
     d_IPF = np.sort(d_IPF, axis=0)
@@ -2261,6 +2527,16 @@ def stereotriangle_colors_from_d_IPF(d_IPF):
     
     return Colors
 def stereotriangle_colors_from_eumats_dir(eumats,d=[1,0,0]):
+    """
+    Get IPF colors from orientation matrices.
+    
+    Input:
+        eumats: numpy array (N, 3, 3) - Orientation matrices
+        d: list/array (3,) - Sample direction (default: [1,0,0])
+    
+    Output:
+        RGB: numpy array (N, 3) - RGB colors
+    """
     #d - list of sample vector
     #eumats shape=(N,3,3)
     #d=[0,1,0]
@@ -2275,6 +2551,15 @@ def stereotriangle_colors_from_eumats_dir(eumats,d=[1,0,0]):
     return Colors
 
 def stereotriangle_colors(proj_Ds):
+    """
+    Get IPF colors from projection coordinates.
+    
+    Input:
+        proj_Ds: numpy array (2, N) - Projection coordinates
+    
+    Output:
+        RGB: numpy array (N, 3) - RGB colors
+    """
     #adapted from https://mathematica.stackexchange.com/questions/47492/how-to-create-an-inverse-pole-figure-color-map
     #Red point
     Rp=stereoprojection_directions(np.array([0,0,1]))
@@ -2352,6 +2637,16 @@ def stereotriangle_colors(proj_Ds):
 
 
 def equivalent_elements(element,lattice):
+    """
+    Find symmetrically equivalent elements.
+    
+    Input:
+        element: numpy array (3,) - Direction/normal vector
+        lattice: str - Crystal system
+    
+    Output:
+        equivalents: list of arrays - Equivalent vectors
+    """
     eq_elements=[]
     R=symmetry_elements(lattice)
     eq_elements.append(R[0].dot(element))
@@ -2369,6 +2664,16 @@ def equivalent_elements(element,lattice):
     return eq_elements
 
 def stereoprojection_intotriangle_ini(dirs,eps=1.0e-5):
+    """
+    Map directions into standard triangle (initial version).
+    
+    Input:
+        dirs: numpy array (3, N) - Direction vectors
+        eps: float - Tolerance (default: 1e-5)
+    
+    Output:
+        proj: numpy array (2, N) - Projection coordinates
+    """
     normals = np.array([-1,0,1]);
     arclength = 40.#-np.arccos(np.sqrt(2)/np.sqrt(3))*180/np.pi;
     proj_normals = stereoprojection_planes(normals,arclength=arclength,iniangle=90)
@@ -2409,6 +2714,16 @@ def stereoprojection_intotriangle_ini(dirs,eps=1.0e-5):
                         #break
     return proj_dirs
 def stereoprojection_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,Rin=None,symops=None):
+    """
+    Fast mapping of directions into standard triangle.
+    
+    Input:
+        dirs: numpy array (3, N) - Direction vectors
+        eps, geteqdirs, geteqmats, Rin, symops: Optional parameters
+    
+    Output:
+        proj: numpy array (2, N) - Projection coordinates
+    """
     etamax=np.arctan2(1,1)*180./np.pi
     if len(dirs.shape)==1:
         dirs = np.expand_dims(dirs,axis=1)
@@ -2451,6 +2766,16 @@ def stereoprojection_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats
     else:
         return proj_dirs
 def stereoprojection_intotriangle(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,Rin=None,symops=None):
+    """
+    Map directions into standard stereographic triangle.
+    
+    Input:
+        dirs: numpy array (3, N) - Direction vectors
+        eps, geteqdirs, geteqmats, Rin, symops: Optional parameters
+    
+    Output:
+        proj: numpy array (2, N) - Projection coordinates
+    """
     etamax=np.arctan2(1,1)*180./np.pi
     if len(dirs.shape)==1:
         dirs = np.expand_dims(dirs,axis=1)
@@ -2500,6 +2825,16 @@ def stereoprojection_intotriangle(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=Fals
     else:
         return proj_dirs
 def equalarea_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,Rin=None,symops=None):
+    """
+    Fast equal-area projection into triangle.
+    
+    Input:
+        dirs: numpy array (3, N) - Direction vectors
+        eps, geteqdirs, geteqmats, Rin, symops: Optional parameters
+    
+    Output:
+        proj: numpy array (2, N) - Projection coordinates
+    """
     etamax=np.arctan2(1,1)*180./np.pi
     if len(dirs.shape)==1:
         dirs = np.expand_dims(dirs,axis=1)
@@ -2542,6 +2877,16 @@ def equalarea_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,
         return proj_dirs
 
 def equalarea_intotriangle(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False):
+    """
+    Equal-area projection into standard triangle.
+    
+    Input:
+        dirs: numpy array (3, N) - Direction vectors
+        eps, geteqdirs, geteqmats: Optional parameters
+    
+    Output:
+        proj: numpy array (2, N) - Projection coordinates
+    """
     etamax=np.arctan2(1,1)*180./np.pi
     if len(dirs.shape)==1:
         dirs = np.expand_dims(dirs,axis=1)
@@ -2592,6 +2937,16 @@ def equalarea_intotriangle(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False):
 
 
 def stereoprojection_planes(normals,arclength=360.,iniangle=0.,hemisphere='both',getpoints=False,R=np.eye(3)):
+    """
+    Project plane traces onto stereographic projection.
+    
+    Input:
+        normals: numpy array (3, N) - Plane normals
+        arclength, iniangle, hemisphere, getpoints, R: Optional parameters
+    
+    Output:
+        traces: list of arrays or plots
+    """
     #%normals = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
     #%varargin{1} arclength in deg
     #normals = np.transpose(np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]))
@@ -2648,17 +3003,30 @@ def stereoprojection_planes(normals,arclength=360.,iniangle=0.,hemisphere='both'
     else:
         return proj_planes
 def iszero(a):
+    """Check if value is approximately zero (|a| < 1e-9)."""
     return abs(a)<1e-9
 
 def gcd(a,b):
+    """Compute greatest common divisor of two numbers."""
     if iszero(b):
         return a
     return gcd(b,a%b)
 
 def gcdarr(arr):
+    """Compute GCD of all array elements."""
     return reduce(gcd,arr)
 
 def vector2miller(arr, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
+    """
+    Convert vector to Miller indices using GCD reduction.
+    
+    Input:
+        arr: array (3,) - Vector [x, y, z]
+        MIN, Tol, tol, text, decimals: Optional parameters
+    
+    Output:
+        miller: array (3,) - Miller indices [h, k, l]
+    """
     #arguments are used just to keep compatibility... here are not used except decimals
     arrgcd = gcdarr(arr)
     vm = [(a/arrgcd) for a in arr]
@@ -2670,6 +3038,16 @@ def vector2miller(arr, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
     
 
 def vector2millerround(v, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
+    """
+    Convert vector to Miller indices with rounding.
+    
+    Input:
+        v: array (3,) - Vector [x, y, z]
+        MIN, Tol, tol, text, decimals: Optional parameters
+    
+    Output:
+        miller: array (3,) - Miller indices
+    """
     vm = np.round(v/Tol)*Tol
     #print(vm)
     #print((np.round(vm)==vm).all())
@@ -2712,6 +3090,16 @@ def vector2millerround(v, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
     return(vm)
 
 def vectors2miller(V, MIN=True, Tol=1e-9,tol=1e5,text=False):
+    """
+    Convert multiple vectors to Miller indices.
+    
+    Input:
+        V: numpy array (3, N) - Vectors
+        MIN, Tol, tol, text: Optional parameters
+    
+    Output:
+        VM: numpy array (3, N) - Miller indices
+    """
     VM=[]
     for v in V.T:
         VM.append(vector2miller(v,MIN=MIN,Tol=Tol,tol=tol,text=text))

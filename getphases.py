@@ -1,14 +1,29 @@
-from orix import plot
+"""
+Phase Management and Crystallographic Transformation Module
+
+Comprehensive utilities for managing crystallographic phases and their transformations,
+with specific focus on shape memory alloys like NiTi.
+
+Key Features: Phase definitions, orientation relationships, deformation gradients,
+twin systems, habit plane variants, slip systems, Miller indices, elastic properties
+
+Dependencies: numpy, crystals, orilib, crystlib, projlib, matplotlib
+
+@author: lheller
+"""
+
+# Core imports
+from orix import plot  # Crystallographic plotting
 import copy
 import numpy as np
-from orilib import *
+from orilib import *  # Orientations, quaternions, Euler angles
 from crystallography_functions import *
-from projlib import *
-from crystals import Crystal
+from projlib import *  # Stereographic projections
+from crystals import Crystal  # CIF parsing
 from numpy import sqrt
-from crystlib import *
-from crystallography_functions import *
-from effective_elastic_constants_functions import *
+from crystlib import *  # Crystallographic calculations
+from effective_elastic_constants_functions import *  # Elastic properties
+
 
 
 class getPhases:
