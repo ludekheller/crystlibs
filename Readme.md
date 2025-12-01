@@ -6,7 +6,7 @@
 
 A comprehensive toolkit for crystallographic analysis, texture analysis, and orientation visualization in materials science research.
 
-**Documentation and the inline docs of functions and classes was made by Claude.ai that was supplied by the python codes written by Luděk Heller.
+**Documentation and the inline docs of functions and classes was made by Claude.ai that was supplied by the python codes written by Luděk Heller.**
 
 
 ## 📚 Overview
