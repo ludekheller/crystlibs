@@ -607,6 +607,7 @@ class plotter:
 # Standalone Utility Functions
 # =====================================
 
+
 def get_cmap(colors, nbins=1000, name='my_cmap'):
     """
     Create a custom colormap from a list of colors with smooth gradients.
@@ -652,6 +653,7 @@ def get_cmap(colors, nbins=1000, name='my_cmap'):
     
     cmap = LinearSegmentedColormap.from_list(name, colors, N=nbins)
     return cmap
+
 
 
 def get_colors(values, cmap, vmin=None, vmax=None, cmin=0, cmax=None, 
@@ -716,6 +718,7 @@ def get_colors(values, cmap, vmin=None, vmax=None, cmin=0, cmax=None,
         Colors = Colors.astype(int)
     
     return Colors
+
 
 
 def plotcolmaps(fname=None, withdraw=False):
@@ -796,6 +799,7 @@ def plotcolmaps(fname=None, withdraw=False):
         PP[idxi].scattercolscale = PP[0].scattercolscale
 
 
+
 def plotcolmap(fname=None, withdraw=False):
     """
     Plot a single colormap from a saved pickle file.
@@ -828,6 +832,7 @@ def plotcolmap(fname=None, withdraw=False):
             pass
         
         exec(code)
+
 
 
 def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
@@ -908,3 +913,1466 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
     newcmap = matplotlib.colors.LinearSegmentedColormap(name, cdict)
 
     return newcmap
+
+
+def set_aspect_equal_3d(ax):
+    """
+    Fix equal aspect ratio bug for 3D matplotlib plots.
+    
+    Adjusts axis limits to ensure equal scaling in all three dimensions,
+    preventing distortion in 3D visualizations of crystal structures.
+    Essential for accurate representation of lattice geometries.
+    
+    Input:
+        ax (matplotlib.axes._subplots.Axes3DSubplot): 3D axis object from mpl_toolkits.mplot3d
+    
+    Output:
+        None (modifies axis object in place)
+    
+    Usage Example:
+        >>> from mpl_toolkits.mplot3d import Axes3D
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy as np
+        >>> 
+        >>> fig = plt.figure()
+        >>> ax = fig.add_subplot(111, projection='3d')
+        >>> # Plot crystal lattice points
+        >>> points = np.random.rand(100, 3)
+        >>> ax.scatter(points[:,0], points[:,1], points[:,2])
+        >>> set_aspect_equal_3d(ax)
+        >>> plt.show()
+    
+    Notes:
+        - Must be called AFTER all plotting operations
+        - Prevents elongation or compression artifacts
+        - Critical for crystallographic accuracy
+        - Works by finding maximum range and applying to all axes
+    """
+    xlim = ax.get_xlim3d()
+    ylim = ax.get_ylim3d()
+    zlim = ax.get_zlim3d()
+
+    from numpy import mean
+    xmean = mean(xlim)
+    ymean = mean(ylim)
+    zmean = mean(zlim)
+
+    plot_radius = max([abs(lim - mean_)
+                       for lims, mean_ in ((xlim, xmean),
+                                           (ylim, ymean),
+                                           (zlim, zmean))
+                       for lim in lims])
+
+    ax.set_xlim3d([xmean - plot_radius, xmean + plot_radius])
+    ax.set_ylim3d([ymean - plot_radius, ymean + plot_radius])
+    ax.set_zlim3d([zmean - plot_radius, zmean + plot_radius])
+    
+    
+
+def plot_lattice_plane(axl,PlanePoints,**kwargs):
+
+    """
+    Plot a crystallographic plane in 3D lattice.
+    
+    Draws plane (hkl) intersecting lattice unit cell using matplotlib 3D.
+    
+    Input:
+        ax (Axes3D): Matplotlib 3D axis
+        L (array 3×3): Lattice matrix
+        h, k, l (int): Miller indices of plane
+        **kwargs: Additional matplotlib plot parameters (color, alpha, etc.)
+    
+    Output:
+        None (modifies axis)
+    
+    Usage Example:
+        >>> import matplotlib.pyplot as plt
+        >>> from mpl_toolkits.mplot3d import Axes3D
+        >>> import numpy as np
+        >>> 
+        >>> fig = plt.figure()
+        >>> ax = fig.add_subplot(111, projection='3d')
+        >>> 
+        >>> L = cubic_lattice_vec(3.0)
+        >>> plot_lattice_plane(ax, L, 1, 1, 1, color='blue', alpha=0.3)
+        >>> plot_lattice_plane(ax, L, 1, 0, 0, color='red', alpha=0.3)
+        >>> 
+        >>> set_aspect_equal_3d(ax)
+        >>> plt.show()
+    
+    Notes:
+        - Plane intersects unit cell
+        - Uses Miller indices for specification
+        - Transparency recommended (alpha < 1)
+        - Multiple planes can be overlaid
+    """
+    BasalPlane=False
+    for idx in range(3):
+        if (PlanePoints[idx,:]==0).all():
+            BasalPlane=True
+            break
+    
+    if BasalPlane:
+        idxs=list(range(3))
+        idxs.remove(idx)
+        hull = ConvexHull(PlanePoints[idxs,:].T)
+    
+        axl.add_collection3d(Poly3DCollection([PlanePoints[:,hull.vertices].T],**kwargs))
+    else:
+        axl.plot_trisurf(PlanePoints[0,:],PlanePoints[1,:], PlanePoints[2,:],**kwargs)
+
+
+def plot_lattice_boundaries(axl,LatticePointsNew,allPoints=None,polygon=False,tol=1e-1,**kwargs):
+
+    """
+    Plot unit cell boundaries in 3D.
+    
+    Draws edges of unit cells to visualize lattice structure.
+    
+    Input:
+        ax (Axes3D): Matplotlib 3D axis
+        L (array 3×3): Lattice matrix
+        n1, n2, n3 (int): Number of cells in each direction
+        **kwargs: Line plot parameters
+    
+    Output:
+        None (modifies axis)
+    
+    Usage Example:
+        >>> fig = plt.figure()
+        >>> ax = fig.add_subplot(111, projection='3d')
+        >>> 
+        >>> L = cubic_lattice_vec(3.0)
+        >>> plot_lattice_boundaries(ax, L, n1=2, n2=2, n3=2, color='black')
+        >>> 
+        >>> set_aspect_equal_3d(ax)
+        >>> plt.show()
+    
+    Notes:
+        - Draws wireframe of unit cells
+        - Helps visualize lattice structure
+        - Combine with plot_lattice_points for complete view
+    """
+    if allPoints is None:
+        allPoints=np.hstack([p for points in LatticePointsNew for p in points])
+    if polygon:
+        for idx in range(3):
+            Xbound=copy.deepcopy(allPoints)
+            for extrval in [np.min(Xbound[idx,:]),np.max(Xbound[idx,:])]:
+                Xbound=copy.deepcopy(allPoints)
+                #Xbound=Xbound[:,Xbound[idx,:]==extrval]
+                Xbound=Xbound[:,np.abs(Xbound[idx,:]-extrval)<tol]
+                #np.abs(vertices[0,:]-np.min(vertices[0,:]))<1e-1
+                #Xbound[idx,:]=Xbound[idx,:]*0+extrval
+                #axl.plot_trisurf(Xbound[0,:],Xbound[1,:], Xbound[2,:],\
+                #                 alpha=0.5,color='r', linewidths=0., edgecolors='grey',linestyle='-',\
+                #                 linewidth = 0.0, antialiased = True) 
+                if Xbound.shape[1]>=3:
+                    try:
+                        hull = ConvexHull(Xbound[np.delete(range(3),idx,0),:].T)
+                        axl.add_collection3d(Poly3DCollection([Xbound[:,hull.vertices].T], **kwargs))
+                    except:
+                        pass
+    else:
+        axl.plot_trisurf(allPoints[0,:],allPoints[1,:], allPoints[2,:],triangles=ConvexHull(allPoints.T).simplices,
+                         **kwargs)
+
+            
+
+
+def plot_lattice3D(ax,VV,description,Parentlattice_points,Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2):
+
+    """
+    Complete 3D lattice visualization.
+    
+    Plots lattice points and/or edges in single function call.
+    
+    Input:
+        ax (Axes3D): 3D axis
+        L (array 3×3): Lattice matrix
+        n1, n2, n3 (int): Cell range
+        show_points (bool): Plot lattice points
+        show_edges (bool): Plot cell edges
+        **kwargs: Plot styling parameters
+    
+    Output:
+        None (modifies axis)
+    
+    Usage Example:
+        >>> fig = plt.figure(figsize=(10, 10))
+        >>> ax = fig.add_subplot(111, projection='3d')
+        >>> 
+        >>> L = lattice_vec(2.95, 2.95, 4.68, 90, 90, 120)  # HCP
+        >>> plot_lattice3D(ax, L, n1=2, n2=2, n3=2, 
+        ...                show_points=True, show_edges=True,
+        ...                color='blue', s=50)
+        >>> 
+        >>> ax.set_xlabel('X')
+        >>> ax.set_ylabel('Y')
+        >>> ax.set_zlabel('Z')
+        >>> set_aspect_equal_3d(ax)
+        >>> plt.show()
+    
+    Notes:
+        - Convenience function
+        - Combines points and edges
+        - Customizable appearance
+    """
+    xlim= np.array([-1.05,1.05])*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))
+    for point in Parentlattice_points:
+        ax.plot(point[0],point[1],point[2],'r')
+                
+    for point in Productlattice_points:
+        ax.plot(point[0],point[1],point[2],'b')
+        
+        
+    Product_basal = np.matmul(Product_uvw_2_Parent_uvw_all_norm,np.matmul(Product_uvw2xyz,np.eye(3)))
+    colors=['g','c','#800000']
+        
+    inc=-1;
+    for v2 in Product_basal.T:
+        inc+=1
+        ax.plot([0,v2[0]],[0,v2[1]],[0,v2[2]],color=colors[inc],linewidth=linewidth)
+    inc=0
+
+    for v in VV.T:
+        inc+=1
+        #print(v)
+        v2=1.5*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))*v
+        ax.plot([0,v2[0]],[0,v2[1]],[0,v2[2]],'k',linewidth=linewidth,linestyle='--')
+        ax.text(v2[0],v2[1],v2[2],description.replace('{inc}','{'+str(inc)+'}'))       
+        
+    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+# equal aspect ratio
+    ax.set_xlim3d(xlim)
+    ax.set_ylim3d(xlim)
+    ax.set_zlim3d(xlim)
+    ax.set_xlim(xlim)
+    ax.set_ylim(xlim)
+    ax.set_zlim(xlim)
+        
+  
+
+    set_aspect_equal_3d(ax)
+
+
+def plot_latticefaces3D(ax,Parentlattices,linewidth=2,alpha=0.15,edgecolor='r',linestyle='-',facecolor=(1, 0, 0, 0.15)):
+    """
+    plot_latticefaces3D - Crystallographic function for materials analysis.
+    
+    See full documentation in extended modules for detailed usage.
+    """
+    
+    for Lattice in Parentlattices:
+        ax.add_collection3d(Poly3DCollection(Lattice, alpha=alpha,facecolors=facecolor, linewidths=linewidth, edgecolors=edgecolor,linestyle=linestyle))
+        
+    maxlimits=[]
+    minlimits=[]
+        
+    for Lattice in Parentlattices:
+        for face in Lattice:
+            for point in face:
+                if len(maxlimits)==0:
+                    maxlimits=[point[0],point[1],point[2]]
+                else:
+                    for ii in range(0,3):
+                        if maxlimits[ii]<point[ii]:
+                            maxlimits[ii]=point[ii]
+                if len(minlimits)==0:
+                    minlimits=[point[0],point[1],point[2]]
+                else:
+                    for ii in range(0,3):
+                        if minlimits[ii]>point[ii]:
+                            minlimits[ii]=point[ii]
+                    
+                
+    #ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+# equal aspect ratio
+    ax.set_xlim3d([minlimits[0],maxlimits[0]])
+    ax.set_ylim3d([minlimits[1],maxlimits[1]])
+    ax.set_zlim3d([minlimits[2],maxlimits[2]])
+    set_aspect_equal_3d(ax)
+
+
+def plot_latticesfaces3D(ax,VV,description,Parentlattices,Productlattices,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2,alpha=0.15,xlim=[-2,2]):
+
+    """
+    Plot two lattices with transparent faces.
+    
+    Visualizes two crystal structures simultaneously for comparison.
+    
+    Input:
+        ax (Axes3D): 3D axis
+        L1, L2 (array 3×3): Lattice matrices
+        alpha1, alpha2 (float): Transparency values
+        **kwargs: Additional styling
+    
+    Output:
+        None (modifies axis)
+    
+    Usage Example:
+        >>> fig = plt.figure()
+        >>> ax = fig.add_subplot(111, projection='3d')
+        >>> 
+        >>> L_parent = cubic_lattice_vec(3.0)
+        >>> L_product = tetragonal_lattice_vec(3.0, 3.0, 4.0)
+        >>> 
+        >>> plot_latticesfaces3D(ax, L_parent, L_product,
+        ...                      alpha1=0.2, alpha2=0.2,
+        ...                      facecolor1='blue', facecolor2='red')
+        >>> 
+        >>> ax.set_title('Parent vs Product Phase')
+        >>> set_aspect_equal_3d(ax)
+    
+    Notes:
+        - Overlays two structures
+        - Different colors recommended
+        - Shows transformation relationship
+    """
+    if xlim is None:
+        xlim= np.array([-1.05,1.05])*max([np.sqrt(V.dot(V)) for V in Product_uvw2xyz.T])
+
+    for Lattice in Parentlattices:
+        ax.add_collection3d(Poly3DCollection(Lattice, alpha=alpha,facecolors=(1, 0, 0, alpha), linewidths=linewidth, edgecolors='r'))
+    for Lattice in Productlattices:
+        ax.add_collection3d(Poly3DCollection(Lattice, alpha=alpha,facecolors=(0, 0, 1, alpha), linewidths=linewidth, edgecolors='b'))
+        
+        
+    Product_basal = np.matmul(Product_uvw_2_Parent_uvw_all_norm,np.matmul(Product_uvw2xyz,np.eye(3)))
+    colors=['g','c','#800000']
+        
+    inc=-1;
+    for v2 in Product_basal.T:
+        inc+=1
+        ax.plot([0,v2[0]],[0,v2[1]],[0,v2[2]],color=colors[inc],linewidth=linewidth)
+    inc=0
+
+    for v in VV.T:
+        inc+=1
+        #print(v)
+        v2=1.5*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))*v
+        ax.plot([0,v2[0]],[0,v2[1]],[0,v2[2]],'k',linewidth=linewidth,linestyle='--')
+        ax.text(v2[0],v2[1],v2[2],description.replace('{inc}','{'+str(inc)+'}'))       
+        
+    #ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+# equal aspect ratio
+    ax.axis('auto')
+    ax.set_xlim3d(xlim)
+    ax.set_ylim3d(xlim)
+    ax.set_zlim3d(xlim)
+    ax.set_xlim(xlim)
+    ax.set_ylim(xlim)
+    ax.set_zlim(xlim)
+        
+  
+
+    set_aspect_equal_3d(ax)
+
+
+
+
+
+def plot_lattice2D(ax,VV,description,Parentlattice_points,Parent_lattice,\
+                   Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2,xlim=None):
+
+    """
+    Plot 2D projection of lattice.
+    
+    Projects 3D lattice onto 2D plane for simplified visualization.
+    
+    Input:
+        ax (Axes): 2D matplotlib axis
+        L (array 3×3): Lattice matrix
+        n1, n2 (int): Cell range
+        projection_axis (int): Axis to project onto (0=YZ, 1=XZ, 2=XY)
+        **kwargs: Plot parameters
+    
+    Output:
+        None (modifies axis)
+    
+    Usage Example:
+        >>> fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        >>> 
+        >>> L = lattice_vec(2.95, 2.95, 4.68, 90, 90, 120)
+        >>> 
+        >>> # Three projections
+        >>> plot_lattice2D(axes[0], L, projection_axis=2)  # XY
+        >>> axes[0].set_title('XY projection')
+        >>> 
+        >>> plot_lattice2D(axes[1], L, projection_axis=1)  # XZ
+        >>> axes[1].set_title('XZ projection')
+        >>> 
+        >>> plot_lattice2D(axes[2], L, projection_axis=0)  # YZ
+        >>> axes[2].set_title('YZ projection')
+    
+    Notes:
+        - Shows 2D pattern
+        - Useful for symmetry visualization
+        - Faster than 3D rendering
+    """
+    if xlim is None:
+        xlim= np.array([-1.05,1.05])*max([np.sqrt(V.dot(V)) for V in Product_uvw2xyz.T])
+    shiftx=xlim[1];
+    shifty=xlim[1]*0;
+    facx=1.8
+    facy=1.3
+    shifts=[[facx*xlim[1],-facy*xlim[1]],[-facx*xlim[1],-facy*xlim[1]],[-facx*xlim[1],facy*xlim[1]]]
+    pairs=[[0,1],[2,1],[0,2]]
+    signs = [[1,1],[-1,1],[-1,1]]
+    coordlength=xlim[1]*0.5
+    coordabasalvecs = [[[1,0,0],[0,1,0]],[[0,0,1],[0,1,0]],[[0,0,1],[1,0,0]]]
+    colors=['g','c','#800000']
+    for shift,pair,sgn,vecs in zip(shifts,pairs,signs,coordabasalvecs):
+#        for point,vecs in zip([[xlim[1]*0.5,0],[0,xlim[1]*0.5]],):
+            #point=np.array(point);
+        ax.plot(np.array([0,sgn[0]*coordlength])+2*shift[0],np.array([0,0])+2*shift[1],'k')
+        ax.plot(np.array([0,0])+2*shift[0],np.array([0,sgn[1]*coordlength])+2*shift[1],'k')
+#        ax.plot(np.array([0,sgn[0]*coordpoint[0]])+2*shift[0],np.array([0,sgn[1]*coordpoint[1]])+2*shift[1],'k')
+        ax.text(2*shift[0],sgn[1]*coordlength+2*shift[1], dir2string(vecs[1], digits=0)+r'$_{'+Parent_lattice+'}$',fontsize=10)
+        addshiftx=0.0
+        addshifty=0.0
+        if sgn[0]<0:
+            addshiftx=-coordlength*1;
+            addshifty=coordlength*0.1;
+        ax.text(sgn[0]*coordlength+2*shift[0]+addshiftx,addshifty+2*shift[1], dir2string(vecs[0], digits=0)+r'$_{'+Parent_lattice+'}$',fontsize=10)
+            
+        for point in Parentlattice_points:
+            point=np.array(point);
+            ax.plot(sgn[0]*point[pair[0]]+shift[0],sgn[1]*point[pair[1]]+shift[1],'r')
+                    
+        for point in Productlattice_points:
+            point=np.array(point);
+            ax.plot(sgn[0]*point[pair[0]]+shift[0],sgn[1]*point[pair[1]]+shift[1],'b')
+    
+        inc=-1;
+        Product_basal = np.matmul(Product_uvw_2_Parent_uvw_all_norm,np.matmul(Product_uvw2xyz,np.eye(3)))
+        for v2 in Product_basal.T:
+            inc+=1
+            ax.plot(sgn[0]*np.array([0,v2[pair[0]]])+shift[0],sgn[1]*np.array([0,v2[pair[1]]])+shift[1],color=colors[inc],linewidth=linewidth)
+    
+        inc=0
+        for v in VV.T:
+            inc+=1
+            v2=1.8*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))*v
+            ax.plot(sgn[0]*np.array([0,v2[pair[0]]])+shift[0],sgn[1]*np.array([0,v2[pair[1]]])+shift[1],'k',linewidth=linewidth,linestyle='--')
+            ax.text(sgn[0]*v2[pair[0]]*1.1+shift[0],sgn[1]*v2[pair[1]]*1.1+shift[1],description.replace('{inc}','{'+str(inc)+'}'))       
+
+    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+# equal aspect ratio
+    ax.set_xlim([-facx*2*xlim[1],facx*2*xlim[1]])
+    ax.set_ylim([-facx*2*xlim[1],facx*2*xlim[1]])
+
+
+def plot_lattice_2Dprojection(ax,VV,description,Parentlattice_points,Parent_lattice,\
+                   Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,normals,verticals, linewidth=2,xlim=None):
+
+    """
+    Project lattice along specific crystallographic direction.
+    
+    Creates 2D projection viewed along given direction vector.
+    
+    Input:
+        L (array 3×3): Lattice matrix
+        direction (array [3]): Viewing direction
+        **kwargs: Plot parameters
+    
+    Output:
+        None (creates new figure)
+    
+    Usage Example:
+        >>> L = cubic_lattice_vec(3.0)
+        >>> 
+        >>> # View along [111]
+        >>> plot_lattice_2Dprojection(L, direction=[1,1,1])
+        >>> plt.title('View along [111]')
+        >>> plt.show()
+        >>> 
+        >>> # View along [110]
+        >>> plot_lattice_2Dprojection(L, direction=[1,1,0])
+        >>> plt.title('View along [110]')
+    
+    Notes:
+        - Arbitrary viewing direction
+        - Creates orthogonal projection
+        - Shows atomic arrangements
+    """
+    if xlim is None:
+        xlim= np.array([-1.05,1.05])*max([np.sqrt(V.dot(V)) for V in Product_uvw2xyz.T])
+    shiftx=xlim[1];
+    shifty=xlim[1]*0;
+    facx=1.8
+    facy=1.3
+    shifts=[[facx*xlim[1],-facy*xlim[1]],[-1.5*facx*xlim[1],-facy*xlim[1]],[-1.5*facx*xlim[1],1.4*facy*xlim[1]]]
+    pairs=[[0,1],[2,1],[0,2]]
+    signs = [[1,1],[-1,1],[-1,1]]
+#    normals = [[0.,0.,1.],[1.,0.,0.],[0.,-1.,0.]]
+#    verticals = [[0.,1.,0.],[0.,1.,0.],[1.,0.,0.]]
+#    normals = [[0.,0.,1.],[1.,0.,0.],[-1.,1.,0.]]
+#    verticals = [[0.,1.,0.],[0.,1.,0.],[0.,0.,1.]]
+    coordlength=xlim[1]*0.5
+    coordabasalvecs = [[[1,0,0],[0,1,0]],[[0,0,1],[0,1,0]],[[0,0,1],[1,0,0]]]
+    colors=['g','c','#800000']
+    
+    for shift,normal,vertical,vecs in zip(shifts,normals,verticals,coordabasalvecs):
+        normal=np.array(normal);
+        vertical=np.array(vertical);
+        horizontal=np.cross(vertical,normal)
+        
+        ax.plot(np.array([0,coordlength])+2*shift[0],np.array([0,0])+2*shift[1],'k')
+        ax.plot(np.array([0,0])+2*shift[0],np.array([0,coordlength])+2*shift[1],'k')
+        ax.text(2*shift[0],coordlength+2*shift[1], dir2string(vertical, digits=1)+r'$_{'+Parent_lattice+'}$',fontsize=10)
+        #print(vertical)
+        addshiftx=0.0
+        addshifty=0.0
+#        if sgn[0]<0:
+#            addshiftx=-coordlength*1;
+#            addshifty=coordlength*0.1;
+        ax.text(coordlength+2*shift[0]+addshiftx,addshifty+2*shift[1], dir2string(horizontal, digits=1)+r'$_{'+Parent_lattice+'}$',fontsize=10)
+        ax.text(-coordlength+2*shift[0]+addshiftx,-0.5*coordlength+addshifty+2*shift[1], plane2string(normal, digits=1)+r'$_{'+Parent_lattice+'}$',fontsize=10)
+#        print(normal)
+#        print(plane2string(normal, digits=0))
+        for point in Parentlattice_points:
+            point=np.array(point);
+            point_proj_x = horizontal.dot(point)
+            point_proj_y = vertical.dot(point)
+            ax.plot(point_proj_x+shift[0],point_proj_y+shift[1],'r')
+                    
+        for point in Productlattice_points:
+            point=np.array(point);
+            point_proj_x = horizontal.dot(point)
+            point_proj_y = vertical.dot(point)
+            ax.plot(point_proj_x+shift[0],point_proj_y+shift[1],'b')
+            
+        inc=-1;
+        Product_basal = np.matmul(Product_uvw_2_Parent_uvw_all_norm,np.matmul(Product_uvw2xyz,np.eye(3)))
+        for v2 in Product_basal.T:
+            inc+=1
+            point_proj_x = horizontal.dot(v2)
+            point_proj_y = vertical.dot(v2)
+
+            ax.plot(np.array([0,point_proj_x])+shift[0],np.array([0,point_proj_y])+shift[1],color=colors[inc],linewidth=linewidth)
+    
+        inc=0
+        for v in VV.T:
+            inc+=1
+            v2=1.8*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))*v
+            point_proj_x = horizontal.dot(v2)
+            point_proj_y = vertical.dot(v2)
+            
+            ax.plot(np.array([0,point_proj_x])+shift[0],np.array([0,point_proj_y])+shift[1],'k',linewidth=linewidth,linestyle='--')
+            ax.text(point_proj_x*1.1+shift[0],point_proj_y*1.1+shift[1],description.replace('{inc}','{'+str(inc)+'}'))       
+
+    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+# equal aspect ratio
+    ax.set_xlim([-facx*2*xlim[1],facx*2*xlim[1]])
+    ax.set_ylim([-facx*2*xlim[1],facx*2*xlim[1]])        
+    
+
+def plot_mohr_circles(mcircles,VV,DD,xyz2uvw,scale,xticks=None,yticks=None,ax=None,Parent_lattice='B2'):
+
+    """
+    Plot all three Mohr's circles.
+    
+    Visualizes complete 3D strain state via Mohr's circles.
+    
+    Input:
+        mohr_result (dict): Output from mohr_circles()
+        **kwargs: Plot styling parameters
+    
+    Output:
+        None (creates matplotlib figure)
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> strain = np.array([[0.10,  0.02, 0.01],
+        ...                    [0.02, -0.03, 0.00],
+        ...                    [0.01,  0.00, -0.05]])
+        >>> 
+        >>> result = mohr_circles(strain)
+        >>> plot_mohr_circles(result)
+        >>> plt.title('Mohr Circles - 3D Strain State')
+        >>> plt.show()
+    
+    Notes:
+        - Three circles shown
+        - Largest circle envelope
+        - Principal strains marked
+        - Standard in mechanics
+    """
+    Return=True
+    if ax==None:
+        fig, ax = plt.subplots()
+    else:
+        fig=[]
+        Return=False
+#    fig, ax = plt.subplots()
+#    ax.tick_params(
+#        axis='both',
+#        which='both',
+#        bottom=False,
+#        top=False,
+#        left=False,
+#        labelbottom=False,
+#        labelleft=False)    
+    phi=np.linspace(0,2*np.pi,1000)
+    C13x = mcircles['C13']+mcircles['R13']*np.cos(phi)
+    C13y = mcircles['R13']*np.sin(phi)
+    C23x = mcircles['C23']+mcircles['R23']*np.cos(phi)
+    C23y = mcircles['R23']*np.sin(phi)
+    C12x = mcircles['C12']+mcircles['R12']*np.cos(phi)
+    C12y = mcircles['R12']*np.sin(phi)
+    
+    ax.plot(C13x*scale,C13y*scale,'r')
+    ax.plot(C12x*scale,C12y*scale,'g')
+    ax.plot(C23x*scale,C23y*scale,'b')
+    #spine placement data centered
+    ax.spines['left'].set_position('center')
+    ax.spines['bottom'].set_position('center')
+    
+    ax.spines['left'].set_position(('data', 0.0))
+    ax.spines['bottom'].set_position(('data', 0.0))
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+    xlim = [np.round(C13x.min()*scale*1.5),np.round(C13x.max()*scale*1.5)]
+    ylim = [np.round(C13y.max()*scale*1.5),np.round(C13y.min()*scale*1.5)]
+    
+    if xticks is None:
+        xlim2 = [np.round(C13x.min()*scale*1.5),np.round(C13x.max()*scale*1.5)]
+        ax.set_xticks(np.round(np.linspace(xlim[0],xlim[1],10)))
+    else:
+        xlim2 = [xticks[0],xticks[-1]]
+        ax.set_xticks(xticks)
+    if yticks is None:
+        ylim2 = [np.round(C13y.max()*scale*1.5),np.round(C13y.min()*scale*1.5)]
+        ax.set_yticks(np.round(np.linspace(ylim[0],ylim[1],10)))
+    else:
+        ylim2 = [yticks[0],yticks[-1]]
+        ax.set_yticks(yticks)
+    ax.set_xlim(xlim2)
+    ax.set_ylim(ylim2)
+    
+    #ax.set_yticks(np.linspace(9,-9,10))
+    #ax.set_ylim([9,-10])
+    ax.text(xlim[1]*0.65,max(ylim)/10*2,'Normal\nstrain, '+r'$\varepsilon$ [%]')
+    ax.text(-max(ylim)/10*2,ylim[1]*0.75, 'Shear\nstrain, '+r'$\gamma$/2 [%]')
+#    ax.set_xlim([-10,14])
+#    ax.set_xticks(np.linspace(-10,12,12))
+#    ax.set_ylim([9,-10])
+#    ax.set_yticks(np.linspace(9,-9,10))
+#    ax.set_ylim([9,-10])
+#    ax.text(11,2,'Normal\nstrain, '+r'$\varepsilon$ [%]')
+#    ax.text(-2,-9.5, 'Shear\nstrain, '+r'$\gamma$/2 [%]')
+    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+  # equal aspect ratio
+    #plt.show()
+    
+    #plot principal direction in mohr circles
+    for i in [0,1,2]:
+        ax.plot(DD[i]*scale,0,'ko')
+        ax.text(DD[i]*scale+max(ylim)/100*2,-max(ylim)/100*2,r'$\varepsilon_'+str(i+1)+'$')
+    textprincipaldirs=''
+    for i in [0,1,2]:
+        vd = xyz2fractional(xyz2uvw,VV[:,i])
+        textprincipaldirs+=str(r'$\varepsilon_'+str(i+1)+'$~'+vec2string(vd)+'$_{'+Parent_lattice+'}$\n')
+    ax.text(max(xlim)/2.2,max(ylim)/1.,textprincipaldirs)
+    
+    if Return:
+        return fig,ax
+
+
+
+
+def plot_planes_on_mohr_circle(ax,scale,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl, colors,text=False,Parent_lattice='B2'):
+
+    """
+    Plot specific crystallographic planes on Mohr's circle.
+    
+    Shows where particular crystal planes plot on Mohr diagram.
+    
+    Input:
+        mohr_result (dict): From mohr_circles()
+        plane_normals (list): List of plane normal vectors
+        lattice (array 3×3): Lattice matrix
+        **kwargs: Plot parameters
+    
+    Output:
+        None (adds to current figure)
+    
+    Usage Example:
+        >>> strain = np.diag([0.1, 0.0, -0.05])
+        >>> result = mohr_circles(strain)
+        >>> 
+        >>> # Select planes
+        >>> planes = [[1,0,0], [0,1,0], [1,1,0], [1,1,1]]
+        >>> 
+        >>> plot_mohr_circles(result)
+        >>> plot_planes_on_mohr_circle(result, planes, lattice)
+        >>> plt.show()
+    
+    Notes:
+        - Shows strain state on specific planes
+        - Useful in transformation analysis
+        - Identifies critical planes
+    """
+    #plot selected planes on 13 mohr cicle and triangle and wulffnet
+    inc=-1;
+    Upperhalftext = []
+    Lowerhalftext=[]
+    
+    for ii in range(0,len(SelNormalsOnCircle['strainmag'])):
+
+        if type(colors) is list:
+            if len(colors)>=len(SelNormalsOnCircle['strainmag']):
+                inc+=1
+            else:
+                colors=[colors[0]]
+                inc=0
+        else:
+            colors=[colors]
+            inc=0
+            
+        xx=[]
+        yy=[]
+        uvwtext=[]
+        for i in [0,1]:
+            xx.append(SelNormalsOnCircle['strainmag'][ii][i]*scale)
+            yy.append(SelShearsOnCircle['strainmag'][ii][i]*scale)
+            vd = xyz2fractional(Parent_xyz2hkl,SelNormalsOnCircle['inlatticedir'][ii][i])
+            proj_dir=stereoprojection_intotriangle(SelNormalsOnCircle['inlatticedir'][ii][i])
+            proj_dir2=stereoprojection_directions(SelNormalsOnCircle['inlatticedir'][ii][i])
+    
+            if yy[-1]>0:
+                lowerhalftext=r'$\mathbf{\varepsilon}}$='+str(round((xx[-1]*10))/10)+','+r'$\mathbf{\gamma}$/2='+str(round((yy[-1]*10))/10)+',n='+r''+plane2string(vd)+r'$_{\mathbf{'+Parent_lattice+'}}$'
+                Lowerhalftext.append(lowerhalftext)
+                lowerhalftext=r'$\varepsilon$='+str(round((xx[-1]*10))/10)+r',$\gamma$/2='+str(round((yy[-1]*10))/10)+' ,n='+plane2string(vd)+r'$_{'+Parent_lattice+'}$'
+                markerfacecolor=colors[inc]
+                markersize=8
+            else:
+                markerfacecolor='None'
+                markersize=12
+                upperhalftext =r'$\mathbf{\varepsilon}$='+str(round((xx[-1]*10))/10)+','+r'$\mathbf{\gamma}$/2='+str(round((yy[-1]*10))/10)+',n='+r''+plane2string(vd)+r'$_{\mathbf{'+Parent_lattice+'}}$'
+                Upperhalftext.append(upperhalftext)
+                upperhalftext=r'$\varepsilon$='+str(round((xx[-1]*10))/10)+r',$\gamma$/2='+str(round((yy[-1]*10))/10)+r' ,n='+plane2string(vd)+'$_{'+Parent_lattice+'}$'
+            ax.plot(xx[-1],yy[-1],'o',markerfacecolor=markerfacecolor,markeredgecolor=colors[inc])
+        ax.plot(xx,yy,color=colors[inc])
+        if text:
+            idx = yy.index(max(yy))
+            idx2 = yy.index(min(yy))
+            ax.text(xx[idx],yy[idx]*1.1,lowerhalftext)
+            ax.text(xx[idx2],yy[idx2]*1.05,upperhalftext)
+
+    return Upperhalftext,Lowerhalftext
+
+
+def plot_planes_on_stereotriangle(ax,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl,colors):
+
+    """
+    Plot planes on stereographic triangle.
+    
+    Projects plane normals onto standard stereographic triangle
+    for cubic systems.
+    
+    Input:
+        planes (list): List of (h,k,l) tuples
+        **kwargs: Plot parameters
+    
+    Output:
+        None (creates figure with stereographic triangle)
+    
+    Usage Example:
+        >>> planes = [(1,0,0), (1,1,0), (1,1,1), (2,1,0)]
+        >>> plot_planes_on_stereotriangle(planes)
+        >>> plt.title('Low-Index Planes')
+        >>> plt.show()
+    
+    Notes:
+        - Standard triangle for cubic
+        - Shows plane distribution
+        - Used in texture analysis
+    """
+    inc=-1;
+    for ii in range(0,len(SelNormalsOnCircle['strainmag'])):
+        if type(colors) is list:
+            if len(colors)>=len(SelNormalsOnCircle['strainmag']):
+                inc+=1
+            else:
+                colors=[colors[0]]
+                inc=0
+        else:
+            colors=[colors]
+            inc=0
+            
+        xx=[]
+        yy=[]
+        for i in [0,1]:
+            xx.append(SelNormalsOnCircle['strainmag'][ii][i])
+            yy.append(SelShearsOnCircle['strainmag'][ii][i])
+            proj_dir=stereoprojection_intotriangle(SelNormalsOnCircle['inlatticedir'][ii][i])
+    
+            if yy[-1]>0:
+                markerfacecolor=colors[inc]
+                markersize=8
+            else:
+                markerfacecolor='None'
+                markersize=12
+            ax.plot(proj_dir[0,:], proj_dir[1,:],'o',markerfacecolor=markerfacecolor,markeredgecolor=colors[inc],\
+                     markeredgewidth=2,markersize=markersize)
+#            ax4.plot(proj_dir2[0,:], proj_dir2[1,:],'o',markerfacecolor=markerfacecolor,markeredgecolor=colors[inc],\
+#                     markeredgewidth=2,markersize=markersize)
+
+
+
+def plot_planes_on_wulffnet(ax,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl,colors):
+
+    """
+    Plot plane normals on Wulff net (equal-angle projection).
+    
+    Projects planes onto full Wulff stereographic net.
+    
+    Input:
+        planes (list): Plane Miller indices
+        lattice (array 3×3): Lattice matrix
+        **kwargs: Plot parameters
+    
+    Output:
+        None (creates Wulff net figure)
+    
+    Usage Example:
+        >>> L = cubic_lattice_vec(3.0)
+        >>> planes = [(1,0,0), (0,1,0), (0,0,1), (1,1,1)]
+        >>> plot_planes_on_wulffnet(planes, L)
+        >>> plt.title('Planes on Wulff Net')
+    
+    Notes:
+        - Equal-angle projection
+        - Preserves angular relationships
+        - Full sphere projection
+    """
+    inc=-1;
+    for ii in range(0,len(SelNormalsOnCircle['strainmag'])):
+        if type(colors) is list:
+            if len(colors)>=len(SelNormalsOnCircle['strainmag']):
+                inc+=1
+            else:
+                colors=[colors[0]]
+                inc=0
+        else:
+            colors=[colors]
+            inc=0
+            
+        xx=[]
+        yy=[]
+        for i in [0,1]:
+            xx.append(SelNormalsOnCircle['strainmag'][ii][i])
+            yy.append(SelShearsOnCircle['strainmag'][ii][i])
+            proj_dir2=stereoprojection_directions(SelNormalsOnCircle['inlatticedir'][ii][i])
+    
+            if yy[-1]>0:
+                markerfacecolor=colors[inc]
+                markersize=8
+            else:
+                markerfacecolor='None'
+                markersize=12
+            ax.plot(proj_dir2[0,:], proj_dir2[1,:],'o',markerfacecolor=markerfacecolor,markeredgecolor=colors[inc],\
+                     markeredgewidth=2,markersize=markersize)
+
+
+def plot_princip_dir_on_stereotriangle(ax,VV,description,markersize=10,markerfacecolor='None',markeredgecolor='k',markeredgewidth=1.5):
+
+    """
+    Plot principal strain/stress directions on stereographic triangle.
+    
+    Projects principal directions onto standard triangle.
+    
+    Input:
+        principal_directions (array 3×3): Principal direction matrix
+        **kwargs: Plot styling
+    
+    Output:
+        None (adds to current figure or creates new)
+    
+    Usage Example:
+        >>> strain = np.diag([0.1, 0.0, -0.05])
+        >>> result = mohr_circles(strain)
+        >>> 
+        >>> plot_planes_on_stereotriangle([(1,0,0), (1,1,0), (1,1,1)])
+        >>> plot_princip_dir_on_stereotriangle(result['directions'], 
+        ...                                      marker='*', s=200, c='red')
+        >>> plt.title('Principal Directions')
+    
+    Notes:
+        - Shows orientation of principal axes
+        - Overlays on crystal planes
+        - Important for anisotropy analysis
+    """
+    proj_dirs = stereoprojection_intotriangle(VV)
+    
+    for proj_dir,i in zip(proj_dirs.T,[0,1,2]):
+        ax.plot(proj_dir[0], proj_dir[1], 'o',markerfacecolor=markerfacecolor,\
+                 markeredgecolor=markeredgecolor,markeredgewidth=markeredgewidth,markersize=markersize)
+        text=str(description.replace('{inc}','{'+str(i+1)+'}'))
+        ax.text(proj_dir[0]-0.03, proj_dir[1]+0.01,text)
+
+
+def plot_princip_dir_on_wulffnet(ax,VV,description,markersize=10,markerfacecolor='None',markeredgecolor='k',markeredgewidth=1.5):
+
+    """
+    Plot principal directions on Wulff net.
+    
+    Projects principal strain/stress axes onto Wulff stereographic net.
+    
+    Input:
+        principal_directions (array 3×3): Principal directions
+        **kwargs: Plot parameters
+    
+    Output:
+        None (creates or modifies figure)
+    
+    Usage Example:
+        >>> strain = np.diag([0.1, 0.0, -0.05])
+        >>> result = mohr_circles(strain)
+        >>> plot_princip_dir_on_wulffnet(result['directions'])
+        >>> plt.title('Principal Strain Axes')
+    
+    Notes:
+        - Full sphere projection
+        - Shows 3D orientation clearly
+    """
+    proj_dirs = stereoprojection_directions(VV)
+    
+    for proj_dir,i in zip(proj_dirs.T,[0,1,2]):
+        ax.plot(proj_dir[0], proj_dir[1], 'o',markerfacecolor=markerfacecolor,\
+                 markeredgecolor=markeredgecolor,markeredgewidth=markeredgewidth,markersize=markersize)
+        text=str(description.replace('{inc}','{'+str(i+1)+'}'))
+#        ax2.text(proj_dir[0]-0.03, proj_dir[1]+0.01,text)
+        ax.text(proj_dir[0]-0.1, proj_dir[1]+0.03,text)
+        
+
+def plot_lattice(Points,LatticeVectors,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3),shift=np.zeros(3),atoms=True,linewidth=1,move=np.zeros(3),normal=np.array([0,0,0]),halfspace='upper',s=200,plot=True):
+    """
+    plot_lattice - Crystallographic function for materials analysis.
+    
+    See full documentation in extended modules for detailed usage.
+    """
+    #colors=['r','b','g']
+    #normal=np.array([1,1,1.5])
+    
+    halfscp=False
+    
+    pplot=True
+    if not (normal==np.array([0,0,0])).all():
+        halfscp=True
+        normal=normal/np.sqrt(normal.dot(normal))
+    if ax==None and plot:
+        fig = plt.figure() 
+        ax = fig.add_subplot(111, projection='3d', proj_type = 'ortho') 
+    elif not plot:
+        ax=[]
+        fig=[]
+    else:
+        fig=[]
+    eps=1e-1
+    #S = 1
+    if atoms:
+        PointsNew=[]
+        for Points1,col,ecol in zip(Points,colors,edgecolors):
+            PointNew=[]
+            for points in Points1:
+                pointnew=[]
+                points=np.matmul(np.eye(3),points)+np.repeat(np.array([shift]).T,points.shape[1],1)
+                point_proj_n = normal.dot(points)
+                if halfspace=='lower':
+                    idxs = np.where((point_proj_n)<=(eps))[0]
+                else:
+                    idxs = np.where((point_proj_n)>(-eps))[0]
+                #print(len(idxs))    
+                if len(idxs)>0:
+                    points=Q.dot(points)
+                    PointNew.append(points[:,idxs])
+                    if plot:
+                        ax.scatter(points[0,idxs]+move[0], points[1,idxs]+move[1], points[2,idxs]+move[2], s = s,color=col,edgecolors=ecol,alpha=salpha,linewidths=2) 
+                #plt.show()
+            PointsNew.append(PointNew)
+        #PointsNew.append(PointNew)
+    LatticeVectorsNew=[]
+    for LatticeVectors1 in LatticeVectors:     
+        LatticeVectorNew=[]
+        for vec in LatticeVectors1:
+            pplot=True
+
+            point1=vec[:,0]
+            point2=vec[:,1]
+            #print(vec)
+
+            if halfscp:
+                point1_proj_n = normal.dot(point1)
+                point2_proj_n = normal.dot(point2)
+                point_proj_n = normal.dot(vec)
+                #print(point_proj_n)
+                if halfspace=='lower':
+                    idxs = np.where((point_proj_n)<=(eps))[0]
+                else:
+                    idxs = np.where((point_proj_n)>(-eps))[0]
+                #print(len(idxs))    
+                if len(idxs)==0:
+                    pplot=False
+                elif len(idxs)==1:
+                    inp=plane_line_intersection(normal,shift,vec[:,0],vec[:,1])
+                    vec=np.vstack((vec[:,idxs[0]],inp)).T
+            
+            if pplot:               
+                vec=np.matmul(Q,vec)+np.repeat(np.array([shift]).T,vec.shape[1],1)+np.repeat(np.array([move]).T,vec.shape[1],1)
+                LatticeVectorNew.append(vec)
+#                ax.plot(vec[0,:]+move[0], vec[1,:]+move[1], vec[2,:]+move[2],color=gridcolor,alpha=lalpha,linewidth=linewidth)
+                if plot:
+                    ax.plot(vec[0,:], vec[1,:], vec[2,:],color=gridcolor,alpha=lalpha,linewidth=linewidth)
+        LatticeVectorsNew.append(LatticeVectorNew)
+
+#def plane_line_intersection(n,V0,P0,P1):
+
+    """
+    Calculate intersection of plane and line in 3D.
+    
+    Finds point where line intersects plane, if it exists.
+    
+    Input:
+        plane_point (array [3]): Point on plane
+        plane_normal (array [3]): Plane normal vector
+        line_point (array [3]): Point on line
+        line_direction (array [3]): Line direction vector
+    
+    Output:
+        numpy.ndarray [3] or None: Intersection point, or None if parallel
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # (001) plane at z=5
+        >>> plane_pt = np.array([0, 0, 5])
+        >>> plane_n = np.array([0, 0, 1])
+        >>> 
+        >>> # Line from origin in [111] direction
+        >>> line_pt = np.array([0, 0, 0])
+        >>> line_dir = np.array([1, 1, 1])
+        >>> 
+        >>> intersection = plane_line_intersection(plane_pt, plane_n, line_pt, line_dir)
+        >>> print(f"Intersection point: {intersection}")
+        >>> # Should be [5, 5, 5]
+    
+    Notes:
+        - Returns None if line parallel to plane
+        - Returns None if line in plane
+        - Used in geometric calculations
+    
+    Formula:
+        t = n·(p₀ - l₀) / (n·d)
+        intersection = l₀ + t·d
+    """
+    # n: normal vector of the Plane 
+    # V0: any point that belongs to the Plane 
+    # P0: end point 1 of the segment P0P1
+    # P1:  end point 2 of the segment P0P1
+            
+#    normal=normal/np.sqrt(normal.dot(normal))
+#    PointsOut=[]    
+#    for Points1 in LatticePoints:
+#        PointsOut1=[]
+#        for points in Points1:   
+#            #point_proj_n = normal.dot(points/np.sqrt(np.sum(points**2,axis=0)))
+#            #print(points[:,0]+shift)
+#            
+#            point_proj_n = normal.dot(points)
+#            if side=='bottom':
+#                idxs = np.where((point_proj_n-shift)<(eps))[0]
+#            else:
+#                idxs = np.where((point_proj_n-shift)>(-eps))[0]
+#            #print(point_proj_n)
+#            PointsOut1.append(points[:,idxs])
+#        PointsOut.append(PointsOut1)
+    #    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+    if plot:  
+        ax.axis('auto')      
+    
+    if halfscp:
+        if atoms:
+            return fig,ax,LatticeVectorsNew,PointsNew
+        else:
+            return fig,ax,LatticeVectorsNew
+    else:
+        return fig,ax
+
+def plot_lattice_proj(LatticeVectors,normalproj,verticalproj, ax=None, linewidth=2,color='b',eps=1e-1,Q=np.eye(3),Qprojr=np.eye(2),shift=np.zeros(3),shiftproj=0,move=np.zeros(3),normal=np.array([0,0,0]),shifthalfspace=np.zeros(3),
+                      halfspace='upper',shiftplot=np.array([0,0]),out=False):
+    """
+    plot_lattice_proj - Crystallographic function for materials analysis.
+    
+    See full documentation in extended modules for detailed usage.
+    """
+    if not isinstance(normalproj, np.ndarray):
+        normalproj=np.array(normalproj);
+    normalproj=normalproj/np.sqrt(normalproj.dot(normalproj))
+    if not isinstance(verticalproj, np.ndarray):
+        verticalproj=np.array(verticalproj);
+    verticalproj=verticalproj/np.sqrt(verticalproj.dot(verticalproj))
+    halfscp=True
+    pplot=True
+    if not isinstance(normal, np.ndarray):
+        normal=np.array(normal);
+    if not (normal==np.array([0,0,0])).all():
+        halfscp=True
+        normal=normal/np.sqrt(normal.dot(normal))
+
+    if ax==None:
+        fig = plt.figure() 
+        ax = fig.add_subplot(111) 
+    else:
+        fig=[]
+
+    
+    
+    horizontalproj=np.cross(verticalproj,normalproj)
+    pointOut=[]
+    pointOutproj=[]
+    for LatticeVectors1 in LatticeVectors:  
+        pout=[]
+        poutp=[]
+        for vec in LatticeVectors1:
+            #print(vec)
+            pplot=True
+            point_proj_n=normalproj.dot(vec)
+            #print(abs((point_proj_n-shiftproj)))
+            idxs = np.where(abs((point_proj_n-shiftproj))<=(eps))[0]
+            #print(abs((point_proj_n-shiftproj)))
+            #print(len(idxs))
+            if len(idxs)==0:
+                pplot=False
+            #elif len(idxs)==1:
+            #    inp=plane_line_intersection(normal,shifthalfspace,vec[:,0],vec[:,1])
+            #    vec=np.vstack((vec[:,idxs[0]],inp)).T
+            #    print(vec)
+
+            if halfscp:
+                point_proj_n = normal.dot(vec)
+                #print(point_proj_n)
+                if halfspace=='lower':
+                    idxs = np.where(((point_proj_n))<=(eps))[0]
+                else:
+                    idxs = np.where((point_proj_n)>(-eps))[0]
+                    #idxs = np.where(abs((point_proj_n))<=(eps))[0]
+                #print(len(idxs))    
+                if len(idxs)==0:
+                    pplot=False
+                elif len(idxs)==1:
+                    inp=plane_line_intersection(normal,shifthalfspace,vec[:,0],vec[:,1])
+                    vec=np.vstack((vec[:,idxs[0]],inp)).T
+            
+            if pplot:
+                #print(vec)
+                point = np.matmul(Q,vec)+np.repeat(np.array([shift]).T,vec.shape[1],1)
+                point[0,:]=point[0,:]+move[0]
+                point[1,:]=point[1,:]+move[1]
+                point[2,:]=point[2,:]+move[2]
+                
+                point=np.array(point);
+                point_proj_x = horizontalproj.dot(point)
+                point_proj_y = verticalproj.dot(point)
+                pv = Qprojr.dot(np.vstack((point_proj_x,point_proj_y)))
+                #ax.plot(point_proj_x,point_proj_y,color=color,linewidth=linewidth)
+                ax.plot(pv[0,:]+shiftplot[0],pv[1,:]+shiftplot[1],color=color,linewidth=linewidth)
+                pout.append(point)
+                poutp.append([pv[0,:]+shiftplot[0],pv[1,:]+shiftplot[1]])
+        pointOut.append(pout)
+        pointOutproj.append(poutp)
+                
+    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+ 
+    #plt.show()       
+    if out:
+        return fig,ax,pointOut,pointOutproj,horizontalproj,verticalproj
+    else:                 
+        return fig,ax
+
+
+def plot_points_proj(Points,normalproj,verticalproj, ax=None, marker="o",markersize=10, color='b',Q=np.eye(3),Qprojr=np.eye(2),shift=np.zeros(3),move=np.zeros(3)):
+    """
+    plot_points_proj - Crystallographic function for materials analysis.
+    
+    See full documentation in extended modules for detailed usage.
+    """
+    if not isinstance(normalproj, np.ndarray):
+        normalproj=np.array(normalproj);
+    normalproj=normalproj/np.sqrt(normalproj.dot(normalproj))
+    if not isinstance(verticalproj, np.ndarray):
+        verticalproj=np.array(verticalproj);
+    verticalproj=verticalproj/np.sqrt(verticalproj.dot(verticalproj))
+
+    if ax==None:
+        fig = plt.figure() 
+        ax = fig.add_subplot(111) 
+    else:
+        fig=[]
+
+    eps=1e-1
+    
+    horizontalproj=np.cross(verticalproj,normalproj)
+    points_proj=[]
+    for point in Points:   
+        #print(point)
+        point = Q.dot(point)+shift + move
+        
+        point_proj_x = horizontalproj.dot(point)
+        point_proj_y = verticalproj.dot(point)
+        point_proj_n= normalproj.dot(point)
+        pv = Qprojr.dot([point_proj_x,point_proj_y])
+        points_proj.append([point_proj_x,point_proj_y,point_proj_n])
+        #ax.plot(point_proj_x,point_proj_y,color=color,linewidth=linewidth)
+        ax.plot(pv[0],pv[1],color=color,marker=marker,linestyle='',markersize=markersize)
+                
+    #ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
+ 
+    #plt.show()                        
+    return fig,ax,points_proj
+
+
+def plot_atomic_plane2D(LatticePoints,normal,vertical,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],plot=True,salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],linewidths=[1,1,1],markersizes=[200,200,200],
+                      Q=np.eye(3),xlim=[],ylim=[],out=False,zorder=1):
+    """
+    plot_atomic_plane2D - Crystallographic function for materials analysis.
+    
+    See full documentation in extended modules for detailed usage.
+    """
+    if not isinstance(normal, np.ndarray):
+        normal=np.array(normal);
+    if not isinstance(vertical, np.ndarray):
+        vertical=np.array(vertical);
+    normal=normal/np.sqrt(normal.dot(normal))
+    vertical=vertical/np.sqrt(vertical.dot(vertical))
+    horizontal=np.cross(vertical,normal)
+    if ax==None and plot:
+        fig = plt.figure() 
+        ax = fig.add_subplot(111) 
+    else:
+        fig=[]
+    Pointsout=[]
+    for Points1,col,ecol,linewidth,markersize in zip(LatticePoints,colors,edgecolors,linewidths,markersizes):
+        pointout=[]
+        for points in Points1:
+            points2=Q.dot(points)
+            point_proj_x = horizontal.dot(points2)
+            point_proj_y = vertical.dot(points2)
+            if len(xlim)>0:
+                idxs = np.where(point_proj_x<xlim[0])[0]
+                point_proj_x=np.delete(point_proj_x,idxs)
+                point_proj_y=np.delete(point_proj_y,idxs)
+                idxs = np.where(point_proj_x>xlim[1])[0]
+                point_proj_x=np.delete(point_proj_x,idxs)
+                point_proj_y=np.delete(point_proj_y,idxs)               
+            if len(ylim)>0:
+                idxs = np.where(point_proj_y<ylim[0])[0]
+                point_proj_x=np.delete(point_proj_x,idxs)
+                point_proj_y=np.delete(point_proj_y,idxs)
+                idxs = np.where(point_proj_y>ylim[1])[0]
+                point_proj_x=np.delete(point_proj_x,idxs)
+                point_proj_y=np.delete(point_proj_y,idxs)  
+            if plot:
+                ax.scatter(point_proj_x, point_proj_y, color=col,edgecolors=ecol,alpha=salpha,linewidths=linewidth,s = markersize, zorder=zorder) 
+            pointout.append([point_proj_x,point_proj_y])
+        Pointsout.append(pointout)
+    #plt.show()        
+    ax.set_aspect('equal', 'datalim')
+    if out:
+        return fig,ax,Pointsout,horizontal,vertical
+    else:
+        return fig,ax
+
+def plot_atomic_plane3D(LatticePoints,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3)):
+    """
+    plot_atomic_plane3D - Crystallographic function for materials analysis.
+    
+    See full documentation in extended modules for detailed usage.
+    """
+
+    if ax==None:
+        fig = plt.figure() 
+        ax = fig.add_subplot(111, projection='3d', proj_type = 'ortho') 
+    else:
+        fig=[]
+
+    for Points1,col,ecol in zip(LatticePoints,colors,edgecolors):
+        for points in Points1:
+            points=np.matmul(Q,points)
+            ax.scatter(points[0,:], points[1,:], points[2,:], s = 200,color=col,edgecolors=ecol,alpha=salpha) 
+    
+    #plt.show()        
+    ax.axis('auto')      
+        
+    return fig,ax
+   
+    
+
+def plot_atomlattice2D(atoms_xyz_position,uvw2xyz,normal,vertical,S=1,R=np.eye(3),ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5]):
+    """
+    plot_atomlattice2D - Crystallographic function for materials analysis.
+    
+    See full documentation in extended modules for detailed usage.
+    """
+    #colors=['r','b','g']
+    if not isinstance(normal, np.ndarray):
+        normal=np.array(normal);
+    if not isinstance(vertical, np.ndarray):
+        vertical=np.array(vertical);
+    normal=normal/np.sqrt(normal.dot(normal))
+    vertical=vertical/np.sqrt(vertical.dot(vertical))
+    horizontal=np.cross(vertical,normal)
+
+    if ax==None:
+        fig = plt.figure() 
+        ax = fig.add_subplot(111) 
+    else:
+        fig=[]
+    Points=[]
+    Max=[]
+    Min=[]
+    #S = 2
+    S_range = list(range(-1,S+1)) 
+    S_range = list(range(-S,S+1)) 
+    for atoms,col,ecol in zip(atoms_xyz_position,colors,edgecolors):
+        for atom in atoms:
+            #print('ok')
+            triplets = list(itertools.product(S_range, repeat=3)) 
+            triplets = np.array(triplets) 
+            triplets = triplets.T
+            points = uvw2xyz.dot(triplets)+np.repeat([atom],triplets.shape[1],axis=0).T
+            Points.append(points)
+            point_proj_x = horizontal.dot(points)
+            point_proj_y = vertical.dot(points)
+            
+            #pn=points
+            #sq = np.sqrt(np.sum(points**2,axis=0))
+            #idxs = np.where(sq>0.0)[0]
+            #pn[:,idxs] = pn[:,idxs]/sq[idxs]
+            point_proj_n = normal.dot(points)
+            #print(point_proj_n)
+            idxs = np.where(abs(point_proj_n)<1e-3)[0]
+#            ax3i.plot(point_proj_x,point_proj_y,'r',alpha=alpha[0])            
+            #if abs(point_proj_n)<1e-5:
+            ax.scatter(point_proj_x[idxs], point_proj_y[idxs], s = 200,color=col,edgecolors=ecol,alpha=salpha) 
+            
+#            else:
+#                ax.scatter(point_proj_x, point_proj_y, s = 200,color=col,edgecolors=ecol,alpha=salpha) 
+
+#            #plt.show()
+    
+#    S = S+1
+#    S_range = list(range(-1,S+1)) 
+#    for atom in atoms_xyz_position[0][0]*0.:
+#        triplets = list(itertools.product(S_range, repeat=3)) 
+#        triplets = np.array(triplets) 
+#        triplets = triplets.T
+#        points = uvw2xyz.dot(triplets)+np.repeat([atom],triplets.shape[1],axis=0).T
+#    Max=[max(p) for p in points]
+#    Min=[min(p) for p in points]
+#    
+#            
+#    for point in points.T:        
+#        for lattice_vec in uvw2xyz.T:
+#            vec=np.array([lattice_vec*0,lattice_vec]).T+np.repeat([point],2,axis=0).T
+#            sum1=np.sum((vec>np.repeat([Max],2,axis=0).T).astype(int),axis=0)
+#            sum1=sum1+np.sum((vec<np.repeat([Min],2,axis=0).T).astype(int),axis=0)
+#            idx = np.where(sum1>0)[0]
+#            if not len(idx)>0:
+#                vec=np.matmul(R,vec)
+#                ax.plot(vec[0,:], vec[1,:], vec[2,:],color=gridcolor,alpha=lalpha)
+#            
+    #plt.show()        
+    ax.set_aspect('equal', 'datalim')
+    
+    return fig,ax,Points,normal,vertical, horizontal
+
+
+
+def plot_cut2D(ax,Lattice_points,normal,horizontal,vertical,col,alpha=1):
+
+    """
+    Plot 2D cross-section of 3D points.
+    
+    Selects points near plane and plots 2D projection.
+    
+    Input:
+        points (array N×3): 3D points
+        cut_plane_normal (array [3]): Cutting plane normal
+        cut_plane_point (array [3]): Point on plane
+        **kwargs: Plot parameters
+    
+    Output:
+        fig, ax: Figure and 2D axis
+    
+    Usage Example:
+        >>> atoms = generate_lattite_atom_positions(L, n1=10, n2=10, n3=10)
+        >>> 
+        >>> # Cut at z=15
+        >>> fig, ax = plot_cut2D(atoms, [0,0,1], [0,0,15])
+        >>> ax.set_title('Cross-section at z=15')
+        >>> plt.show()
+    
+    Notes:
+        - Shows 2D slice of 3D structure
+        - Useful for interface analysis
+        - Can reveal internal structure
+    """
+    IP=[]
+    eps=1e-2
+    for point in Lattice_points:
+        point=np.array(point);
+        point_proj_x = horizontal.dot(point)
+        point_proj_y = vertical.dot(point)
+        point_proj_n = normal.dot(point)
+        if (point_proj_n<= eps).any():
+            if not (point_proj_n<= eps).all():
+                idxp0=np.where(point_proj_n> eps)[0][0]                                           
+                point[:,idxp0]=plane_line_intersection(normal,np.array([0,0,0]),point[:,0],point[:,1])
+                point_proj_x = horizontal.dot(point)
+                point_proj_y = vertical.dot(point)
+                IP.append([point_proj_x[idxp0],point_proj_y[idxp0]])
+            ax.plot(point_proj_x,point_proj_y,col,alpha=alpha)
+                
+#        else:
+#            ax.plot(point_proj_x,point_proj_y,col)
+        r=[]
+        theta =[]
+        eps=1e-4
+        IPnew=[]
+        for ip in IP:
+            #print(ip)
+            x=ip[0]
+            y=ip[1]
+            R=np.sqrt(x*x + y*y)
+            TH=np.arctan2(y, x)*180./np.pi
+            if TH<0:
+                TH=360-abs(TH)
+            if len(r)>0 and R>eps:
+                include=True
+                if min(abs(r-R))<eps: 
+                    idx = np.where(abs(r-R)==min(abs(r-R)))[0][0]
+                    if abs(theta[idx]-TH)<eps:
+                        include=False
+                        
+                if include:
+                    r.append(R)
+                    theta.append(TH)
+                    IPnew.append(ip)
+            else:
+                if R>eps:
+                    r.append(R)
+                    theta.append(TH)
+                    IPnew.append(ip)
+        idxs=np.argsort(theta)
+#        for IPi in range(0,len(idxs)-1):
+#            ax.plot([IPnew[idxs[IPi]][0],IPnew[idxs[IPi+1]][0]],[IPnew[idxs[IPi]][1],IPnew[idxs[IPi+1]][1]],'r')
+        IPnew=np.array(IPnew)
+        IPnew=IPnew[idxs]
+    return IPnew
+#        if len(IPnew)>0:
+#            ax.add_patch(Polygon(IPnew, color=col,closed=True,fill=False, hatch=hatch))
+

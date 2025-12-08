@@ -18,59 +18,7 @@ import math
 import sympy
 from scipy.spatial import ConvexHull
 from projlib import  *
-def set_aspect_equal_3d(ax):
-    """
-    Fix equal aspect ratio bug for 3D matplotlib plots.
-    
-    Adjusts axis limits to ensure equal scaling in all three dimensions,
-    preventing distortion in 3D visualizations of crystal structures.
-    Essential for accurate representation of lattice geometries.
-    
-    Input:
-        ax (matplotlib.axes._subplots.Axes3DSubplot): 3D axis object from mpl_toolkits.mplot3d
-    
-    Output:
-        None (modifies axis object in place)
-    
-    Usage Example:
-        >>> from mpl_toolkits.mplot3d import Axes3D
-        >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
-        >>> 
-        >>> fig = plt.figure()
-        >>> ax = fig.add_subplot(111, projection='3d')
-        >>> # Plot crystal lattice points
-        >>> points = np.random.rand(100, 3)
-        >>> ax.scatter(points[:,0], points[:,1], points[:,2])
-        >>> set_aspect_equal_3d(ax)
-        >>> plt.show()
-    
-    Notes:
-        - Must be called AFTER all plotting operations
-        - Prevents elongation or compression artifacts
-        - Critical for crystallographic accuracy
-        - Works by finding maximum range and applying to all axes
-    """
-    xlim = ax.get_xlim3d()
-    ylim = ax.get_ylim3d()
-    zlim = ax.get_zlim3d()
 
-    from numpy import mean
-    xmean = mean(xlim)
-    ymean = mean(ylim)
-    zmean = mean(zlim)
-
-    plot_radius = max([abs(lim - mean_)
-                       for lims, mean_ in ((xlim, xmean),
-                                           (ylim, ymean),
-                                           (zlim, zmean))
-                       for lim in lims])
-
-    ax.set_xlim3d([xmean - plot_radius, xmean + plot_radius])
-    ax.set_ylim3d([ymean - plot_radius, ymean + plot_radius])
-    ax.set_zlim3d([zmean - plot_radius, zmean + plot_radius])
-    
-    
 def find_gcd(x, y): 
 
     """
@@ -128,6 +76,7 @@ def find_gcd(x, y):
         x, y = y, x % y 
       
     return x 
+
 
 def perpendicular_vector(v):
 
@@ -197,6 +146,7 @@ def perpendicular_vector(v):
     return v2/np.sqrt(v2.dot(v2))
 
 
+
 def vec2string(v, digits=2):
 
     """
@@ -248,6 +198,7 @@ def vec2string(v, digits=2):
     # vstr +=']'
     vstr='[{:0.{prec}f},{:0.{prec}f},{:0.{prec}f}]'.format(v[0],v[1],v[2],prec=digits)
     return vstr
+
 def plane2string(v, digits=2):
 
     """
@@ -298,6 +249,7 @@ def plane2string(v, digits=2):
     # vstr +=')'
     vstr='({:0.{prec}f},{:0.{prec}f},{:0.{prec}f})'.format(v[0],v[1],v[2],prec=digits)
     return vstr
+
 def dir2string(v, digits=2):
 
     """
@@ -349,6 +301,7 @@ def dir2string(v, digits=2):
     return vstr
         
         
+
 def xyz2fractional(Txyz2uvw,V,frac=10,eps2=1e-2,decimals=5):
 
     """
@@ -433,6 +386,7 @@ def xyz2fractional(Txyz2uvw,V,frac=10,eps2=1e-2,decimals=5):
 #    if (np.sign(uvw[idxs])==-1).all():
 #        uvw=-1*uvw
     return np.around(uvw,decimals=decimals)
+
 def miller2fractional(uvw,frac=10,eps2=1e-2,decimals=5):
 
     """
@@ -524,6 +478,7 @@ def miller2fractional(uvw,frac=10,eps2=1e-2,decimals=5):
     return np.around(uvw,decimals=decimals)
 
 
+
 def xyz2fractional02(Txyz2uvw,V):
 
     """
@@ -569,6 +524,7 @@ def xyz2fractional02(Txyz2uvw,V):
     uvw=uvw/min(abs(uvw[idxs]))
     
     return uvw
+
 def normArrayColumns(arr):
 
     """
@@ -619,6 +575,7 @@ def normArrayColumns(arr):
     return arr_norm
 
     
+
 def cubic_lattice_vec(a):
 
     """
@@ -660,6 +617,7 @@ def cubic_lattice_vec(a):
     """
     V = a*np.eye(3)
     return V[:,0], V[:,1], V[:,2]
+
 
 def monoclinic_lattice_vec(a,b,c,beta):
 
@@ -712,6 +670,7 @@ def monoclinic_lattice_vec(a,b,c,beta):
     
     return V1,V2,V3
 
+
 def tetragonal_lattice_vec(a,b,c):
 
     """
@@ -758,6 +717,7 @@ def tetragonal_lattice_vec(a,b,c):
     V3 = np.array([0,0,c])
     
     return V1,V2,V3
+
 def uvtw2uvw(uvtw):
 
     """
@@ -804,6 +764,7 @@ def uvtw2uvw(uvtw):
             
     uvw=np.array([uvtw[0,:]-uvtw[2,:],uvtw[1,:]-uvtw[2,:],uvtw[3,:]]) 
     return uvw
+
 def uvw2uvtw(uvw):
 
     """
@@ -853,6 +814,7 @@ def uvw2uvtw(uvw):
     uvtw=np.array([1/3*(2*uvw[0,:]-uvw[1,:]),1/3*(2*uvw[1,:]-uvw[0,:]),-1/3*(uvw[0,:]+uvw[1,:]),uvw[2,:]]) 
     return uvtw
 
+
 def hkil2hkl(hkil):
 
     """
@@ -900,6 +862,7 @@ def hkil2hkl(hkil):
             
     hkl=hkil[[0,1,3],:] 
     return hkl
+
 def hkl2hkil(hkl):
 
     """
@@ -948,6 +911,7 @@ def hkl2hkil(hkl):
             
     hkil=np.array([hkl[0,:],hkl[1,:],-1*(hkl[0,:]+hkl[1,:]),hkl[2,:]]) 
     return hkil
+
 
 
 def gensystemsHexIni(eta1,K1,L, Lr,sm=None,eta2=None):
@@ -1022,6 +986,7 @@ def gensystemsHexIni(eta1,K1,L, Lr,sm=None,eta2=None):
             sm['StrainSym'].append(0.5*(sm['StrainNonSym'][-1]+sm['StrainNonSym'][-1].T))
             sm['Rotation'].append(0.5*(sm['StrainNonSym'][-1]-sm['StrainNonSym'][-1].T))
     return sm
+
 
 def gensystemsHex(eta1,K1,L, Lr,sm=None,eta2=None, K2=None):
 
@@ -1172,57 +1137,7 @@ def gensystemsHex(eta1,K1,L, Lr,sm=None,eta2=None, K2=None):
 
             
     return sm
-def rotation_from_axis_angle(ax,an,deg=False):
 
-    """
-    Generate rotation matrix from axis-angle representation using Rodrigues formula.
-    
-    Creates 3×3 rotation matrix for rotation by 'angle' radians around 'axis'.
-    Implements Rodrigues' rotation formula for arbitrary axis rotations.
-    
-    Input:
-        axis (array [3]): Rotation axis (will be normalized)
-        angle (float): Rotation angle in radians
-    
-    Output:
-        numpy.ndarray (3×3): Rotation matrix R
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # 90° rotation around z-axis
-        >>> axis = np.array([0, 0, 1])
-        >>> angle = np.pi / 2
-        >>> R = rotation_from_axis_angle(axis, angle)
-        >>> print(R)
-        >>> # [[0, -1, 0],
-        >>> #  [1,  0, 0],
-        >>> #  [0,  0, 1]]
-        >>> 
-        >>> # Verify: rotate [1,0,0] to [0,1,0]
-        >>> v = np.array([1, 0, 0])
-        >>> v_rot = R.dot(v)
-        >>> print(v_rot)  # [0, 1, 0]
-        >>> 
-        >>> # 120° rotation around [111]
-        >>> axis_111 = np.array([1, 1, 1])
-        >>> R_111 = rotation_from_axis_angle(axis_111, 2*np.pi/3)
-    
-    Notes:
-        - Axis is automatically normalized
-        - Right-hand rule: thumb along axis, fingers show rotation
-        - Preserves vector lengths (orthogonal matrix)
-        - det(R) = 1 (proper rotation)
-        - Used in crystallographic symmetry operations
-    
-    Formula (Rodrigues):
-        R = I + sin(θ)K + (1-cos(θ))K²
-        where K is the skew-symmetric matrix of the axis
-    """
-    if deg:
-        an=an*np.pi/180
-    ax/=norm(ax)
-    return np.eye(3)*np.cos(an)+np.sin(an)*np.cross(ax,np.eye(3)) + (1-np.cos(an))*np.outer(ax,ax)
 def genallHexSys():
 
     """
@@ -1275,6 +1190,7 @@ def genallHexSys():
         namei=name+' ' +str(K1).replace('[','{').replace(']','}').replace(',','')+str(eta1).replace('[','<').replace(']','>').replace(',','')
         SSys[namei]=gensystemsHex(eta1,K1)
     
+
 def lattice_vec(lattice_param):
 
     """
@@ -1396,6 +1312,7 @@ def lattice_vec(lattice_param):
         
     return V[:,0], V[:,1], V[:,2]
 
+
 def reciprocal_basis(a1,a2,a3):
     
 
@@ -1447,755 +1364,7 @@ def reciprocal_basis(a1,a2,a3):
     b3 = np.cross(a1,a2)/np.dot(a3,np.cross(a1,a2))
     return b1,b2,b3
 
-def np_euler_matrix(ai, aj, ak): 
 
-    """
-    Convert Euler angles to rotation matrix (ZXZ convention, Bunge notation).
-    Single orientation version.
-    
-    Input:
-        ai: float - First Euler angle (phi1) in radians
-        aj: float - Second Euler angle (Phi) in radians
-        ak: float - Third Euler angle (phi2) in radians
-    
-    Output:
-        g: numpy array (3, 3) - Rotation matrix
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> # 90-degree rotation around Z axis
-        >>> phi1 = np.pi/2
-        >>> Phi = 0
-        >>> phi2 = 0
-        >>> g = np_euler_matrix(phi1, Phi, phi2)
-        >>> print("Rotation matrix:")
-        >>> print(g)
-        
-        >>> # Identity rotation
-        >>> g_identity = np_euler_matrix(0, 0, 0)
-        >>> print("Identity:", g_identity)
-    """
-#    ai=20.*np.pi/180.
-#    aj=40.*np.pi/180.
-#    ak=80.*np.pi/180.
-#    np_euler_matrix(ai, aj, ak)
-#    np.matmul(passive_rotation(ak,'z'),np.matmul(passive_rotation(aj,'x'),passive_rotation(ai,'z')))
-    
-    g=np.eye(3)
-    s1, s2, s3 = np.sin(ai), np.sin(aj), np.sin(ak)
-    c1, c2, c3 = np.cos(ai), np.cos(aj), np.cos(ak)
-    
-    g[0,0] = c1*c3-s1*s3*c2
-    g[0,1] = s1*c3+c1*s3*c2
-    g[0,2] = s3*s2    
-    g[1,0] = -c1*s3-s1*c3*c2 
-    g[1,1] = -s1*s3+c1*c3*c2
-    g[1,2] = c3*s2 
-    g[2,0] = s1*s2 
-    g[2,1] = -c1*s2
-    g[2,2] = c2   
-    return g
-
-def np_inverse_euler_matrix(ai, aj, ak): 
-
-    """
-    Convert Euler angles to inverse (transpose) rotation matrix.
-    Equivalent to the transpose of the forward rotation matrix.
-    
-    Input:
-        ai: float - First Euler angle (phi1) in radians
-        aj: float - Second Euler angle (Phi) in radians
-        ak: float - Third Euler angle (phi2) in radians
-    
-    Output:
-        U: numpy array (3, 3) - Inverse rotation matrix (transpose of forward matrix)
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> # Forward rotation
-        >>> ai, aj, ak = np.pi/4, np.pi/3, np.pi/6
-        >>> g_forward = np_euler_matrix(ai, aj, ak)
-        >>> g_inverse = np_inverse_euler_matrix(ai, aj, ak)
-        >>> 
-        >>> # Verify: forward * inverse = identity
-        >>> result = g_forward @ g_inverse
-        >>> print("Forward @ Inverse:")
-        >>> print(result)
-        >>> # Should be close to identity matrix
-    """
-    U=np.eye(3)
-
-    s1, s2, s3 = np.sin(ai), np.sin(aj), np.sin(ak)
-    c1, c2, c3 = np.cos(ai), np.cos(aj), np.cos(ak)
-
-    U[0,0] = c1*c3-s1*s3*c2
-    U[0,1] = -c1*s3-s1*c3*c2
-    U[0,2] = s1*s2    
-    U[1,0] = s1*c3+c1*s3*c2 
-    U[1,1] = -s1*s3+c1*c3*c2
-    U[1,2] = -c1*s2 
-    U[2,0] = s3*s2 
-    U[2,1] = c3*s2
-    U[2,2] = c2   
-    return U
-def ol_g_rtheta_rad(g):
-
-    """
-    Convert rotation matrix to axis-angle representation (Rodrigues-Frank vector).
-    Returns rotation axis and angle.
-    
-    Input:
-        g: list or array (3, 3) - Rotation matrix
-    
-    Output:
-        r: list (3,) - Rotation axis (unit vector)
-        ptheta: float - Rotation angle in radians
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> # 90-degree rotation around Z
-        >>> g = [[0, -1, 0],
-        ...      [1,  0, 0],
-        ...      [0,  0, 1]]
-        >>> axis, angle = ol_g_rtheta_rad(g)
-        >>> print("Rotation axis:", axis)
-        >>> print("Rotation angle (rad):", angle)
-        >>> print("Rotation angle (deg):", np.degrees(angle))
-        >>> # Should give axis ≈ [0, 0, 1] and angle ≈ π/2
-    """
-    eps = 1.e-6;
-    
-    ptheta = np.arccos((g[0][0] + g[1][1] + g[2][2] - 1) / 2);
-    r=[0.,0.,0.];
-    if ((ptheta) < eps):
-        r[0] = 1;
-        r[1] = 0;
-        r[2] = 0;
-    elif ((ptheta) < (1 - eps)*np.pi):
-        r[0] = (g[1][2] - g[2][1]) / (2 * np.sin(ptheta));
-        r[1] = (g[2][0] - g[0][2]) / (2 * np.sin(ptheta));
-        r[2] = (g[0][1] - g[1][0]) / (2 * np.sin(ptheta));
-    else:
-        r[0] = np.sqrt((g[0][0] + 1) / 2)
-        r[1] = np.sqrt((g[1][1] + 1) / 2);
-        r[2] = np.sqrt((g[2][2] + 1) / 2);
-    m = r.index(max(r))
-    for i in range(0,3):
-        if not r==m:
-            if g[i][m]<0:
-                r[i] *= 1;
-    return r,ptheta            
-def np_ol_g_rtheta_rad(g):
-
-    """
-    Convert rotation matrix to axis-angle representation (NumPy optimized version).
-    
-    Input:
-        g: numpy array (3, 3) - Rotation matrix
-    
-    Output:
-        r: numpy array (3,) - Rotation axis (unit vector)
-        ptheta: float - Rotation angle in radians
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> # 120-degree rotation around [1,1,1]
-        >>> angle = np.radians(120)
-        >>> axis = np.array([1, 1, 1]) / np.sqrt(3)
-        >>> # Create rotation matrix using Rodrigues formula
-        >>> K = np.array([[0, -axis[2], axis[1]],
-        ...               [axis[2], 0, -axis[0]],
-        ...               [-axis[1], axis[0], 0]])
-        >>> g = np.eye(3) + np.sin(angle)*K + (1-np.cos(angle))*K@K
-        >>> 
-        >>> # Convert back to axis-angle
-        >>> axis_out, angle_out = np_ol_g_rtheta_rad(g)
-        >>> print("Recovered axis:", axis_out)
-        >>> print("Recovered angle (deg):", np.degrees(angle_out))
-    """
-    eps = 1.e-6;
-    
-    ptheta = np.arccos((np.trace(g) - 1) / 2);
-    r=np.array([0.,0.,0.]);
-    if ((ptheta) < eps):
-        r[0] = 1;
-        r[1] = 0;
-        r[2] = 0;
-    elif ((ptheta) < (1 - eps)*np.pi):
-        r[0] = (g[1,2] - g[2,1]) / (2 * np.sin(ptheta));
-        r[1] = (g[2,0] - g[0,2]) / (2 * np.sin(ptheta));
-        r[2] = (g[0,1] - g[1,0]) / (2 * np.sin(ptheta));
-    else:
-        r[0] = np.sqrt((g[0,0] + 1) / 2)
-        r[1] = np.sqrt((g[1,1] + 1) / 2);
-        r[2] = np.sqrt((g[2,2] + 1) / 2);
-    m = np.where(r==max(r))[0][0]
-    for i in range(0,3):
-        if not i==m:
-            if g[i,m]<0:
-                r[i] *= 1;
-    return r,ptheta            
-
-def ol_rtheta_g_rad(r, theta):
-
-
-    """
-    Convert axis-angle representation to rotation matrix using Rodrigues' formula.
-    
-    Input:
-        r: list or array (3,) - Rotation axis (should be unit vector)
-        theta: float - Rotation angle in radians
-    
-    Output:
-        g: list (3, 3) - Rotation matrix
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> # 90-degree rotation around Z axis
-        >>> axis = [0, 0, 1]
-        >>> angle = np.pi/2
-        >>> g = ol_rtheta_g_rad(axis, angle)
-        >>> print("Rotation matrix:")
-        >>> for row in g:
-        ...     print(row)
-        >>> # Should give approximately [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-        
-        >>> # 180-degree rotation around X axis
-        >>> g_180x = ol_rtheta_g_rad([1, 0, 0], np.pi)
-        >>> print("180° around X:")
-        >>> for row in g_180x:
-        ...     print(row)
-    """
-    g = [[0,0,0] for i in range(0,3)]
-
-    g[0][0] = r[0] * r[0] * (1 - np.cos (theta)) + np.cos (theta);
-    g[0][1] = r[0] * r[1] * (1 - np.cos (theta)) + r[2] * np.sin (theta);
-    g[0][2] = r[0] * r[2] * (1 - np.cos (theta)) - r[1] * np.sin (theta);
-    
-    g[1][0] = r[1] * r[0] * (1 - np.cos (theta)) - r[2] * np.sin (theta);
-    g[1][1] = r[1] * r[1] * (1 - np.cos (theta)) + np.cos (theta);
-    g[1][2] = r[1] * r[2] * (1 - np.cos (theta)) + r[0] * np.sin (theta);
-    
-    g[2][0] = r[2] * r[0] * (1 - np.cos (theta)) + r[1] * np.sin (theta);
-    g[2][1] = r[2] * r[1] * (1 - np.cos (theta)) - r[0] * np.sin (theta);
-    g[2][2] = r[2] * r[2] * (1 - np.cos (theta)) + np.cos (theta);
-
-    return g
-
-def np_ol_rtheta_g_rad(r, theta):
-
-
-    """
-    Convert axis-angle representation to rotation matrix (NumPy version).
-    Uses Rodrigues' rotation formula.
-    
-    Input:
-        r: numpy array (3,) - Rotation axis (unit vector)
-        theta: float - Rotation angle in radians
-    
-    Output:
-        g: numpy array (3, 3) - Rotation matrix
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> # 45-degree rotation around [1,1,1] axis
-        >>> axis = np.array([1, 1, 1]) / np.sqrt(3)  # Normalize
-        >>> angle = np.radians(45)
-        >>> g = np_ol_rtheta_g_rad(axis, angle)
-        >>> print("Rotation matrix:")
-        >>> print(g)
-        >>> 
-        >>> # Verify it's a valid rotation matrix
-        >>> det = np.linalg.det(g)
-        >>> print("Determinant:", det)  # Should be 1
-        >>> orthogonal = g @ g.T
-        >>> print("G @ G.T (should be identity):")
-        >>> print(orthogonal)
-    """
-    g=np.eye(3)
-
-    g[0,0] = r[0] * r[0] * (1 - np.cos (theta)) + np.cos (theta);
-    g[0,1] = r[0] * r[1] * (1 - np.cos (theta)) + r[2] * np.sin (theta);
-    g[0,2] = r[0] * r[2] * (1 - np.cos (theta)) - r[1] * np.sin (theta);
-    
-    g[1,0] = r[1] * r[0] * (1 - np.cos (theta)) - r[2] * np.sin (theta);
-    g[1,1] = r[1] * r[1] * (1 - np.cos (theta)) + np.cos (theta);
-    g[1,2] = r[1] * r[2] * (1 - np.cos (theta)) + r[0] * np.sin (theta);
-    
-    g[2,0] = r[2] * r[0] * (1 - np.cos (theta)) + r[1] * np.sin (theta);
-    g[2,1] = r[2] * r[1] * (1 - np.cos (theta)) - r[0] * np.sin (theta);
-    g[2,2] = r[2] * r[2] * (1 - np.cos (theta)) + np.cos (theta);
-
-    return g
-
-
-def ol_g_R(g):
-
-    """
-    Convert rotation matrix to Rodrigues-Frank vector (list version).
-    
-    Calculates Rodrigues-Frank vector R = r·tan(θ/2) from rotation matrix,
-    where r is the rotation axis and θ is the rotation angle.
-    
-    Input:
-        g (list 3×3): Rotation matrix
-    
-    Output:
-        list [3]: Rodrigues-Frank vector
-    
-    Usage Example:
-        >>> # 90° rotation around Z
-        >>> g = [[0, -1, 0],
-        ...      [1,  0, 0],
-        ...      [0,  0, 1]]
-        >>> R = ol_g_R(g)
-        >>> print(R)  # [0, 0, 1] (since tan(45°)=1)
-    
-    Notes:
-        - Compact representation: 3 parameters vs 9 for matrix
-        - R = axis · tan(angle/2)
-        - Magnitude ||R|| = tan(θ/2)
-        - Direction = rotation axis
-        - Singular at θ = 180° (infinite magnitude)
-    
-    Formula:
-        R = r · tan(θ/2)
-        where (r, θ) from ol_g_rtheta_rad(g)
-    """
-    #Quey
-    r,theta = ol_g_rtheta_rad (g)
-    R=[0.,0.,0.]
-    for i in range(0,3):
-        R[i]=r[i]*np.tan(theta/2)
-    return R
-
-def np_ol_g_R(g):
-
-    """
-    Convert rotation matrix to Rodrigues-Frank vector (NumPy version).
-    
-    NumPy implementation returning Rodrigues-Frank vector as numpy array.
-    
-    Input:
-        g (numpy.ndarray 3×3): Rotation matrix
-    
-    Output:
-        numpy.ndarray [3]: Rodrigues-Frank vector
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Identity rotation
-        >>> g_id = np.eye(3)
-        >>> R_id = np_ol_g_R(g_id)
-        >>> print(R_id)  # [0, 0, 0]
-        >>> 
-        >>> # General rotation
-        >>> g = rotation_from_axis_angle([1,1,1], np.pi/3)
-        >>> R = np_ol_g_R(g)
-        >>> print(f"Rodrigues vector: {R}")
-    
-    Notes:
-        - Efficient numpy implementation
-        - Useful in grain boundary analysis
-        - Common in crystal plasticity codes
-    """
-    #Quey
-    r,theta = np_ol_g_rtheta_rad (g)
-    R=r*np.tan(theta/2)
-
-    return R
-
-def ol_R_g (R):
-
-
-    """
-    Convert Rodrigues-Frank vector to rotation matrix (list version).
-    
-    Reconstructs rotation matrix from Rodrigues-Frank representation.
-    
-    Input:
-        R (list [3]): Rodrigues-Frank vector
-    
-    Output:
-        list (3×3): Rotation matrix
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Rodrigues vector for 90° around Z
-        >>> R = [0, 0, 1]  # tan(45°) = 1
-        >>> g = ol_R_g(R)
-        >>> # Should give 90° rotation around Z
-    
-    Notes:
-        - Inverse of ol_g_R()
-        - Extracts angle: θ = 2·arctan(||R||)
-        - Extracts axis: r = R/||R||
-    
-    Formula:
-        θ = 2·arctan(||R||)
-        r = R / ||R||
-        g = ol_rtheta_g_rad(r, θ)
-    """
-    norm = np.sqrt(sum([ri*ri for ri in R]))
-    r = [ri/norm for ri in R]
-    theta = 2*np.arctan(norm)
-
-
-    g=ol_rtheta_g_rad(r, theta)
-
-
-    return g
-
-def np_ol_R_g (R):
-
-
-    """
-    Convert Rodrigues-Frank vector to rotation matrix (NumPy version).
-    
-    NumPy implementation of Rodrigues-Frank to rotation matrix conversion.
-    
-    Input:
-        R (numpy.ndarray [3]): Rodrigues-Frank vector
-    
-    Output:
-        numpy.ndarray (3×3): Rotation matrix
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Small rotation
-        >>> R_small = np.array([0.01, 0.02, 0.03])
-        >>> g = np_ol_R_g(R_small)
-        >>> print(f"Rotation angle: {np.degrees(2*np.arctan(np.linalg.norm(R_small))):.2f}°")
-        >>> 
-        >>> # Round trip test
-        >>> g_orig = rotation_from_axis_angle([1,0,0], 0.5)
-        >>> R_test = np_ol_g_R(g_orig)
-        >>> g_recovered = np_ol_R_g(R_test)
-        >>> print(np.allclose(g_orig, g_recovered))  # True
-    
-    Notes:
-        - Inverse of np_ol_g_R()
-        - Handles small rotations accurately
-        - Returns identity for zero vector
-    """
-    norm = np.sqrt(R.dot(R))
-    r=R/norm
-    theta = 2*np.arctan(norm)
-
-
-    g=np_ol_rtheta_g_rad(r, theta)
-
-
-    return g
-
-
-        
-def ol_g_R2(g):
-
-    """
-    Alternative Rodrigues-Frank conversion (list version, method 2).
-    
-    Second implementation of rotation matrix to Rodrigues-Frank vector.
-    May use different numerical approach for stability.
-    
-    Input:
-        g (list 3×3): Rotation matrix
-    
-    Output:
-        list [3]: Rodrigues-Frank vector
-    
-    Usage Example:
-        >>> g = [[0, -1, 0],
-        ...      [1,  0, 0],
-        ...      [0,  0, 1]]
-        >>> R = ol_g_R2(g)
-    
-    Notes:
-        - Alternative implementation for numerical comparison
-        - Should give same result as ol_g_R()
-        - Useful for validation
-    """
-    #Poulsen
-    gmm = g[0][0]+g[1][1]+g[2][2]
-    R=[0.,0.,0.]
-    epsilon = permut_tensor3()
-    delta = kronecker()
-    for i in range(0,3):
-        for j in range(0,3):
-            for k in range(0,3):
-                R[i]=R[i]+(epsilon[i][j][k]*g[j][k])/(1+gmm)
-                
-    return R
-
-def np_ol_g_R2(g,epsilon, delta):
-
-    """
-    Alternative Rodrigues-Frank conversion (NumPy version, method 2).
-    
-    NumPy implementation of alternative Rodrigues-Frank calculation.
-    
-    Input:
-        g (numpy.ndarray 3×3): Rotation matrix
-    
-    Output:
-        numpy.ndarray [3]: Rodrigues-Frank vector
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> g = np.eye(3)
-        >>> R = np_ol_g_R2(g)
-    
-    Notes:
-        - Alternative implementation
-        - For numerical stability comparison
-    """
-    #Poulsen
-    gmm = np.trace(g)
-    R = np.einsum('ijk,jk',epsilon,g)/(1+gmm)    
-    return R
-
-def ol_R_g2(R):
-
-    """
-    Alternative Rodrigues-Frank to rotation matrix (list version, method 2).
-    
-    Second implementation of Rodrigues-Frank to rotation matrix conversion.
-    
-    Input:
-        R (list [3]): Rodrigues-Frank vector
-    
-    Output:
-        list (3×3): Rotation matrix
-    
-    Usage Example:
-        >>> R = [0, 0, 0.5]
-        >>> g = ol_R_g2(R)
-    
-    Notes:
-        - Alternative implementation
-        - Should match ol_R_g() results
-    """
-    #Poulsen
-    r2=sum([ri*ri for ri in R])
-    
-    epsilon = permut_tensor3()
-    delta = kronecker()
-    g=[]
-    for i in range(0,3):
-        gj=[]
-        for j in range(0,3):
-            er=0.
-            for k in range(0,3):
-                er=er+2*epsilon[i][j][k]*R[k]
-            gj.append(1./(1+r2)*((1-r2)*delta[i][j]+2*R[i]*R[j]+er))
-        g.append(gj)
-            
-                    
-    return g
-
-def np_ol_R_g2(R,epsilon, delta):
-
-    """
-    Alternative Rodrigues-Frank to rotation matrix (NumPy version, method 2).
-    
-    NumPy implementation of alternative conversion method.
-    
-    Input:
-        R (numpy.ndarray [3]): Rodrigues-Frank vector
-    
-    Output:
-        numpy.ndarray (3×3): Rotation matrix
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> R = np.array([0.1, 0.2, 0.3])
-        >>> g = np_ol_R_g2(R)
-    
-    Notes:
-        - Alternative implementation for comparison
-    """
-    #Poulsen
-    r2=R.dot(R)
-    g= 1./(1+r2)*((1-r2)*delta+2*np.einsum('i,j',R,R)+np.einsum('ijk,k',2*epsilon,R))
-    return g
-
-def np_ol_R_q2(R):
-
-    """
-    Convert Rodrigues-Frank vector to quaternion (method 2).
-    
-    Transforms Rodrigues-Frank representation to unit quaternion [w,x,y,z].
-    
-    Input:
-        R (numpy.ndarray [3]): Rodrigues-Frank vector
-    
-    Output:
-        numpy.ndarray [4]: Unit quaternion [w, x, y, z]
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Small rotation
-        >>> R = np.array([0.01, 0, 0])
-        >>> q = np_ol_R_q2(R)
-        >>> print(q)  # Near [1, 0.01, 0, 0]
-        >>> print(f"Norm: {np.linalg.norm(q)}")  # 1.0
-    
-    Notes:
-        - Output is normalized quaternion
-        - w ≥ 0 convention
-        - Quaternion avoids singularities of Rodrigues-Frank
-    
-    Formula:
-        θ = 2·arctan(||R||)
-        q = [cos(θ/2), r·sin(θ/2)]
-        where r = R/||R||
-    """
-    #Poulsen
-    q=np.empty(4)
-    r2 = R.dot(R)
-    q[0]=1./np.sqrt(1+r2);
-    q[1:]=R/np.sqrt(1+r2)
-
-    return q
-
-def np_ol_g_q2(g):
-
-    """
-    Convert rotation matrix to quaternion (method 2).
-    
-    Extracts unit quaternion representation from rotation matrix.
-    
-    Input:
-        g (numpy.ndarray 3×3): Rotation matrix
-    
-    Output:
-        numpy.ndarray [4]: Unit quaternion [w, x, y, z]
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # 90° around Z
-        >>> g = np.array([[0, -1, 0],
-        ...               [1,  0, 0],
-        ...               [0,  0, 1]], dtype=float)
-        >>> q = np_ol_g_q2(g)
-        >>> print(q)  # [0.707, 0, 0, 0.707]
-    
-    Notes:
-        - Uses Rodrigues-Frank as intermediate
-        - Normalized output
-        - Stable for all rotation angles
-    
-    Formula:
-        g → R → q
-        (via np_ol_g_R and np_ol_R_q2)
-    """
-    #Poulsen
-    eps = 1e-6;
-    q=np.empty(4)
-    q[0] = 0.5*np.sqrt(np.trace(g)+1)
-    
-    if abs(q[0]) > eps:
-        q[1]=1./4./q[0]*(g[2,1]-g[1,2])
-        q[2]=1./4./q[0]*(g[2,0]-g[0,2])
-        q[3]=1./4./q[0]*(g[0,1]-g[1,0])
-    else:
-        for i in range(0,2):
-            q[i+1]=np.sqrt((g[i,i]+1)/2)
-        
-        m = 1+np.where(q[1:]==max(q[1:]))[0][0]
-        for i in range(0,3):
-            q[i]*=np.sign(g[i - 1][m - 1])
-            
-            
-    
-    return q
-#def np_ol_q_U2(q):
-#    #Poulsen
-#    g=np.empty((3,3))
-#    
-#    for i in range(0,2):
-#        g[i,i]=2*(q[0]**2+q[i+1]**2)-1
-#    
-#    g[1,0] = 2*(q[1]*q[2]+q[0]*q[3])
-#    g[0,1] = 2*(q[1]*q[2]-q[0]*q[3])
-#
-#    g[2,0] = 2*(q[1]*q[3]-q[0]*q[2])
-#    g[0,2] = 2*(q[1]*q[3]+q[0]*q[2])
-#    
-#    g[2,1] = 2*(q[2]*q[3]+q[0]*q[1])
-#    g[1,2] = 2*(q[2]*q[3]-q[0]*q[1])
-#
-#    return g
-#
-def np_ol_q_g(q):
-
-    """
-    Convert quaternion to rotation matrix.
-    
-    Transforms unit quaternion [w,x,y,z] to 3×3 rotation matrix.
-    
-    Input:
-        q (numpy.ndarray [4]): Unit quaternion [w, x, y, z]
-    
-    Output:
-        numpy.ndarray (3×3): Rotation matrix
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Identity quaternion
-        >>> q_id = np.array([1, 0, 0, 0])
-        >>> g_id = np_ol_q_g(q_id)
-        >>> print(np.allclose(g_id, np.eye(3)))  # True
-        >>> 
-        >>> # 180° around X
-        >>> q_180x = np.array([0, 1, 0, 0])
-        >>> g_180x = np_ol_q_g(q_180x)
-        >>> print(g_180x)
-        >>> # [[ 1,  0,  0],
-        >>> #  [ 0, -1,  0],
-        >>> #  [ 0,  0, -1]]
-    
-    Notes:
-        - Input should be normalized
-        - Avoids gimbal lock
-        - Efficient for interpolation
-    
-    Formula:
-        g₁₁ = 1 - 2(y² + z²)
-        g₁₂ = 2(xy - zw)
-        g₁₃ = 2(xz + yw)
-        ... (full 3×3 matrix)
-    """
-    #Poulsen
-    g=np.empty((3,3))
-    
-    g[0,0]=q[0]**2+q[1]**2-q[2]**2-q[3]**2
-    g[1,1]=q[0]**2-q[1]**2+q[2]**2-q[3]**2
-    g[2,2]=q[0]**2-q[1]**2-q[2]**2+q[3]**2
-    
-    for i in range(0,2):
-        g[i,i]=2*(q[0]**2+q[i+1]**2)-1
-    
-    g[1,0] = 2*(q[1]*q[2]-q[0]*q[3])
-    g[0,1] = 2*(q[1]*q[2]+q[0]*q[3])
-
-    g[2,0] = 2*(q[1]*q[3]+q[0]*q[2])
-    g[0,2] = 2*(q[1]*q[3]-q[0]*q[2])
-    
-    g[2,1] = 2*(q[2]*q[3]-q[0]*q[1])
-    g[1,2] = 2*(q[2]*q[3]+q[0]*q[1])
-
-    return g
-
-
-
-        
 def permut_tensor3():
 
     """
@@ -2251,6 +1420,7 @@ def permut_tensor3():
         epsilon.append(pj)
     return epsilon
 
+
 def np_permut_tensor3():
 
     """
@@ -2293,6 +1463,7 @@ def np_permut_tensor3():
                     val=-1
                 epsilon[i,j,k]=val
     return epsilon
+
 
 def kronecker():
 
@@ -2343,6 +1514,7 @@ def kronecker():
         delta.append(pj)
     return delta
 
+
 def np_kronecker():
 
     """
@@ -2380,671 +1552,7 @@ def np_kronecker():
 
 
 
-def active_rotation(an, aboutaxis, deg=False):
 
-    """
-    Perform active rotation of vector v by rotation matrix g.
-    
-    Rotates the vector itself while keeping coordinate system fixed.
-    v' = g · v (matrix-vector multiplication).
-    
-    Input:
-        g (array 3×3): Rotation matrix
-        v (array [3]): Vector to rotate
-    
-    Output:
-        numpy.ndarray [3]: Rotated vector v'
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # 90° rotation around Z (active)
-        >>> g_z90 = np.array([[0, -1, 0],
-        ...                   [1,  0, 0],
-        ...                   [0,  0, 1]])
-        >>> v = np.array([1, 0, 0])
-        >>> v_rot = active_rotation(g_z90, v)
-        >>> print(v_rot)  # [0, 1, 0]
-        >>> 
-        >>> # Verify: [1,0,0] rotates to [0,1,0]
-        >>> assert np.allclose(v_rot, [0, 1, 0])
-    
-    Notes:
-        - Active = rotate the object
-        - Compare with passive_rotation (rotate coordinates)
-        - Common in physics and mechanics
-        - v' = g · v
-    
-    Formula:
-        v'_i = g_{ij} v_j
-    """
-    if deg:
-        an=an*np.pi/180.        
-    if aboutaxis.lower()=='z':
-        R = np.array([[np.cos(an),-np.sin(an),0],[np.sin(an),np.cos(an),0],[0,0,1]]);
-    elif aboutaxis.lower()=='x':
-        R = np.array([[1,0,0],[0,np.cos(an),-np.sin(an)],[0,np.sin(an),np.cos(an)]]);
-    elif aboutaxis.lower()=='y':
-        R = np.array([[np.cos(an),0,np.sin(an)],[0,1,0],[-np.sin(an),0,np.cos(an)]]);
-    
-    return R
-    
-
-def passive_rotation(an, aboutaxis, deg=False):
-
-    """
-    Perform passive rotation (coordinate transformation).
-    
-    Rotates the coordinate system while vector stays fixed in space.
-    v' = g^T · v (transpose of rotation matrix).
-    
-    Input:
-        g (array 3×3): Rotation matrix
-        v (array [3]): Vector in old coordinates
-    
-    Output:
-        numpy.ndarray [3]: Vector components in new coordinates
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Rotate coordinates 90° around Z
-        >>> g_z90 = np.array([[0, -1, 0],
-        ...                   [1,  0, 0],
-        ...                   [0,  0, 1]])
-        >>> v = np.array([0, 1, 0])
-        >>> v_new_coords = passive_rotation(g_z90, v)
-        >>> print(v_new_coords)  # [1, 0, 0]
-    
-    Notes:
-        - Passive = rotate coordinate system
-        - v' = g^T · v (transpose)
-        - Common in crystallography (sample↔crystal)
-        - Inverse of active rotation for same g
-    
-    Formula:
-        v'_i = g_{ji} v_j = g^T_{ij} v_j
-    """
-    R=np.transpose(active_rotation(an, aboutaxis, deg=deg));    
-    
-    return R
-    
-def stereoprojection_directions(dirs):
-
-    """
-    Project 3D direction vectors onto 2D stereographic projection plane (Wulff net).
-    
-    Uses stereographic projection from south pole: r = tan(θ/2), where θ is the
-    angle from the north pole. Points on lower hemisphere project outside unit circle.
-    
-    Input:
-        dirs: numpy array (3, N) or (3,) - Direction vectors [x, y, z]
-                                           Will be automatically normalized
-                                           Single vector (3,) will be reshaped to (3, 1)
-    
-    Output:
-        proj_dirs: numpy array (3, N) - Projected coordinates [X, Y, 0]
-                                         X, Y are 2D projection coordinates
-                                         Third row is zeros (kept for compatibility)
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Project single direction
-        >>> dir_vec = np.array([1, 0, 0])  # +X axis
-        >>> proj = stereoprojection_directions(dir_vec)
-        >>> print("Projected:", proj[:2, 0])  # [X, Y]
-        >>> 
-        >>> # Project multiple directions
-        >>> dirs = np.array([
-        ...     [1, 0, 0],      # +X axis (on equator)
-        ...     [0, 1, 0],      # +Y axis (on equator)
-        ...     [0, 0, 1],      # +Z axis (north pole)
-        ...     [0, 0, -1],     # -Z axis (south pole)
-        ...     [1, 1, 1]       # Upper hemisphere
-        ... ]).T
-        >>> proj_all = stereoprojection_directions(dirs)
-        >>> print("Shape:", proj_all.shape)  # (3, 5)
-        >>> print("North pole projects to:", proj_all[:2, 2])  # [0, 0]
-        >>> 
-        >>> # Visualize projection
-        >>> import matplotlib.pyplot as plt
-        >>> fig, ax = plt.subplots(figsize=(8, 8))
-        >>> 
-        >>> # Draw unit circle
-        >>> circle = plt.Circle((0, 0), 1, fill=False, color='k')
-        >>> ax.add_patch(circle)
-        >>> 
-        >>> # Project grid of directions
-        >>> oris = genori(dangle=10.0, hemi='upper')
-        >>> proj_grid = stereoprojection_directions(oris)
-        >>> ax.scatter(proj_grid[0], proj_grid[1], s=1, alpha=0.5)
-        >>> 
-        >>> ax.set_aspect('equal')
-        >>> ax.set_xlim(-1.2, 1.2)
-        >>> ax.set_ylim(-1.2, 1.2)
-        >>> plt.title('Stereographic Projection (Wulff Net)')
-        >>> plt.show()
-        >>> 
-        >>> # Compare with equal-area
-        >>> proj_stereo = stereoprojection_directions(dirs)
-        >>> proj_ea = equalarea_directions(dirs)
-        >>> print("Stereographic radii:", np.linalg.norm(proj_stereo[:2], axis=0))
-        >>> print("Equal-area radii:", np.linalg.norm(proj_ea[:2], axis=0))
-    """
-    #dirs = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
-    #example: dirs = [0,1,2,3;1,2,3,0;0,3,2,1]
-    
-    #normalize and project
-    if len(dirs.shape)==1:
-        dirs = np.expand_dims(dirs,axis=1)
-
-    dirs = dirs.astype(float)
-    #normalizing dirs
-    dirs /= np.sqrt((dirs ** 2).sum(0))
-    #check
-    
-    proj_dirs = np.vstack((1./(np.sign(dirs[2,:])*dirs[2,:]+1)*dirs[0,:], 
-               1./(np.sign(dirs[2,:])*dirs[2,:]+1)*dirs[1,:],
-                np.zeros(dirs[2,:].shape)))
-    #check
-#    alpha = np.arccos(np.sign(dirs[2,:])*dirs[2,:])
-#    eps=1e-6;
-#    idxs = np.where(alpha<eps)
-#    alpha[idxs]=1.
-#    beta = np.arccos(dirs[0,:]/np.sin(alpha))
-#    rx=np.tan(alpha/2)*np.cos(beta)
-#    ry=np.tan(alpha/2)*np.sin(beta)
-#    rx[idxs]=0.
-#    ry[idxs]=0.
-#    abs(proj_dirs[0,:]-rx)<eps
-#    abs(proj_dirs[1,:]-ry)<eps
-    return proj_dirs
-
-# def stereoprojection_intotriangle(dirs):
-
-    """
-    Map directions into standard stereographic triangle.
-    
-    Input:
-        dirs: numpy array (3, N) - Direction vectors
-        eps, geteqdirs, geteqmats, Rin, symops: Optional parameters
-    
-    Output:
-        proj: numpy array (2, N) - Projection coordinates
-    """
-#     eps=1.0e-2
-#     normals = np.array([-1,0,1]);
-#     arclength = 40.#-np.arccos(np.sqrt(2)/np.sqrt(3))*180/np.pi;
-#     proj_normals, points = stereoprojection_planes(normals,arclength=arclength,iniangle=90)
-#     proj_tans = np.arctan(proj_normals[1,:]/proj_normals[0,:])
-
-#     if len(dirs.shape)==1:
-#         dirs = np.expand_dims(dirs,axis=1)
-
-#     proj_dirs = np.zeros(dirs.shape)
-#     inc=-1
-#     for co,diri in enumerate(dirs.T):
-#         #print('Direction {} from {}'.format(co+1,dirs.shape[1]))
-# #        print('===================================================')
-# #        print(diri)
-# #        print('===================================================')
-#         inc+=1
-#         el=equivalent_elements(diri,'cubic')
-#         #print(el)
-#         for eli in el:
-#             proj_eli = stereoprojection_directions(eli)
-# #            print(eli)
-# #            print(np.arctan(proj_eli[1,0]/proj_eli[0,0])-np.arccos(1./np.sqrt(3.)))
-# #            print(np.arctan(proj_eli[1,0]/proj_eli[0,0]))#-np.pi/4)
-# #            print((np.arccos(abs(eli[2])/np.sqrt(eli.dot(eli)))-np.arccos(1./np.sqrt(3.))))
-# #            if (eli>=-eps).all() and (np.arccos(abs(eli[2])/np.sqrt(eli.dot(eli)))-np.arccos(1./np.sqrt(3.)))<eps:
-# #            if (proj_eli[:,0]>=-eps).all() and (np.arccos(abs(eli[2])/np.sqrt(eli.dot(eli)))-np.arccos(1./np.sqrt(3.)))<eps:
-#             if ((proj_eli[:,0])>=-eps).all():                #proj_eli = stereoprojection_directions(eli)
-#                 atan=np.arctan2(proj_eli[1,0],proj_eli[0,0])
-#                 if (atan-np.pi/4)<eps:
-#                     idx=np.where(abs(proj_tans-atan)==min(abs(proj_tans-atan)))[0][0]
-# #                    print(proj_eli[:,0].dot(proj_eli[:,0])) 
-# #                    print(proj_normals[:,idx].dot(proj_normals[:,idx])) 
-# #                    print((proj_eli[:,0].dot(proj_eli[:,0])-proj_normals[:,idx].dot(proj_normals[:,idx])))
-# #                    print((proj_eli[:,0].dot(proj_eli[:,0])-proj_normals[:,idx].dot(proj_normals[:,idx]))<eps)
-#                     if (proj_eli[:,0].dot(proj_eli[:,0])-proj_normals[:,idx].dot(proj_normals[:,idx]))<eps:
-#                         proj_dirs[:,inc]=proj_eli[:,0]
-# #                        print('OK')
-# #                        print(proj_dirs[:,inc])
-#                         break
-#     return proj_dirs
-
-#def coodinate_from_equalarea_proj(projdirs):
-    #dirs = [x1,x2,...,xn;y1,y2,...,yn];
-    #example: dirs = [0,1,2,3;1,2,3,0]
-#    if len(projdirs.shape)==1:
-#        projdirs = np.expand_dims(projdirs,axis=1)
-#    z=-2+np.sqrt(8-projdirs[0,:]**2-projdirs[1,:]**2)
-
-#    z=-2+np.sqrt()
-    
-    
-    
-def equalarea_directions(dirs):
-
-    """
-    Project 3D direction vectors onto 2D equal-area projection plane (Schmidt net).
-    
-    Uses Lambert azimuthal equal-area projection: r = √2 × sin(θ/2), where θ is the
-    angle from the north pole. Preserves area, making it ideal for texture analysis.
-    Maximum radius is √2 for hemisphere projection.
-    
-    Input:
-        dirs: numpy array (3, N) or (3,) - Direction vectors [x, y, z]
-                                           Will be automatically normalized
-                                           Single vector (3,) will be reshaped to (3, 1)
-    
-    Output:
-        proj_dirs: numpy array (3, N) - Projected coordinates [X, Y, 0]
-                                         X, Y are 2D equal-area projection coordinates
-                                         Third row is zeros (kept for compatibility)
-                                         Range: [-√2, √2] for full sphere
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Project single direction
-        >>> dir_vec = np.array([1, 0, 0])  # +X axis
-        >>> proj = equalarea_directions(dir_vec)
-        >>> print("Projected:", proj[:2, 0])
-        >>> print("Radius:", np.linalg.norm(proj[:2, 0]))  # Should be 1.0 (on equator)
-        >>> 
-        >>> # Project multiple directions
-        >>> dirs = np.array([
-        ...     [1, 0, 0],      # +X axis (equator)
-        ...     [0, 1, 0],      # +Y axis (equator)
-        ...     [0, 0, 1],      # +Z axis (north pole)
-        ...     [1, 1, 1]       # Upper hemisphere
-        ... ]).T
-        >>> proj_all = equalarea_directions(dirs)
-        >>> print("Shape:", proj_all.shape)  # (3, 4)
-        >>> print("North pole:", proj_all[:2, 2])  # [0, 0]
-        >>> 
-        >>> # Create pole figure
-        >>> import matplotlib.pyplot as plt
-        >>> oris = genori(dangle=5.0, hemi='upper')
-        >>> proj = equalarea_directions(oris)
-        >>> 
-        >>> fig, ax = plt.subplots(figsize=(8, 8))
-        >>> circle = plt.Circle((0, 0), np.sqrt(2), fill=False, color='k', linewidth=2)
-        >>> ax.add_patch(circle)
-        >>> ax.scatter(proj[0], proj[1], s=1, alpha=0.5, c='blue')
-        >>> ax.set_aspect('equal')
-        >>> ax.set_xlim(-1.5, 1.5)
-        >>> ax.set_ylim(-1.5, 1.5)
-        >>> plt.title('Equal-Area Projection (Schmidt Net)')
-        >>> plt.show()
-    """
-    #dirs = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
-    #example: dirs = np.array([[0,1,2,3],[1,2,3,0],[0,3,2,1]])
-    
-    #normalize and project
-       
-    if len(dirs.shape)==1:
-        dirs = np.expand_dims(dirs,axis=1)
-
-    dirs = dirs.astype(float)
-    #normalizing dirs
-    dirs /= np.sqrt((dirs ** 2).sum(0))
-    dirsxy = dirs[0:2,:];
-    #print(dirsxy)
-    eps=1e-6
-    normdirsxy = np.sqrt((dirsxy ** 2).sum(0))
-    idxs=np.where(normdirsxy<eps)
-    normdirsxy[idxs]=1.
-    dirsxy /= normdirsxy
-    
-    alpha=np.arccos(np.sign(dirs[2,:])*dirs[2,:]);
-    proj_dirs = np.vstack((np.sin(alpha/2)*2.*dirsxy[0,:], 
-               np.sin(alpha/2)*2.*dirsxy[1,:],
-                np.zeros(dirs[2,:].shape)))
-    proj_dirs[:,idxs]=0.
-    #check
-#    if False:
-#        phi2=90*np.pi/180.
-#        phi1=0*np.pi/180.
-#        RotX = active_rotation(phi1, 'x') 
-#        RotY = active_rotation(phi2, 'y')
-#        Dc=[0.,0.,1.];
-#        Ds = np.matmul(RotY,RotX).dot(Dc)
-#        proj_Ds = equalarea_directions(Ds)  
-#        #np.pi*proj_Ds[0][0]**2-(-np.cos(phi2)+np.cos(0))*2*np.pi
-#        phi22=90*np.pi/180.
-#        phi21=85*np.pi/180.
-#        phi1=0*np.pi/180.
-#        RotX = active_rotation(phi1, 'x') 
-#        RotY = active_rotation(phi21, 'y')
-#        RotY2 = active_rotation(phi22, 'y')
-#        Dc=[0.,0.,1.];
-#        Ds = np.matmul(RotY,RotX).dot(Dc)
-#        proj_Ds = equalarea_directions(Ds)  
-#        Ds = np.matmul(RotY2,RotX).dot(Dc)
-#        proj_Ds2 = equalarea_directions(Ds)  
-#        #np.pi*(proj_Ds2[0][0]**2-proj_Ds[0][0]**2)-(-np.cos(phi22)+np.cos(phi21))*2*np.pi
-#        phi2=45*np.pi/180.
-#        dphi2=5*np.pi/180.
-#        dphi1=5.*np.pi/180.
-#        RotY = active_rotation(phi2-dphi2, 'y')
-#        RotY2 = active_rotation(phi2+dphi2, 'y')
-#        Dc=[0.,0.,1.];
-#        Ds = RotY.dot(Dc)
-#        proj_Ds = equalarea_directions(Ds)  
-#        Ds = RotY2.dot(Dc)
-#        proj_Ds2 = equalarea_directions(Ds)  
-#        #1./2.*dphi1*(proj_Ds2[0][0]**2-proj_Ds[0][0]**2)-(+np.cos(phi2-dphi2)-np.cos(phi2+dphi2))*dphi1
-        
-        
-    return proj_dirs
-# def equalarea_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
-
-    """
-    Project plane traces onto equal-area (Schmidt) net.
-    
-    Input:
-        normals: numpy array (3, N) - Plane normal vectors
-        arclength: float - Arc length in degrees (default: 360)
-        iniangle: float - Starting angle in degrees (default: 0)
-        hemisphere: str - 'both', 'upper', or 'lower' (default: 'both')
-    
-    Output:
-        traces: list of arrays - Trace points for each plane
-    """
-#     #%normals = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
-#     #%varargin{1} arclength in deg
-#     #normals = np.transpose(np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]))
-#     #
-#     if len(normals.shape)==1:
-#         normals = np.expand_dims(normals,axis=1)
-
-#     normals = normals.astype(float)
-#     normals /= np.sqrt((normals ** 2).sum(0))
-
-#     proj_normals = equalarea_directions(normals)
-
-#     idxs = np.where(abs(normals[0,:])+abs(normals[1,:])==0)[0]
-    
-#     inplanedirs = np.vstack((-normals[1,:],normals[0,:],np.zeros(normals[0,:].shape)));
-#     inplanedirs[:,idxs] = np.vstack((np.zeros(normals[0,idxs].shape), -normals[2,idxs],normals[1,idxs]));
-    
-#     inplanedirs /= np.sqrt((inplanedirs ** 2).sum(0))
-
-#     thirdaxis=np.cross(normals,inplanedirs,axisa=0,axisb=0,axisc=0)
-# #    thirdaxis = np.vstack((normals[1,:]*inplanedirs[2,:]-normals[2,:]*inplanedirs[1,:],
-# #                           -1*(normals[0,:]*inplanedirs[2,:]-normals[2,:]*inplanedirs[0,:]),
-# #                           normals[0,:]*inplanedirs[1,:]-normals[1,:]*inplanedirs[0,:]));
-#     t=np.linspace(iniangle,iniangle+arclength,180*2+1)*np.pi/180;
-#     basicarc = np.vstack((np.cos(t),np.sin(t),np.zeros(t.shape)));
-    
-#     proj_planes=[];
-#     Zdir=[]
-#     for i in range(0,normals.shape[1]):
-#         Rot2Global = np.transpose(np.vstack((inplanedirs[:,i],thirdaxis[:,i],normals[:,i])));
-#         Ccp = np.matmul(Rot2Global,basicarc);
-#         Zdir=Ccp[2]
-#         if hemisphere == "both":            
-#             Ds = equalarea_directions(Ccp)
-#         else:
-#             if hemisphere == "upper":
-#                 idxs = np.where(Ccp[2,:]>=0)[0]
-#                 Ds = equalarea_directions(Ccp[:,idxs])
-#             elif hemisphere == "lower":
-#                 idxs = np.where(Ccp[2,:]<=0)[0]
-#                 Ds = equalarea_directions(Ccp[:,idxs])
-#         proj_planes.append(Ds)
-#     if len(proj_planes)==1:
-#         return proj_planes[0]
-#     else:          
-#         return proj_planes
-
-
-# def stereoprojection_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
-#     #%normals = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
-#     #%varargin{1} arclength in deg
-#     #normals = np.transpose(np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]))
-#     #
-#     if len(normals.shape)==1:
-#         normals = np.expand_dims(normals,axis=1)
-
-#     normals = normals.astype(float)
-#     normals /= np.sqrt((normals ** 2).sum(0))
-
-#     proj_normals = stereoprojection_directions(normals)
-
-#     idxs = np.where(abs(normals[0,:])+abs(normals[1,:])==0)[0]
-    
-#     inplanedirs = np.vstack((-normals[1,:],normals[0,:],np.zeros(normals[0,:].shape)));
-#     inplanedirs[:,idxs] = np.vstack((np.zeros(normals[0,idxs].shape), -normals[2,idxs],normals[1,idxs]));
-    
-#     inplanedirs /= np.sqrt((inplanedirs ** 2).sum(0))
-
-#     thirdaxis=np.cross(normals,inplanedirs,axisa=0,axisb=0,axisc=0)
-# #    thirdaxis = np.vstack((normals[1,:]*inplanedirs[2,:]-normals[2,:]*inplanedirs[1,:],
-# #                           -1*(normals[0,:]*inplanedirs[2,:]-normals[2,:]*inplanedirs[0,:]),
-# #                           normals[0,:]*inplanedirs[1,:]-normals[1,:]*inplanedirs[0,:]));
-#     t=np.linspace(iniangle,iniangle+arclength,180*2+1)*np.pi/180;
-#     basicarc = np.vstack((np.cos(t),np.sin(t),np.zeros(t.shape)));
-    
-#     proj_planes=[];
-#     Zdir=[]
-#     points=[]
-#     for i in range(0,normals.shape[1]):
-#         Rot2Global = np.transpose(np.vstack((inplanedirs[:,i],thirdaxis[:,i],normals[:,i])));
-#         Ccp = np.matmul(Rot2Global,basicarc);
-#         points.append(Ccp)
-#         Zdir=Ccp[2]
-#         if hemisphere == "both":            
-#             Ds = stereoprojection_directions(Ccp)
-#         else:
-#             if hemisphere == "upper":
-#                 idxs = np.where(Ccp[2,:]>=0)[0]
-#                 Ds = stereoprojection_directions(Ccp[:,idxs])
-#             elif hemisphere == "lower":
-#                 idxs = np.where(Ccp[2,:]<=0)[0]
-#                 Ds = stereoprojection_directions(Ccp[:,idxs])
-#         proj_planes.append(Ds)
-#     if len(proj_planes)==1:
-#         return proj_planes[0],points[0]
-#     else:          
-#         return proj_planes, points
-
-def euler_angles_reduction(Phi1,PHI,Phi2):
-
-
-    """
-    Reduce Euler angles to fundamental zone using symmetry operations.
-    
-    Applies crystal symmetry operations to find equivalent orientation
-    with Euler angles in the fundamental zone (asymmetric unit).
-    
-    Input:
-        phi1, Phi, phi2 (float): Euler angles in radians (Bunge convention)
-        symops (list): List of 3×3 symmetry operation matrices
-    
-    Output:
-        tuple: (phi1_red, Phi_red, phi2_red) - Reduced Euler angles in radians
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # Cubic symmetry (simplified - just identity for demo)
-        >>> symops = [np.eye(3)]
-        >>> 
-        >>> # Reduce orientation
-        >>> phi1, Phi, phi2 = np.radians([45, 30, 60])
-        >>> phi1_r, Phi_r, phi2_r = euler_angles_reduction(phi1, Phi, phi2, symops)
-        >>> print(f"Reduced: φ1={np.degrees(phi1_r):.1f}°")
-    
-    Notes:
-        - Fundamental zone depends on crystal symmetry
-        - Cubic: 0≤φ1≤90°, 0≤Φ≤45°, 0≤φ2≤90°
-        - Reduces orientation distribution function (ODF) storage
-        - Essential for texture analysis
-    """
-    if not type(Phi1)==list:
-        Phi1 = [Phi1]
-        PHI = [PHI]
-        Phi2 = [Phi2]
-    Phi1_red=[]
-    Phi2_red=[]
-    PHI_red=[]
-    
-    for phi1,phi,phi2 in zip(Phi1,PHI,Phi2):
-    #converting PHI to 0-2*pi
-        phi = phi-round(phi/(2*np.pi))
-        if phi<0:
-            phi=phi+2*np.pi
-
-        #if phi>PI, applying reflection */
-        #phi becomes within [0,PI] */
-
-        if phi>np.pi:
-            phi=2*np.pi-phi
-            phi1 = phi1 + np.pi
-            phi2 = phi2 + np.pi
-
-        #treating the std case where phi != 0 */
-        if (abs(phi) > 1e-6 and abs(phi-np.pi)> 1e-6):
-            # ranging phi2 within [0,(2*np.pi)] */
-            phi2 = phi2-round(phi2/(2*np.pi))
-            if phi2<0:
-                phi2 =phi2 + 2*np.pi
-        
-        
-        # treating degeneracy: phi = 0: phi1 += phi2 and phi2 = 0. */
-        elif (abs(phi) > 1e-6):
-            phi1=phi1+phi2
-            phi2 = 0
-        else: # the same at phi = 180 */
-            phi1=phi1-phi2
-            phi2 = 0
-        
-        # ranging phi1 within [0,(2*PI)] */
-        phi1 = phi1-round(phi1/(2*np.pi))
-        if phi1<0:
-            phi1 = phi1 + 2*np.pi
-
-        Phi1_red.append(phi1)
-        Phi2_red.append(phi2)
-        PHI_red.append(phi)
-    if len(Phi1_red)==1:
-        return Phi1_red[0],PHI_red[0],Phi2_red[0]
-    else:
-        return Phi1_red,PHI_red,Phi2_red
-
-
-
-        
-def symmetry_elements(lattice):
-
-    """
-    Generate symmetry operation matrices for crystal system.
-    
-    Returns list of 3×3 rotation matrices representing all symmetry
-    operations for specified crystal system.
-    
-    Input:
-        crystal_system (str): 'cubic', 'hexagonal', 'tetragonal', 
-                             'orthorhombic', 'monoclinic', 'triclinic'
-    
-    Output:
-        list: List of numpy.ndarray (3×3) symmetry matrices
-    
-    Usage Example:
-        >>> symops = symmetry_elements('cubic')
-        >>> print(f"Cubic has {len(symops)} symmetry operations")
-        >>> # 24 operations for cubic (point group m-3m)
-        >>> 
-        >>> # Verify they're proper rotations
-        >>> for g in symops:
-        ...     assert np.abs(np.linalg.det(g) - 1.0) < 1e-10
-    
-    Notes:
-        - Cubic (Oh): 24 operations
-        - Hexagonal (D6h): 12 operations (typically)
-        - Tetragonal (D4h): 8 operations
-        - All matrices are proper rotations (det=1)
-        - Used in texture analysis and pole figures
-    """
-    U=[]
-    #identity
-    U.append(np.eye(3))
-    if lattice.lower()=='cubic':
-        #3xpi/2 Rotations about 100,010,001=>9 operations
-        U.append(np.array([[1,0,0],[0,0,-1],[0,1,0]]).T)
-        U.append(np.array([[1,0,0],[0,-1,0],[0,0,-1]]).T)
-        U.append(np.array([[1,0,0],[0,0,1],[0,-1,0]]).T)
-        
-        
-        U.append(np.array([[0,0,1],[0,1,0],[-1,0,0]]).T)
-        U.append(np.array([[-1,0,0],[0,1,0],[0,0,-1]]).T)
-        U.append(np.array([[0,0,-1],[0,1,0],[1,0,0]]).T)
-
-
-        U.append(np.array([[0,-1,0],[1,0,0],[0,0,1]]).T)
-        U.append(np.array([[-1,0,0],[0,-1,0],[0,0,1]]).T)
-        U.append(np.array([[0,1,0],[-1,0,0],[0,0,1]]).T)
-
-
-        #1xpi Rotation about [110][-110][011][0-11][101][10-1]
-        U.append(np.array([[0,1,0],[1,0,0],[0,0,-1]]).T)
-        U.append(np.array([[-1,0,0],[0,0,1],[0,1,0]]).T)
-        U.append(np.array([[0,0,1],[0,-1,0],[1,0,0]]).T)
-        U.append(np.array([[0,-1,0],[-1,0,0],[0,0,-1]]).T)
-        U.append(np.array([[-1,0,0],[0,0,-1],[0,-1,0]]).T)
-        U.append(np.array([[0,0,-1],[0,-1,0],[-1,0,0]]).T)
-        
-        #2xpi/3 rotations about [111][11-1][-111][-11-1]
-        U.append(np.array([[0,0,1],[1,0,0],[0,1,0]]).T)
-        U.append(np.array([[0,1,0],[0,0,1],[1,0,0]]).T)
-        U.append(np.array([[0,-1,0],[0,0,1],[-1,0,0]]).T)
-        U.append(np.array([[0,0,-1],[-1,0,0],[0,1,0]]).T)
-        U.append(np.array([[0,-1,0],[0,0,-1],[1,0,0]]).T)
-        U.append(np.array([[0,0,1],[-1,0,0],[0,-1,0]]).T)
-        U.append(np.array([[0,1,0],[0,0,-1],[-1,0,0]]).T)
-        U.append(np.array([[0,0,-1],[1,0,0],[0,-1,0]]).T)
-
-    if lattice.lower()=='tetragonal':
-        #1xpi/2 Rotations about 001=>3 operations
-
-        U.append(np.array([[0,-1,0],[1,0,0],[0,0,1]]).T)
-        U.append(np.array([[-1,0,0],[0,-1,0],[0,0,1]]).T)
-        U.append(np.array([[0,1,0],[-1,0,0],[0,0,1]]).T)
-
-        #1xpi Rotations about 100,010=>2 operations
-
-        U.append(np.array([[1,0,0],[0,-1,0],[0,0,-1]]).T)
-        U.append(np.array([[-1,0,0],[0,1,0],[0,0,-1]]).T)
-        
-
-
-        
-        #1xpi Rotation about [110][-110]=>2 operations
-        U.append(np.array([[0,1,0],[1,0,0],[0,0,-1]]).T)
-        U.append(np.array([[0,-1,0],[-1,0,0],[0,0,-1]]).T)
-        
-       
-    if lattice.lower()=='monoclinic':        
-        U.append(np.array([[-1,0,0],[0,1,0],[0,0,-1]]).T)
-
-        
-#        for i in range(0,len(U)):
-#            for j in range(0,len(U)):
-#                if (U[i]==U[j]).all() and i<>j:
-#                    print('spatne')
-#        
-#for u in U:
-#    print(u)
-#    print('')
-#    return U
-#     
-    return U
-           
 def equivalent_elements(element,lattice):
 
     """
@@ -3939,6 +2447,7 @@ def equivalent_elements(element,lattice):
 #     plt.scatter(GridX,GridY, c=Intensity, s=50, edgecolor='',zorder=10,cmap='jet')
 #     cb=plt.colorbar()
 #     #plt.show()
+
 def B19p_B2_lattice_correspondence(notation='Miyazaki'):
 
     """
@@ -4161,6 +2670,7 @@ def B19p_B2_lattice_correspondence(notation='Miyazaki'):
 
     return B19puvw_2_B2uvw_all,B2uvw_2_B19puvw_all,B19phkl_2_B2hkl_all,B2hkl_2_B19phkl_all
 
+
 def lattice_correspondence(LatCorr,parent_symops,product_symops):
 
     """
@@ -4223,6 +2733,7 @@ def lattice_correspondence(LatCorr,parent_symops,product_symops):
             #print(f'count={count}')
             #print(LatCorr[:,:,-1])
             #print
+
 
 def B19p_B2_lattice_correspondence_ini():
 
@@ -4389,6 +2900,7 @@ def B19p_B2_lattice_correspondence_ini():
 #    print('============================================')
     
     
+
 def cubic2tetragonal_lattice_correspondence():
 
     """
@@ -4463,6 +2975,7 @@ def cubic2tetragonal_lattice_correspondence():
         Parenthkl_2_Producthkl_all[:,:,Variant] = inv(Producthkl_2_Parenthkl_all[:,:,Variant]);         
 
     return Parentuvw_2_Productuvw_all,Productuvw_2_Parentuvw_all,Parenthkl_2_Producthkl_all,Producthkl_2_Parenthkl_all
+
 def Rp_B2_lattice_correspondence():
 
     """
@@ -4534,6 +3047,7 @@ def Rp_B2_lattice_correspondence():
         B2hkl_2_Rphkl_all[:,:,Variant] = inv(Rphkl_2_B2hkl_all[:,:,Variant]);         
 
     return Rpuvw_2_B2uvw_all,B2uvw_2_Rpuvw_all,Rphkl_2_B2hkl_all,B2hkl_2_Rphkl_all
+
 
 def print_correspondence(Mcorr,VecA,latticeA, latticeB,planes=False,returnB=False):
 
@@ -4626,6 +3140,7 @@ def print_correspondence(Mcorr,VecA,latticeA, latticeB,planes=False,returnB=Fals
 #    print('Varianta '+str(var+1))
 #    print(plane2string(b19pvar, digits=2))
 
+
 def mohr_circles(tensor):
 
     """
@@ -4689,6 +3204,7 @@ def mohr_circles(tensor):
                   'D1':DD[0],'D2':DD[1],'D3':DD[2],\
                   'V1':VV[:,0],'V2':VV[:,1],'V3':VV[:,2]}
     return mohr_circles,VV,DD
+
 
 def generate_lattice_points(uvw2xyz,basal_dirs):
 
@@ -4795,114 +3311,6 @@ def generate_lattice_points(uvw2xyz,basal_dirs):
 #                    B2point.append([p0ri,p1ri])
 #                Lattice.append(B2point)
     return Lattice
-def plot_lattice_plane(axl,PlanePoints,**kwargs):
-
-    """
-    Plot a crystallographic plane in 3D lattice.
-    
-    Draws plane (hkl) intersecting lattice unit cell using matplotlib 3D.
-    
-    Input:
-        ax (Axes3D): Matplotlib 3D axis
-        L (array 3×3): Lattice matrix
-        h, k, l (int): Miller indices of plane
-        **kwargs: Additional matplotlib plot parameters (color, alpha, etc.)
-    
-    Output:
-        None (modifies axis)
-    
-    Usage Example:
-        >>> import matplotlib.pyplot as plt
-        >>> from mpl_toolkits.mplot3d import Axes3D
-        >>> import numpy as np
-        >>> 
-        >>> fig = plt.figure()
-        >>> ax = fig.add_subplot(111, projection='3d')
-        >>> 
-        >>> L = cubic_lattice_vec(3.0)
-        >>> plot_lattice_plane(ax, L, 1, 1, 1, color='blue', alpha=0.3)
-        >>> plot_lattice_plane(ax, L, 1, 0, 0, color='red', alpha=0.3)
-        >>> 
-        >>> set_aspect_equal_3d(ax)
-        >>> plt.show()
-    
-    Notes:
-        - Plane intersects unit cell
-        - Uses Miller indices for specification
-        - Transparency recommended (alpha < 1)
-        - Multiple planes can be overlaid
-    """
-    BasalPlane=False
-    for idx in range(3):
-        if (PlanePoints[idx,:]==0).all():
-            BasalPlane=True
-            break
-    
-    if BasalPlane:
-        idxs=list(range(3))
-        idxs.remove(idx)
-        hull = ConvexHull(PlanePoints[idxs,:].T)
-    
-        axl.add_collection3d(Poly3DCollection([PlanePoints[:,hull.vertices].T],**kwargs))
-    else:
-        axl.plot_trisurf(PlanePoints[0,:],PlanePoints[1,:], PlanePoints[2,:],**kwargs)
-
-def plot_lattice_boundaries(axl,LatticePointsNew,allPoints=None,polygon=False,tol=1e-1,**kwargs):
-
-    """
-    Plot unit cell boundaries in 3D.
-    
-    Draws edges of unit cells to visualize lattice structure.
-    
-    Input:
-        ax (Axes3D): Matplotlib 3D axis
-        L (array 3×3): Lattice matrix
-        n1, n2, n3 (int): Number of cells in each direction
-        **kwargs: Line plot parameters
-    
-    Output:
-        None (modifies axis)
-    
-    Usage Example:
-        >>> fig = plt.figure()
-        >>> ax = fig.add_subplot(111, projection='3d')
-        >>> 
-        >>> L = cubic_lattice_vec(3.0)
-        >>> plot_lattice_boundaries(ax, L, n1=2, n2=2, n3=2, color='black')
-        >>> 
-        >>> set_aspect_equal_3d(ax)
-        >>> plt.show()
-    
-    Notes:
-        - Draws wireframe of unit cells
-        - Helps visualize lattice structure
-        - Combine with plot_lattice_points for complete view
-    """
-    if allPoints is None:
-        allPoints=np.hstack([p for points in LatticePointsNew for p in points])
-    if polygon:
-        for idx in range(3):
-            Xbound=copy.deepcopy(allPoints)
-            for extrval in [np.min(Xbound[idx,:]),np.max(Xbound[idx,:])]:
-                Xbound=copy.deepcopy(allPoints)
-                #Xbound=Xbound[:,Xbound[idx,:]==extrval]
-                Xbound=Xbound[:,np.abs(Xbound[idx,:]-extrval)<tol]
-                #np.abs(vertices[0,:]-np.min(vertices[0,:]))<1e-1
-                #Xbound[idx,:]=Xbound[idx,:]*0+extrval
-                #axl.plot_trisurf(Xbound[0,:],Xbound[1,:], Xbound[2,:],\
-                #                 alpha=0.5,color='r', linewidths=0., edgecolors='grey',linestyle='-',\
-                #                 linewidth = 0.0, antialiased = True) 
-                if Xbound.shape[1]>=3:
-                    try:
-                        hull = ConvexHull(Xbound[np.delete(range(3),idx,0),:].T)
-                        axl.add_collection3d(Poly3DCollection([Xbound[:,hull.vertices].T], **kwargs))
-                    except:
-                        pass
-    else:
-        axl.plot_trisurf(allPoints[0,:],allPoints[1,:], allPoints[2,:],triangles=ConvexHull(allPoints.T).simplices,
-                         **kwargs)
-
-            
 
 def generate_lattice_faces(uvw2xyz,basal_dirs):
 
@@ -5013,6 +3421,7 @@ def generate_lattice_faces(uvw2xyz,basal_dirs):
             Lattices2.append(Lat)
     return Lattices2
 
+
 def generate_product_lattice_points(F,Parentlattice_points,Q=np.eye(3)):
     """
     generate_product_lattice_points - Crystallographic function for materials analysis.
@@ -5042,6 +3451,7 @@ def generate_product_lattice_points(F,Parentlattice_points,Q=np.eye(3)):
         Productlattice_points.append([[p0B19pi,p1B19pi] for p0B19pi,p1B19pi in zip(p0B19p,p1B19p) ])
     
     return Productlattice_points
+
 def generate_product_lattice_faces(F,Parentlattices):
 
     """
@@ -5079,389 +3489,7 @@ def generate_product_lattice_faces(F,Parentlattices):
     return Productlattices
 
 
-def plot_lattice3D(ax,VV,description,Parentlattice_points,Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2):
 
-    """
-    Complete 3D lattice visualization.
-    
-    Plots lattice points and/or edges in single function call.
-    
-    Input:
-        ax (Axes3D): 3D axis
-        L (array 3×3): Lattice matrix
-        n1, n2, n3 (int): Cell range
-        show_points (bool): Plot lattice points
-        show_edges (bool): Plot cell edges
-        **kwargs: Plot styling parameters
-    
-    Output:
-        None (modifies axis)
-    
-    Usage Example:
-        >>> fig = plt.figure(figsize=(10, 10))
-        >>> ax = fig.add_subplot(111, projection='3d')
-        >>> 
-        >>> L = lattice_vec(2.95, 2.95, 4.68, 90, 90, 120)  # HCP
-        >>> plot_lattice3D(ax, L, n1=2, n2=2, n3=2, 
-        ...                show_points=True, show_edges=True,
-        ...                color='blue', s=50)
-        >>> 
-        >>> ax.set_xlabel('X')
-        >>> ax.set_ylabel('Y')
-        >>> ax.set_zlabel('Z')
-        >>> set_aspect_equal_3d(ax)
-        >>> plt.show()
-    
-    Notes:
-        - Convenience function
-        - Combines points and edges
-        - Customizable appearance
-    """
-    xlim= np.array([-1.05,1.05])*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))
-    for point in Parentlattice_points:
-        ax.plot(point[0],point[1],point[2],'r')
-                
-    for point in Productlattice_points:
-        ax.plot(point[0],point[1],point[2],'b')
-        
-        
-    Product_basal = np.matmul(Product_uvw_2_Parent_uvw_all_norm,np.matmul(Product_uvw2xyz,np.eye(3)))
-    colors=['g','c','#800000']
-        
-    inc=-1;
-    for v2 in Product_basal.T:
-        inc+=1
-        ax.plot([0,v2[0]],[0,v2[1]],[0,v2[2]],color=colors[inc],linewidth=linewidth)
-    inc=0
-
-    for v in VV.T:
-        inc+=1
-        #print(v)
-        v2=1.5*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))*v
-        ax.plot([0,v2[0]],[0,v2[1]],[0,v2[2]],'k',linewidth=linewidth,linestyle='--')
-        ax.text(v2[0],v2[1],v2[2],description.replace('{inc}','{'+str(inc)+'}'))       
-        
-    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-# equal aspect ratio
-    ax.set_xlim3d(xlim)
-    ax.set_ylim3d(xlim)
-    ax.set_zlim3d(xlim)
-    ax.set_xlim(xlim)
-    ax.set_ylim(xlim)
-    ax.set_zlim(xlim)
-        
-  
-
-    set_aspect_equal_3d(ax)
-
-def plot_latticefaces3D(ax,Parentlattices,linewidth=2,alpha=0.15,edgecolor='r',linestyle='-',facecolor=(1, 0, 0, 0.15)):
-    """
-    plot_latticefaces3D - Crystallographic function for materials analysis.
-    
-    See full documentation in extended modules for detailed usage.
-    """
-    
-    for Lattice in Parentlattices:
-        ax.add_collection3d(Poly3DCollection(Lattice, alpha=alpha,facecolors=facecolor, linewidths=linewidth, edgecolors=edgecolor,linestyle=linestyle))
-        
-    maxlimits=[]
-    minlimits=[]
-        
-    for Lattice in Parentlattices:
-        for face in Lattice:
-            for point in face:
-                if len(maxlimits)==0:
-                    maxlimits=[point[0],point[1],point[2]]
-                else:
-                    for ii in range(0,3):
-                        if maxlimits[ii]<point[ii]:
-                            maxlimits[ii]=point[ii]
-                if len(minlimits)==0:
-                    minlimits=[point[0],point[1],point[2]]
-                else:
-                    for ii in range(0,3):
-                        if minlimits[ii]>point[ii]:
-                            minlimits[ii]=point[ii]
-                    
-                
-    #ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-# equal aspect ratio
-    ax.set_xlim3d([minlimits[0],maxlimits[0]])
-    ax.set_ylim3d([minlimits[1],maxlimits[1]])
-    ax.set_zlim3d([minlimits[2],maxlimits[2]])
-    set_aspect_equal_3d(ax)
-
-def plot_latticesfaces3D(ax,VV,description,Parentlattices,Productlattices,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2,alpha=0.15,xlim=[-2,2]):
-
-    """
-    Plot two lattices with transparent faces.
-    
-    Visualizes two crystal structures simultaneously for comparison.
-    
-    Input:
-        ax (Axes3D): 3D axis
-        L1, L2 (array 3×3): Lattice matrices
-        alpha1, alpha2 (float): Transparency values
-        **kwargs: Additional styling
-    
-    Output:
-        None (modifies axis)
-    
-    Usage Example:
-        >>> fig = plt.figure()
-        >>> ax = fig.add_subplot(111, projection='3d')
-        >>> 
-        >>> L_parent = cubic_lattice_vec(3.0)
-        >>> L_product = tetragonal_lattice_vec(3.0, 3.0, 4.0)
-        >>> 
-        >>> plot_latticesfaces3D(ax, L_parent, L_product,
-        ...                      alpha1=0.2, alpha2=0.2,
-        ...                      facecolor1='blue', facecolor2='red')
-        >>> 
-        >>> ax.set_title('Parent vs Product Phase')
-        >>> set_aspect_equal_3d(ax)
-    
-    Notes:
-        - Overlays two structures
-        - Different colors recommended
-        - Shows transformation relationship
-    """
-    if xlim is None:
-        xlim= np.array([-1.05,1.05])*max([np.sqrt(V.dot(V)) for V in Product_uvw2xyz.T])
-
-    for Lattice in Parentlattices:
-        ax.add_collection3d(Poly3DCollection(Lattice, alpha=alpha,facecolors=(1, 0, 0, alpha), linewidths=linewidth, edgecolors='r'))
-    for Lattice in Productlattices:
-        ax.add_collection3d(Poly3DCollection(Lattice, alpha=alpha,facecolors=(0, 0, 1, alpha), linewidths=linewidth, edgecolors='b'))
-        
-        
-    Product_basal = np.matmul(Product_uvw_2_Parent_uvw_all_norm,np.matmul(Product_uvw2xyz,np.eye(3)))
-    colors=['g','c','#800000']
-        
-    inc=-1;
-    for v2 in Product_basal.T:
-        inc+=1
-        ax.plot([0,v2[0]],[0,v2[1]],[0,v2[2]],color=colors[inc],linewidth=linewidth)
-    inc=0
-
-    for v in VV.T:
-        inc+=1
-        #print(v)
-        v2=1.5*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))*v
-        ax.plot([0,v2[0]],[0,v2[1]],[0,v2[2]],'k',linewidth=linewidth,linestyle='--')
-        ax.text(v2[0],v2[1],v2[2],description.replace('{inc}','{'+str(inc)+'}'))       
-        
-    #ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-# equal aspect ratio
-    ax.axis('auto')
-    ax.set_xlim3d(xlim)
-    ax.set_ylim3d(xlim)
-    ax.set_zlim3d(xlim)
-    ax.set_xlim(xlim)
-    ax.set_ylim(xlim)
-    ax.set_zlim(xlim)
-        
-  
-
-    set_aspect_equal_3d(ax)
-
-
-
-
-def plot_lattice2D(ax,VV,description,Parentlattice_points,Parent_lattice,\
-                   Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2,xlim=None):
-
-    """
-    Plot 2D projection of lattice.
-    
-    Projects 3D lattice onto 2D plane for simplified visualization.
-    
-    Input:
-        ax (Axes): 2D matplotlib axis
-        L (array 3×3): Lattice matrix
-        n1, n2 (int): Cell range
-        projection_axis (int): Axis to project onto (0=YZ, 1=XZ, 2=XY)
-        **kwargs: Plot parameters
-    
-    Output:
-        None (modifies axis)
-    
-    Usage Example:
-        >>> fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-        >>> 
-        >>> L = lattice_vec(2.95, 2.95, 4.68, 90, 90, 120)
-        >>> 
-        >>> # Three projections
-        >>> plot_lattice2D(axes[0], L, projection_axis=2)  # XY
-        >>> axes[0].set_title('XY projection')
-        >>> 
-        >>> plot_lattice2D(axes[1], L, projection_axis=1)  # XZ
-        >>> axes[1].set_title('XZ projection')
-        >>> 
-        >>> plot_lattice2D(axes[2], L, projection_axis=0)  # YZ
-        >>> axes[2].set_title('YZ projection')
-    
-    Notes:
-        - Shows 2D pattern
-        - Useful for symmetry visualization
-        - Faster than 3D rendering
-    """
-    if xlim is None:
-        xlim= np.array([-1.05,1.05])*max([np.sqrt(V.dot(V)) for V in Product_uvw2xyz.T])
-    shiftx=xlim[1];
-    shifty=xlim[1]*0;
-    facx=1.8
-    facy=1.3
-    shifts=[[facx*xlim[1],-facy*xlim[1]],[-facx*xlim[1],-facy*xlim[1]],[-facx*xlim[1],facy*xlim[1]]]
-    pairs=[[0,1],[2,1],[0,2]]
-    signs = [[1,1],[-1,1],[-1,1]]
-    coordlength=xlim[1]*0.5
-    coordabasalvecs = [[[1,0,0],[0,1,0]],[[0,0,1],[0,1,0]],[[0,0,1],[1,0,0]]]
-    colors=['g','c','#800000']
-    for shift,pair,sgn,vecs in zip(shifts,pairs,signs,coordabasalvecs):
-#        for point,vecs in zip([[xlim[1]*0.5,0],[0,xlim[1]*0.5]],):
-            #point=np.array(point);
-        ax.plot(np.array([0,sgn[0]*coordlength])+2*shift[0],np.array([0,0])+2*shift[1],'k')
-        ax.plot(np.array([0,0])+2*shift[0],np.array([0,sgn[1]*coordlength])+2*shift[1],'k')
-#        ax.plot(np.array([0,sgn[0]*coordpoint[0]])+2*shift[0],np.array([0,sgn[1]*coordpoint[1]])+2*shift[1],'k')
-        ax.text(2*shift[0],sgn[1]*coordlength+2*shift[1], dir2string(vecs[1], digits=0)+r'$_{'+Parent_lattice+'}$',fontsize=10)
-        addshiftx=0.0
-        addshifty=0.0
-        if sgn[0]<0:
-            addshiftx=-coordlength*1;
-            addshifty=coordlength*0.1;
-        ax.text(sgn[0]*coordlength+2*shift[0]+addshiftx,addshifty+2*shift[1], dir2string(vecs[0], digits=0)+r'$_{'+Parent_lattice+'}$',fontsize=10)
-            
-        for point in Parentlattice_points:
-            point=np.array(point);
-            ax.plot(sgn[0]*point[pair[0]]+shift[0],sgn[1]*point[pair[1]]+shift[1],'r')
-                    
-        for point in Productlattice_points:
-            point=np.array(point);
-            ax.plot(sgn[0]*point[pair[0]]+shift[0],sgn[1]*point[pair[1]]+shift[1],'b')
-    
-        inc=-1;
-        Product_basal = np.matmul(Product_uvw_2_Parent_uvw_all_norm,np.matmul(Product_uvw2xyz,np.eye(3)))
-        for v2 in Product_basal.T:
-            inc+=1
-            ax.plot(sgn[0]*np.array([0,v2[pair[0]]])+shift[0],sgn[1]*np.array([0,v2[pair[1]]])+shift[1],color=colors[inc],linewidth=linewidth)
-    
-        inc=0
-        for v in VV.T:
-            inc+=1
-            v2=1.8*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))*v
-            ax.plot(sgn[0]*np.array([0,v2[pair[0]]])+shift[0],sgn[1]*np.array([0,v2[pair[1]]])+shift[1],'k',linewidth=linewidth,linestyle='--')
-            ax.text(sgn[0]*v2[pair[0]]*1.1+shift[0],sgn[1]*v2[pair[1]]*1.1+shift[1],description.replace('{inc}','{'+str(inc)+'}'))       
-
-    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-# equal aspect ratio
-    ax.set_xlim([-facx*2*xlim[1],facx*2*xlim[1]])
-    ax.set_ylim([-facx*2*xlim[1],facx*2*xlim[1]])
-
-def plot_lattice_2Dprojection(ax,VV,description,Parentlattice_points,Parent_lattice,\
-                   Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,normals,verticals, linewidth=2,xlim=None):
-
-    """
-    Project lattice along specific crystallographic direction.
-    
-    Creates 2D projection viewed along given direction vector.
-    
-    Input:
-        L (array 3×3): Lattice matrix
-        direction (array [3]): Viewing direction
-        **kwargs: Plot parameters
-    
-    Output:
-        None (creates new figure)
-    
-    Usage Example:
-        >>> L = cubic_lattice_vec(3.0)
-        >>> 
-        >>> # View along [111]
-        >>> plot_lattice_2Dprojection(L, direction=[1,1,1])
-        >>> plt.title('View along [111]')
-        >>> plt.show()
-        >>> 
-        >>> # View along [110]
-        >>> plot_lattice_2Dprojection(L, direction=[1,1,0])
-        >>> plt.title('View along [110]')
-    
-    Notes:
-        - Arbitrary viewing direction
-        - Creates orthogonal projection
-        - Shows atomic arrangements
-    """
-    if xlim is None:
-        xlim= np.array([-1.05,1.05])*max([np.sqrt(V.dot(V)) for V in Product_uvw2xyz.T])
-    shiftx=xlim[1];
-    shifty=xlim[1]*0;
-    facx=1.8
-    facy=1.3
-    shifts=[[facx*xlim[1],-facy*xlim[1]],[-1.5*facx*xlim[1],-facy*xlim[1]],[-1.5*facx*xlim[1],1.4*facy*xlim[1]]]
-    pairs=[[0,1],[2,1],[0,2]]
-    signs = [[1,1],[-1,1],[-1,1]]
-#    normals = [[0.,0.,1.],[1.,0.,0.],[0.,-1.,0.]]
-#    verticals = [[0.,1.,0.],[0.,1.,0.],[1.,0.,0.]]
-#    normals = [[0.,0.,1.],[1.,0.,0.],[-1.,1.,0.]]
-#    verticals = [[0.,1.,0.],[0.,1.,0.],[0.,0.,1.]]
-    coordlength=xlim[1]*0.5
-    coordabasalvecs = [[[1,0,0],[0,1,0]],[[0,0,1],[0,1,0]],[[0,0,1],[1,0,0]]]
-    colors=['g','c','#800000']
-    
-    for shift,normal,vertical,vecs in zip(shifts,normals,verticals,coordabasalvecs):
-        normal=np.array(normal);
-        vertical=np.array(vertical);
-        horizontal=np.cross(vertical,normal)
-        
-        ax.plot(np.array([0,coordlength])+2*shift[0],np.array([0,0])+2*shift[1],'k')
-        ax.plot(np.array([0,0])+2*shift[0],np.array([0,coordlength])+2*shift[1],'k')
-        ax.text(2*shift[0],coordlength+2*shift[1], dir2string(vertical, digits=1)+r'$_{'+Parent_lattice+'}$',fontsize=10)
-        #print(vertical)
-        addshiftx=0.0
-        addshifty=0.0
-#        if sgn[0]<0:
-#            addshiftx=-coordlength*1;
-#            addshifty=coordlength*0.1;
-        ax.text(coordlength+2*shift[0]+addshiftx,addshifty+2*shift[1], dir2string(horizontal, digits=1)+r'$_{'+Parent_lattice+'}$',fontsize=10)
-        ax.text(-coordlength+2*shift[0]+addshiftx,-0.5*coordlength+addshifty+2*shift[1], plane2string(normal, digits=1)+r'$_{'+Parent_lattice+'}$',fontsize=10)
-#        print(normal)
-#        print(plane2string(normal, digits=0))
-        for point in Parentlattice_points:
-            point=np.array(point);
-            point_proj_x = horizontal.dot(point)
-            point_proj_y = vertical.dot(point)
-            ax.plot(point_proj_x+shift[0],point_proj_y+shift[1],'r')
-                    
-        for point in Productlattice_points:
-            point=np.array(point);
-            point_proj_x = horizontal.dot(point)
-            point_proj_y = vertical.dot(point)
-            ax.plot(point_proj_x+shift[0],point_proj_y+shift[1],'b')
-            
-        inc=-1;
-        Product_basal = np.matmul(Product_uvw_2_Parent_uvw_all_norm,np.matmul(Product_uvw2xyz,np.eye(3)))
-        for v2 in Product_basal.T:
-            inc+=1
-            point_proj_x = horizontal.dot(v2)
-            point_proj_y = vertical.dot(v2)
-
-            ax.plot(np.array([0,point_proj_x])+shift[0],np.array([0,point_proj_y])+shift[1],color=colors[inc],linewidth=linewidth)
-    
-        inc=0
-        for v in VV.T:
-            inc+=1
-            v2=1.8*np.sqrt(Product_uvw2xyz[:,0].dot(Product_uvw2xyz[:,0]))*v
-            point_proj_x = horizontal.dot(v2)
-            point_proj_y = vertical.dot(v2)
-            
-            ax.plot(np.array([0,point_proj_x])+shift[0],np.array([0,point_proj_y])+shift[1],'k',linewidth=linewidth,linestyle='--')
-            ax.text(point_proj_x*1.1+shift[0],point_proj_y*1.1+shift[1],description.replace('{inc}','{'+str(inc)+'}'))       
-
-    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-# equal aspect ratio
-    ax.set_xlim([-facx*2*xlim[1],facx*2*xlim[1]])
-    ax.set_ylim([-facx*2*xlim[1],facx*2*xlim[1]])        
-    
 def zero_normal_strains(Strain, mcircles,VV,normdiri,phi_around_normdiri,Parent_xyz2hkl):
 
     """
@@ -5628,6 +3656,7 @@ def zero_normal_strains(Strain, mcircles,VV,normdiri,phi_around_normdiri,Parent_
 
     return     Shear,Normal,InPlaneShears,InPlaneNormals,[an,an+90.]
 
+
 def strains_along_13mohrcirle(Strain,VV,normdiri,phi_around_V2,Parent_xyz2hkl):
 
     """
@@ -5735,6 +3764,7 @@ def strains_along_13mohrcirle(Strain,VV,normdiri,phi_around_V2,Parent_xyz2hkl):
             
     return ShearsOnCircle, NormalsOnCircle
 
+
 def select_crystal_planes(NormalsOnCircle,ShearsOnCircle,maxhkl):
     
 
@@ -5797,381 +3827,7 @@ def select_crystal_planes(NormalsOnCircle,ShearsOnCircle,maxhkl):
     return  SelShearsOnCircle, SelNormalsOnCircle           
                 
 
-def plot_mohr_circles(mcircles,VV,DD,xyz2uvw,scale,xticks=None,yticks=None,ax=None,Parent_lattice='B2'):
 
-    """
-    Plot all three Mohr's circles.
-    
-    Visualizes complete 3D strain state via Mohr's circles.
-    
-    Input:
-        mohr_result (dict): Output from mohr_circles()
-        **kwargs: Plot styling parameters
-    
-    Output:
-        None (creates matplotlib figure)
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> strain = np.array([[0.10,  0.02, 0.01],
-        ...                    [0.02, -0.03, 0.00],
-        ...                    [0.01,  0.00, -0.05]])
-        >>> 
-        >>> result = mohr_circles(strain)
-        >>> plot_mohr_circles(result)
-        >>> plt.title('Mohr Circles - 3D Strain State')
-        >>> plt.show()
-    
-    Notes:
-        - Three circles shown
-        - Largest circle envelope
-        - Principal strains marked
-        - Standard in mechanics
-    """
-    Return=True
-    if ax==None:
-        fig, ax = plt.subplots()
-    else:
-        fig=[]
-        Return=False
-#    fig, ax = plt.subplots()
-#    ax.tick_params(
-#        axis='both',
-#        which='both',
-#        bottom=False,
-#        top=False,
-#        left=False,
-#        labelbottom=False,
-#        labelleft=False)    
-    phi=np.linspace(0,2*np.pi,1000)
-    C13x = mcircles['C13']+mcircles['R13']*np.cos(phi)
-    C13y = mcircles['R13']*np.sin(phi)
-    C23x = mcircles['C23']+mcircles['R23']*np.cos(phi)
-    C23y = mcircles['R23']*np.sin(phi)
-    C12x = mcircles['C12']+mcircles['R12']*np.cos(phi)
-    C12y = mcircles['R12']*np.sin(phi)
-    
-    ax.plot(C13x*scale,C13y*scale,'r')
-    ax.plot(C12x*scale,C12y*scale,'g')
-    ax.plot(C23x*scale,C23y*scale,'b')
-    #spine placement data centered
-    ax.spines['left'].set_position('center')
-    ax.spines['bottom'].set_position('center')
-    
-    ax.spines['left'].set_position(('data', 0.0))
-    ax.spines['bottom'].set_position(('data', 0.0))
-    ax.spines['right'].set_color('none')
-    ax.spines['top'].set_color('none')
-    xlim = [np.round(C13x.min()*scale*1.5),np.round(C13x.max()*scale*1.5)]
-    ylim = [np.round(C13y.max()*scale*1.5),np.round(C13y.min()*scale*1.5)]
-    
-    if xticks is None:
-        xlim2 = [np.round(C13x.min()*scale*1.5),np.round(C13x.max()*scale*1.5)]
-        ax.set_xticks(np.round(np.linspace(xlim[0],xlim[1],10)))
-    else:
-        xlim2 = [xticks[0],xticks[-1]]
-        ax.set_xticks(xticks)
-    if yticks is None:
-        ylim2 = [np.round(C13y.max()*scale*1.5),np.round(C13y.min()*scale*1.5)]
-        ax.set_yticks(np.round(np.linspace(ylim[0],ylim[1],10)))
-    else:
-        ylim2 = [yticks[0],yticks[-1]]
-        ax.set_yticks(yticks)
-    ax.set_xlim(xlim2)
-    ax.set_ylim(ylim2)
-    
-    #ax.set_yticks(np.linspace(9,-9,10))
-    #ax.set_ylim([9,-10])
-    ax.text(xlim[1]*0.65,max(ylim)/10*2,'Normal\nstrain, '+r'$\varepsilon$ [%]')
-    ax.text(-max(ylim)/10*2,ylim[1]*0.75, 'Shear\nstrain, '+r'$\gamma$/2 [%]')
-#    ax.set_xlim([-10,14])
-#    ax.set_xticks(np.linspace(-10,12,12))
-#    ax.set_ylim([9,-10])
-#    ax.set_yticks(np.linspace(9,-9,10))
-#    ax.set_ylim([9,-10])
-#    ax.text(11,2,'Normal\nstrain, '+r'$\varepsilon$ [%]')
-#    ax.text(-2,-9.5, 'Shear\nstrain, '+r'$\gamma$/2 [%]')
-    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-  # equal aspect ratio
-    #plt.show()
-    
-    #plot principal direction in mohr circles
-    for i in [0,1,2]:
-        ax.plot(DD[i]*scale,0,'ko')
-        ax.text(DD[i]*scale+max(ylim)/100*2,-max(ylim)/100*2,r'$\varepsilon_'+str(i+1)+'$')
-    textprincipaldirs=''
-    for i in [0,1,2]:
-        vd = xyz2fractional(xyz2uvw,VV[:,i])
-        textprincipaldirs+=str(r'$\varepsilon_'+str(i+1)+'$~'+vec2string(vd)+'$_{'+Parent_lattice+'}$\n')
-    ax.text(max(xlim)/2.2,max(ylim)/1.,textprincipaldirs)
-    
-    if Return:
-        return fig,ax
-
-
-
-def plot_planes_on_mohr_circle(ax,scale,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl, colors,text=False,Parent_lattice='B2'):
-
-    """
-    Plot specific crystallographic planes on Mohr's circle.
-    
-    Shows where particular crystal planes plot on Mohr diagram.
-    
-    Input:
-        mohr_result (dict): From mohr_circles()
-        plane_normals (list): List of plane normal vectors
-        lattice (array 3×3): Lattice matrix
-        **kwargs: Plot parameters
-    
-    Output:
-        None (adds to current figure)
-    
-    Usage Example:
-        >>> strain = np.diag([0.1, 0.0, -0.05])
-        >>> result = mohr_circles(strain)
-        >>> 
-        >>> # Select planes
-        >>> planes = [[1,0,0], [0,1,0], [1,1,0], [1,1,1]]
-        >>> 
-        >>> plot_mohr_circles(result)
-        >>> plot_planes_on_mohr_circle(result, planes, lattice)
-        >>> plt.show()
-    
-    Notes:
-        - Shows strain state on specific planes
-        - Useful in transformation analysis
-        - Identifies critical planes
-    """
-    #plot selected planes on 13 mohr cicle and triangle and wulffnet
-    inc=-1;
-    Upperhalftext = []
-    Lowerhalftext=[]
-    
-    for ii in range(0,len(SelNormalsOnCircle['strainmag'])):
-
-        if type(colors) is list:
-            if len(colors)>=len(SelNormalsOnCircle['strainmag']):
-                inc+=1
-            else:
-                colors=[colors[0]]
-                inc=0
-        else:
-            colors=[colors]
-            inc=0
-            
-        xx=[]
-        yy=[]
-        uvwtext=[]
-        for i in [0,1]:
-            xx.append(SelNormalsOnCircle['strainmag'][ii][i]*scale)
-            yy.append(SelShearsOnCircle['strainmag'][ii][i]*scale)
-            vd = xyz2fractional(Parent_xyz2hkl,SelNormalsOnCircle['inlatticedir'][ii][i])
-            proj_dir=stereoprojection_intotriangle(SelNormalsOnCircle['inlatticedir'][ii][i])
-            proj_dir2=stereoprojection_directions(SelNormalsOnCircle['inlatticedir'][ii][i])
-    
-            if yy[-1]>0:
-                lowerhalftext=r'$\mathbf{\varepsilon}}$='+str(round((xx[-1]*10))/10)+','+r'$\mathbf{\gamma}$/2='+str(round((yy[-1]*10))/10)+',n='+r''+plane2string(vd)+r'$_{\mathbf{'+Parent_lattice+'}}$'
-                Lowerhalftext.append(lowerhalftext)
-                lowerhalftext=r'$\varepsilon$='+str(round((xx[-1]*10))/10)+r',$\gamma$/2='+str(round((yy[-1]*10))/10)+' ,n='+plane2string(vd)+r'$_{'+Parent_lattice+'}$'
-                markerfacecolor=colors[inc]
-                markersize=8
-            else:
-                markerfacecolor='None'
-                markersize=12
-                upperhalftext =r'$\mathbf{\varepsilon}$='+str(round((xx[-1]*10))/10)+','+r'$\mathbf{\gamma}$/2='+str(round((yy[-1]*10))/10)+',n='+r''+plane2string(vd)+r'$_{\mathbf{'+Parent_lattice+'}}$'
-                Upperhalftext.append(upperhalftext)
-                upperhalftext=r'$\varepsilon$='+str(round((xx[-1]*10))/10)+r',$\gamma$/2='+str(round((yy[-1]*10))/10)+r' ,n='+plane2string(vd)+'$_{'+Parent_lattice+'}$'
-            ax.plot(xx[-1],yy[-1],'o',markerfacecolor=markerfacecolor,markeredgecolor=colors[inc])
-        ax.plot(xx,yy,color=colors[inc])
-        if text:
-            idx = yy.index(max(yy))
-            idx2 = yy.index(min(yy))
-            ax.text(xx[idx],yy[idx]*1.1,lowerhalftext)
-            ax.text(xx[idx2],yy[idx2]*1.05,upperhalftext)
-
-    return Upperhalftext,Lowerhalftext
-
-def plot_planes_on_stereotriangle(ax,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl,colors):
-
-    """
-    Plot planes on stereographic triangle.
-    
-    Projects plane normals onto standard stereographic triangle
-    for cubic systems.
-    
-    Input:
-        planes (list): List of (h,k,l) tuples
-        **kwargs: Plot parameters
-    
-    Output:
-        None (creates figure with stereographic triangle)
-    
-    Usage Example:
-        >>> planes = [(1,0,0), (1,1,0), (1,1,1), (2,1,0)]
-        >>> plot_planes_on_stereotriangle(planes)
-        >>> plt.title('Low-Index Planes')
-        >>> plt.show()
-    
-    Notes:
-        - Standard triangle for cubic
-        - Shows plane distribution
-        - Used in texture analysis
-    """
-    inc=-1;
-    for ii in range(0,len(SelNormalsOnCircle['strainmag'])):
-        if type(colors) is list:
-            if len(colors)>=len(SelNormalsOnCircle['strainmag']):
-                inc+=1
-            else:
-                colors=[colors[0]]
-                inc=0
-        else:
-            colors=[colors]
-            inc=0
-            
-        xx=[]
-        yy=[]
-        for i in [0,1]:
-            xx.append(SelNormalsOnCircle['strainmag'][ii][i])
-            yy.append(SelShearsOnCircle['strainmag'][ii][i])
-            proj_dir=stereoprojection_intotriangle(SelNormalsOnCircle['inlatticedir'][ii][i])
-    
-            if yy[-1]>0:
-                markerfacecolor=colors[inc]
-                markersize=8
-            else:
-                markerfacecolor='None'
-                markersize=12
-            ax.plot(proj_dir[0,:], proj_dir[1,:],'o',markerfacecolor=markerfacecolor,markeredgecolor=colors[inc],\
-                     markeredgewidth=2,markersize=markersize)
-#            ax4.plot(proj_dir2[0,:], proj_dir2[1,:],'o',markerfacecolor=markerfacecolor,markeredgecolor=colors[inc],\
-#                     markeredgewidth=2,markersize=markersize)
-
-
-def plot_planes_on_wulffnet(ax,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl,colors):
-
-    """
-    Plot plane normals on Wulff net (equal-angle projection).
-    
-    Projects planes onto full Wulff stereographic net.
-    
-    Input:
-        planes (list): Plane Miller indices
-        lattice (array 3×3): Lattice matrix
-        **kwargs: Plot parameters
-    
-    Output:
-        None (creates Wulff net figure)
-    
-    Usage Example:
-        >>> L = cubic_lattice_vec(3.0)
-        >>> planes = [(1,0,0), (0,1,0), (0,0,1), (1,1,1)]
-        >>> plot_planes_on_wulffnet(planes, L)
-        >>> plt.title('Planes on Wulff Net')
-    
-    Notes:
-        - Equal-angle projection
-        - Preserves angular relationships
-        - Full sphere projection
-    """
-    inc=-1;
-    for ii in range(0,len(SelNormalsOnCircle['strainmag'])):
-        if type(colors) is list:
-            if len(colors)>=len(SelNormalsOnCircle['strainmag']):
-                inc+=1
-            else:
-                colors=[colors[0]]
-                inc=0
-        else:
-            colors=[colors]
-            inc=0
-            
-        xx=[]
-        yy=[]
-        for i in [0,1]:
-            xx.append(SelNormalsOnCircle['strainmag'][ii][i])
-            yy.append(SelShearsOnCircle['strainmag'][ii][i])
-            proj_dir2=stereoprojection_directions(SelNormalsOnCircle['inlatticedir'][ii][i])
-    
-            if yy[-1]>0:
-                markerfacecolor=colors[inc]
-                markersize=8
-            else:
-                markerfacecolor='None'
-                markersize=12
-            ax.plot(proj_dir2[0,:], proj_dir2[1,:],'o',markerfacecolor=markerfacecolor,markeredgecolor=colors[inc],\
-                     markeredgewidth=2,markersize=markersize)
-
-def plot_princip_dir_on_stereotriangle(ax,VV,description,markersize=10,markerfacecolor='None',markeredgecolor='k',markeredgewidth=1.5):
-
-    """
-    Plot principal strain/stress directions on stereographic triangle.
-    
-    Projects principal directions onto standard triangle.
-    
-    Input:
-        principal_directions (array 3×3): Principal direction matrix
-        **kwargs: Plot styling
-    
-    Output:
-        None (adds to current figure or creates new)
-    
-    Usage Example:
-        >>> strain = np.diag([0.1, 0.0, -0.05])
-        >>> result = mohr_circles(strain)
-        >>> 
-        >>> plot_planes_on_stereotriangle([(1,0,0), (1,1,0), (1,1,1)])
-        >>> plot_princip_dir_on_stereotriangle(result['directions'], 
-        ...                                      marker='*', s=200, c='red')
-        >>> plt.title('Principal Directions')
-    
-    Notes:
-        - Shows orientation of principal axes
-        - Overlays on crystal planes
-        - Important for anisotropy analysis
-    """
-    proj_dirs = stereoprojection_intotriangle(VV)
-    
-    for proj_dir,i in zip(proj_dirs.T,[0,1,2]):
-        ax.plot(proj_dir[0], proj_dir[1], 'o',markerfacecolor=markerfacecolor,\
-                 markeredgecolor=markeredgecolor,markeredgewidth=markeredgewidth,markersize=markersize)
-        text=str(description.replace('{inc}','{'+str(i+1)+'}'))
-        ax.text(proj_dir[0]-0.03, proj_dir[1]+0.01,text)
-
-def plot_princip_dir_on_wulffnet(ax,VV,description,markersize=10,markerfacecolor='None',markeredgecolor='k',markeredgewidth=1.5):
-
-    """
-    Plot principal directions on Wulff net.
-    
-    Projects principal strain/stress axes onto Wulff stereographic net.
-    
-    Input:
-        principal_directions (array 3×3): Principal directions
-        **kwargs: Plot parameters
-    
-    Output:
-        None (creates or modifies figure)
-    
-    Usage Example:
-        >>> strain = np.diag([0.1, 0.0, -0.05])
-        >>> result = mohr_circles(strain)
-        >>> plot_princip_dir_on_wulffnet(result['directions'])
-        >>> plt.title('Principal Strain Axes')
-    
-    Notes:
-        - Full sphere projection
-        - Shows 3D orientation clearly
-    """
-    proj_dirs = stereoprojection_directions(VV)
-    
-    for proj_dir,i in zip(proj_dirs.T,[0,1,2]):
-        ax.plot(proj_dir[0], proj_dir[1], 'o',markerfacecolor=markerfacecolor,\
-                 markeredgecolor=markeredgecolor,markeredgewidth=markeredgewidth,markersize=markersize)
-        text=str(description.replace('{inc}','{'+str(i+1)+'}'))
-#        ax2.text(proj_dir[0]-0.03, proj_dir[1]+0.01,text)
-        ax.text(proj_dir[0]-0.1, proj_dir[1]+0.03,text)
-        
 def write_mohr_planes(ax,Upperhalftext,Lowerhalftext,colors,markersize=8,markeredgewidth=2):
 
     """
@@ -6249,6 +3905,7 @@ def write_mohr_planes(ax,Upperhalftext,Lowerhalftext,colors,markersize=8,markere
     ax.set_ylim([0,1])
 
 
+
 def write_lattice_correspondence(ax,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,Product_lattice,Parent_lattice,FontSize=10,Fontweight="bold"):
 
     """
@@ -6295,6 +3952,7 @@ def write_lattice_correspondence(ax,Product_uvw_2_Parent_uvw_all_norm,Product_uv
     
     ax.set_xlim([0,1])
     ax.set_ylim([0,1])
+
 
 def generate_lattite_atom_positions(atoms_xyz_position,uvw2xyz,S=1,Q=np.eye(3),R=np.eye(3),shift=np.zeros(3),xlim=[],ylim=[],zlim=[]):
     """
@@ -6349,6 +4007,7 @@ def generate_lattite_atom_positions(atoms_xyz_position,uvw2xyz,S=1,Q=np.eye(3),R
             Points1.append(points)
         Points.append(Points1)
     return Points
+
 def generate_lattice_vectors(Points,uvw2xyz,S=1,Q=np.eye(3),xlim=[],ylim=[],zlim=[],fitpoints=False,shift=np.zeros(3)):
     """
     generate_lattice_vectors - Crystallographic function for materials analysis.
@@ -6423,288 +4082,6 @@ def generate_lattice_vectors(Points,uvw2xyz,S=1,Q=np.eye(3),xlim=[],ylim=[],zlim
 
     return LatticeVectors
     
-def plot_lattice(Points,LatticeVectors,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3),shift=np.zeros(3),atoms=True,linewidth=1,move=np.zeros(3),normal=np.array([0,0,0]),halfspace='upper',s=200,plot=True):
-    """
-    plot_lattice - Crystallographic function for materials analysis.
-    
-    See full documentation in extended modules for detailed usage.
-    """
-    #colors=['r','b','g']
-    #normal=np.array([1,1,1.5])
-    
-    halfscp=False
-    
-    pplot=True
-    if not (normal==np.array([0,0,0])).all():
-        halfscp=True
-        normal=normal/np.sqrt(normal.dot(normal))
-    if ax==None and plot:
-        fig = plt.figure() 
-        ax = fig.add_subplot(111, projection='3d', proj_type = 'ortho') 
-    elif not plot:
-        ax=[]
-        fig=[]
-    else:
-        fig=[]
-    eps=1e-1
-    #S = 1
-    if atoms:
-        PointsNew=[]
-        for Points1,col,ecol in zip(Points,colors,edgecolors):
-            PointNew=[]
-            for points in Points1:
-                pointnew=[]
-                points=np.matmul(np.eye(3),points)+np.repeat(np.array([shift]).T,points.shape[1],1)
-                point_proj_n = normal.dot(points)
-                if halfspace=='lower':
-                    idxs = np.where((point_proj_n)<=(eps))[0]
-                else:
-                    idxs = np.where((point_proj_n)>(-eps))[0]
-                #print(len(idxs))    
-                if len(idxs)>0:
-                    points=Q.dot(points)
-                    PointNew.append(points[:,idxs])
-                    if plot:
-                        ax.scatter(points[0,idxs]+move[0], points[1,idxs]+move[1], points[2,idxs]+move[2], s = s,color=col,edgecolors=ecol,alpha=salpha,linewidths=2) 
-                #plt.show()
-            PointsNew.append(PointNew)
-        #PointsNew.append(PointNew)
-    LatticeVectorsNew=[]
-    for LatticeVectors1 in LatticeVectors:     
-        LatticeVectorNew=[]
-        for vec in LatticeVectors1:
-            pplot=True
-
-            point1=vec[:,0]
-            point2=vec[:,1]
-            #print(vec)
-
-            if halfscp:
-                point1_proj_n = normal.dot(point1)
-                point2_proj_n = normal.dot(point2)
-                point_proj_n = normal.dot(vec)
-                #print(point_proj_n)
-                if halfspace=='lower':
-                    idxs = np.where((point_proj_n)<=(eps))[0]
-                else:
-                    idxs = np.where((point_proj_n)>(-eps))[0]
-                #print(len(idxs))    
-                if len(idxs)==0:
-                    pplot=False
-                elif len(idxs)==1:
-                    inp=plane_line_intersection(normal,shift,vec[:,0],vec[:,1])
-                    vec=np.vstack((vec[:,idxs[0]],inp)).T
-            
-            if pplot:               
-                vec=np.matmul(Q,vec)+np.repeat(np.array([shift]).T,vec.shape[1],1)+np.repeat(np.array([move]).T,vec.shape[1],1)
-                LatticeVectorNew.append(vec)
-#                ax.plot(vec[0,:]+move[0], vec[1,:]+move[1], vec[2,:]+move[2],color=gridcolor,alpha=lalpha,linewidth=linewidth)
-                if plot:
-                    ax.plot(vec[0,:], vec[1,:], vec[2,:],color=gridcolor,alpha=lalpha,linewidth=linewidth)
-        LatticeVectorsNew.append(LatticeVectorNew)
-
-#def plane_line_intersection(n,V0,P0,P1):
-
-    """
-    Calculate intersection of plane and line in 3D.
-    
-    Finds point where line intersects plane, if it exists.
-    
-    Input:
-        plane_point (array [3]): Point on plane
-        plane_normal (array [3]): Plane normal vector
-        line_point (array [3]): Point on line
-        line_direction (array [3]): Line direction vector
-    
-    Output:
-        numpy.ndarray [3] or None: Intersection point, or None if parallel
-    
-    Usage Example:
-        >>> import numpy as np
-        >>> 
-        >>> # (001) plane at z=5
-        >>> plane_pt = np.array([0, 0, 5])
-        >>> plane_n = np.array([0, 0, 1])
-        >>> 
-        >>> # Line from origin in [111] direction
-        >>> line_pt = np.array([0, 0, 0])
-        >>> line_dir = np.array([1, 1, 1])
-        >>> 
-        >>> intersection = plane_line_intersection(plane_pt, plane_n, line_pt, line_dir)
-        >>> print(f"Intersection point: {intersection}")
-        >>> # Should be [5, 5, 5]
-    
-    Notes:
-        - Returns None if line parallel to plane
-        - Returns None if line in plane
-        - Used in geometric calculations
-    
-    Formula:
-        t = n·(p₀ - l₀) / (n·d)
-        intersection = l₀ + t·d
-    """
-    # n: normal vector of the Plane 
-    # V0: any point that belongs to the Plane 
-    # P0: end point 1 of the segment P0P1
-    # P1:  end point 2 of the segment P0P1
-            
-#    normal=normal/np.sqrt(normal.dot(normal))
-#    PointsOut=[]    
-#    for Points1 in LatticePoints:
-#        PointsOut1=[]
-#        for points in Points1:   
-#            #point_proj_n = normal.dot(points/np.sqrt(np.sum(points**2,axis=0)))
-#            #print(points[:,0]+shift)
-#            
-#            point_proj_n = normal.dot(points)
-#            if side=='bottom':
-#                idxs = np.where((point_proj_n-shift)<(eps))[0]
-#            else:
-#                idxs = np.where((point_proj_n-shift)>(-eps))[0]
-#            #print(point_proj_n)
-#            PointsOut1.append(points[:,idxs])
-#        PointsOut.append(PointsOut1)
-    #    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-    if plot:  
-        ax.axis('auto')      
-    
-    if halfscp:
-        if atoms:
-            return fig,ax,LatticeVectorsNew,PointsNew
-        else:
-            return fig,ax,LatticeVectorsNew
-    else:
-        return fig,ax
-def plot_lattice_proj(LatticeVectors,normalproj,verticalproj, ax=None, linewidth=2,color='b',eps=1e-1,Q=np.eye(3),Qprojr=np.eye(2),shift=np.zeros(3),shiftproj=0,move=np.zeros(3),normal=np.array([0,0,0]),shifthalfspace=np.zeros(3),
-                      halfspace='upper',shiftplot=np.array([0,0]),out=False):
-    """
-    plot_lattice_proj - Crystallographic function for materials analysis.
-    
-    See full documentation in extended modules for detailed usage.
-    """
-    if not isinstance(normalproj, np.ndarray):
-        normalproj=np.array(normalproj);
-    normalproj=normalproj/np.sqrt(normalproj.dot(normalproj))
-    if not isinstance(verticalproj, np.ndarray):
-        verticalproj=np.array(verticalproj);
-    verticalproj=verticalproj/np.sqrt(verticalproj.dot(verticalproj))
-    halfscp=True
-    pplot=True
-    if not isinstance(normal, np.ndarray):
-        normal=np.array(normal);
-    if not (normal==np.array([0,0,0])).all():
-        halfscp=True
-        normal=normal/np.sqrt(normal.dot(normal))
-
-    if ax==None:
-        fig = plt.figure() 
-        ax = fig.add_subplot(111) 
-    else:
-        fig=[]
-
-    
-    
-    horizontalproj=np.cross(verticalproj,normalproj)
-    pointOut=[]
-    pointOutproj=[]
-    for LatticeVectors1 in LatticeVectors:  
-        pout=[]
-        poutp=[]
-        for vec in LatticeVectors1:
-            #print(vec)
-            pplot=True
-            point_proj_n=normalproj.dot(vec)
-            #print(abs((point_proj_n-shiftproj)))
-            idxs = np.where(abs((point_proj_n-shiftproj))<=(eps))[0]
-            #print(abs((point_proj_n-shiftproj)))
-            #print(len(idxs))
-            if len(idxs)==0:
-                pplot=False
-            #elif len(idxs)==1:
-            #    inp=plane_line_intersection(normal,shifthalfspace,vec[:,0],vec[:,1])
-            #    vec=np.vstack((vec[:,idxs[0]],inp)).T
-            #    print(vec)
-
-            if halfscp:
-                point_proj_n = normal.dot(vec)
-                #print(point_proj_n)
-                if halfspace=='lower':
-                    idxs = np.where(((point_proj_n))<=(eps))[0]
-                else:
-                    idxs = np.where((point_proj_n)>(-eps))[0]
-                    #idxs = np.where(abs((point_proj_n))<=(eps))[0]
-                #print(len(idxs))    
-                if len(idxs)==0:
-                    pplot=False
-                elif len(idxs)==1:
-                    inp=plane_line_intersection(normal,shifthalfspace,vec[:,0],vec[:,1])
-                    vec=np.vstack((vec[:,idxs[0]],inp)).T
-            
-            if pplot:
-                #print(vec)
-                point = np.matmul(Q,vec)+np.repeat(np.array([shift]).T,vec.shape[1],1)
-                point[0,:]=point[0,:]+move[0]
-                point[1,:]=point[1,:]+move[1]
-                point[2,:]=point[2,:]+move[2]
-                
-                point=np.array(point);
-                point_proj_x = horizontalproj.dot(point)
-                point_proj_y = verticalproj.dot(point)
-                pv = Qprojr.dot(np.vstack((point_proj_x,point_proj_y)))
-                #ax.plot(point_proj_x,point_proj_y,color=color,linewidth=linewidth)
-                ax.plot(pv[0,:]+shiftplot[0],pv[1,:]+shiftplot[1],color=color,linewidth=linewidth)
-                pout.append(point)
-                poutp.append([pv[0,:]+shiftplot[0],pv[1,:]+shiftplot[1]])
-        pointOut.append(pout)
-        pointOutproj.append(poutp)
-                
-    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
- 
-    #plt.show()       
-    if out:
-        return fig,ax,pointOut,pointOutproj,horizontalproj,verticalproj
-    else:                 
-        return fig,ax
-
-def plot_points_proj(Points,normalproj,verticalproj, ax=None, marker="o",markersize=10, color='b',Q=np.eye(3),Qprojr=np.eye(2),shift=np.zeros(3),move=np.zeros(3)):
-    """
-    plot_points_proj - Crystallographic function for materials analysis.
-    
-    See full documentation in extended modules for detailed usage.
-    """
-    if not isinstance(normalproj, np.ndarray):
-        normalproj=np.array(normalproj);
-    normalproj=normalproj/np.sqrt(normalproj.dot(normalproj))
-    if not isinstance(verticalproj, np.ndarray):
-        verticalproj=np.array(verticalproj);
-    verticalproj=verticalproj/np.sqrt(verticalproj.dot(verticalproj))
-
-    if ax==None:
-        fig = plt.figure() 
-        ax = fig.add_subplot(111) 
-    else:
-        fig=[]
-
-    eps=1e-1
-    
-    horizontalproj=np.cross(verticalproj,normalproj)
-    points_proj=[]
-    for point in Points:   
-        #print(point)
-        point = Q.dot(point)+shift + move
-        
-        point_proj_x = horizontalproj.dot(point)
-        point_proj_y = verticalproj.dot(point)
-        point_proj_n= normalproj.dot(point)
-        pv = Qprojr.dot([point_proj_x,point_proj_y])
-        points_proj.append([point_proj_x,point_proj_y,point_proj_n])
-        #ax.plot(point_proj_x,point_proj_y,color=color,linewidth=linewidth)
-        ax.plot(pv[0],pv[1],color=color,marker=marker,linestyle='',markersize=markersize)
-                
-    #ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
- 
-    #plt.show()                        
-    return fig,ax,points_proj
 
 def select_atomic_plane(LatticePoints,normal,eps=1e-1,shift=0.,eps2=None):
 
@@ -6760,6 +4137,7 @@ def select_atomic_plane(LatticePoints,normal,eps=1e-1,shift=0.,eps2=None):
         PointsOut.append(PointsOut1)
     
     return PointsOut
+
 def get_interface2d(pointOutproj,normal,horizontalproj,verticalproj):
 
     """
@@ -6811,6 +4189,7 @@ def get_interface2d(pointOutproj,normal,horizontalproj,verticalproj):
     projnormal=np.array([horizontalproj.dot(normal),verticalproj.dot(normal)])
     twpoints=verts[:,np.abs(projnormal.dot(verts))<1e-10]
     return twpoints
+
 def select_plane(LatticeVectors,normal,eps=1e-1,shift=0.,Q=np.eye(3)):
     """
     select_plane - Crystallographic function for materials analysis.
@@ -6870,6 +4249,7 @@ def select_plane(LatticeVectors,normal,eps=1e-1,shift=0.,Q=np.eye(3)):
 
     
     return np.array(PointsOut).T
+
 
 def generate_plane_vertices(PlanePoints,normal,Q=np.eye(3),move=np.zeros(3)):
     """
@@ -6934,6 +4314,7 @@ def generate_plane_vertices(PlanePoints,normal,Q=np.eye(3),move=np.zeros(3)):
     verts = [list(zip(x,y,z))]
     return verts,phase
 
+
 def select_atomic_region(LatticePoints,normal,side='lower',eps=1e-1,shift=0.):
 
     """
@@ -6990,56 +4371,7 @@ def select_atomic_region(LatticePoints,normal,side='lower',eps=1e-1,shift=0.):
     
     return PointsOut
     
-def plot_atomic_plane2D(LatticePoints,normal,vertical,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],plot=True,salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],linewidths=[1,1,1],markersizes=[200,200,200],
-                      Q=np.eye(3),xlim=[],ylim=[],out=False,zorder=1):
-    """
-    plot_atomic_plane2D - Crystallographic function for materials analysis.
-    
-    See full documentation in extended modules for detailed usage.
-    """
-    if not isinstance(normal, np.ndarray):
-        normal=np.array(normal);
-    if not isinstance(vertical, np.ndarray):
-        vertical=np.array(vertical);
-    normal=normal/np.sqrt(normal.dot(normal))
-    vertical=vertical/np.sqrt(vertical.dot(vertical))
-    horizontal=np.cross(vertical,normal)
-    if ax==None and plot:
-        fig = plt.figure() 
-        ax = fig.add_subplot(111) 
-    else:
-        fig=[]
-    Pointsout=[]
-    for Points1,col,ecol,linewidth,markersize in zip(LatticePoints,colors,edgecolors,linewidths,markersizes):
-        pointout=[]
-        for points in Points1:
-            points2=Q.dot(points)
-            point_proj_x = horizontal.dot(points2)
-            point_proj_y = vertical.dot(points2)
-            if len(xlim)>0:
-                idxs = np.where(point_proj_x<xlim[0])[0]
-                point_proj_x=np.delete(point_proj_x,idxs)
-                point_proj_y=np.delete(point_proj_y,idxs)
-                idxs = np.where(point_proj_x>xlim[1])[0]
-                point_proj_x=np.delete(point_proj_x,idxs)
-                point_proj_y=np.delete(point_proj_y,idxs)               
-            if len(ylim)>0:
-                idxs = np.where(point_proj_y<ylim[0])[0]
-                point_proj_x=np.delete(point_proj_x,idxs)
-                point_proj_y=np.delete(point_proj_y,idxs)
-                idxs = np.where(point_proj_y>ylim[1])[0]
-                point_proj_x=np.delete(point_proj_x,idxs)
-                point_proj_y=np.delete(point_proj_y,idxs)  
-            if plot:
-                ax.scatter(point_proj_x, point_proj_y, color=col,edgecolors=ecol,alpha=salpha,linewidths=linewidth,s = markersize, zorder=zorder) 
-            pointout.append([point_proj_x,point_proj_y])
-        Pointsout.append(pointout)
-    #plt.show()        
-    ax.set_aspect('equal', 'datalim')
-    if out:
-        return fig,ax,Pointsout,horizontal,vertical
-    else:
-        return fig,ax
+
 def get_twinning_plane_points(K1,Pointsout,horizontal,vertical):
 
     """
@@ -7085,109 +4417,6 @@ def get_twinning_plane_points(K1,Pointsout,horizontal,vertical):
     twpoints=verts[:,np.abs(projnormal.dot(verts))<1e-10]
     return twpoints
     
-def plot_atomic_plane3D(LatticePoints,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3)):
-    """
-    plot_atomic_plane3D - Crystallographic function for materials analysis.
-    
-    See full documentation in extended modules for detailed usage.
-    """
-
-    if ax==None:
-        fig = plt.figure() 
-        ax = fig.add_subplot(111, projection='3d', proj_type = 'ortho') 
-    else:
-        fig=[]
-
-    for Points1,col,ecol in zip(LatticePoints,colors,edgecolors):
-        for points in Points1:
-            points=np.matmul(Q,points)
-            ax.scatter(points[0,:], points[1,:], points[2,:], s = 200,color=col,edgecolors=ecol,alpha=salpha) 
-    
-    #plt.show()        
-    ax.axis('auto')      
-        
-    return fig,ax
-   
-    
-def plot_atomlattice2D(atoms_xyz_position,uvw2xyz,normal,vertical,S=1,R=np.eye(3),ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5]):
-    """
-    plot_atomlattice2D - Crystallographic function for materials analysis.
-    
-    See full documentation in extended modules for detailed usage.
-    """
-    #colors=['r','b','g']
-    if not isinstance(normal, np.ndarray):
-        normal=np.array(normal);
-    if not isinstance(vertical, np.ndarray):
-        vertical=np.array(vertical);
-    normal=normal/np.sqrt(normal.dot(normal))
-    vertical=vertical/np.sqrt(vertical.dot(vertical))
-    horizontal=np.cross(vertical,normal)
-
-    if ax==None:
-        fig = plt.figure() 
-        ax = fig.add_subplot(111) 
-    else:
-        fig=[]
-    Points=[]
-    Max=[]
-    Min=[]
-    #S = 2
-    S_range = list(range(-1,S+1)) 
-    S_range = list(range(-S,S+1)) 
-    for atoms,col,ecol in zip(atoms_xyz_position,colors,edgecolors):
-        for atom in atoms:
-            #print('ok')
-            triplets = list(itertools.product(S_range, repeat=3)) 
-            triplets = np.array(triplets) 
-            triplets = triplets.T
-            points = uvw2xyz.dot(triplets)+np.repeat([atom],triplets.shape[1],axis=0).T
-            Points.append(points)
-            point_proj_x = horizontal.dot(points)
-            point_proj_y = vertical.dot(points)
-            
-            #pn=points
-            #sq = np.sqrt(np.sum(points**2,axis=0))
-            #idxs = np.where(sq>0.0)[0]
-            #pn[:,idxs] = pn[:,idxs]/sq[idxs]
-            point_proj_n = normal.dot(points)
-            #print(point_proj_n)
-            idxs = np.where(abs(point_proj_n)<1e-3)[0]
-#            ax3i.plot(point_proj_x,point_proj_y,'r',alpha=alpha[0])            
-            #if abs(point_proj_n)<1e-5:
-            ax.scatter(point_proj_x[idxs], point_proj_y[idxs], s = 200,color=col,edgecolors=ecol,alpha=salpha) 
-            
-#            else:
-#                ax.scatter(point_proj_x, point_proj_y, s = 200,color=col,edgecolors=ecol,alpha=salpha) 
-
-#            #plt.show()
-    
-#    S = S+1
-#    S_range = list(range(-1,S+1)) 
-#    for atom in atoms_xyz_position[0][0]*0.:
-#        triplets = list(itertools.product(S_range, repeat=3)) 
-#        triplets = np.array(triplets) 
-#        triplets = triplets.T
-#        points = uvw2xyz.dot(triplets)+np.repeat([atom],triplets.shape[1],axis=0).T
-#    Max=[max(p) for p in points]
-#    Min=[min(p) for p in points]
-#    
-#            
-#    for point in points.T:        
-#        for lattice_vec in uvw2xyz.T:
-#            vec=np.array([lattice_vec*0,lattice_vec]).T+np.repeat([point],2,axis=0).T
-#            sum1=np.sum((vec>np.repeat([Max],2,axis=0).T).astype(int),axis=0)
-#            sum1=sum1+np.sum((vec<np.repeat([Min],2,axis=0).T).astype(int),axis=0)
-#            idx = np.where(sum1>0)[0]
-#            if not len(idx)>0:
-#                vec=np.matmul(R,vec)
-#                ax.plot(vec[0,:], vec[1,:], vec[2,:],color=gridcolor,alpha=lalpha)
-#            
-    #plt.show()        
-    ax.set_aspect('equal', 'datalim')
-    
-    return fig,ax,Points,normal,vertical, horizontal
-
 
 def an_between_vecs(v1,v2,deg=True,full2pi=False):
 
@@ -7240,6 +4469,7 @@ def an_between_vecs(v1,v2,deg=True,full2pi=False):
     if full2pi and an<0:
         an+=360.
     return an
+
 def habitplane_equation_solution(Uj,Ui,Qj,n,a,tol=1e-10):
 
     """
@@ -7335,6 +4565,7 @@ def habitplane_equation_solution(Uj,Ui,Qj,n,a,tol=1e-10):
         # Q2_a=(np.eye(3)+np.outer(b1_a,m1_a)).dot(inv(lam*Qij.dot(Uj)+(1-lam)*Ui))
         #         twind['s']=s1
         #         twind['shear_angle']=np.arctan(s1/2)*2
+
 
 def twinnedhabitplane(Ui,Uj,Qij,a1,n1,hbplanes=[],addondata={},method='bhata'):        
 
@@ -7497,6 +4728,7 @@ def twinnedhabitplane(Ui,Uj,Qij,a1,n1,hbplanes=[],addondata={},method='bhata'):
         
 
     return hbplanes
+
 def twin_equation_solution_ini(Uj,Ui,Parent_uvw2xyz,Parent_hkl2xyz,Product_uvw2xyz,Product_hkl2xyz, 
                            Parent_uvw_2_Product_uvw_rot, Parent_uvw_2_Product_uvw,Parent_hkl_2_Product_hkl,tol=1e-10,miller='greaterthanone',printlambda=False,
                            Qj=None,Qi=None):
@@ -7778,6 +5010,7 @@ def twin_equation_solution_ini(Uj,Ui,Parent_uvw2xyz,Parent_hkl2xyz,Product_uvw2x
     return TWINDATA
 
 
+
 def twin_equation_solution(Uj,Ui,L_A,Lr_A,L_M,Lr_M, 
                            R_AM, Ci_d,Ci_p,tol=1e-10,miller='greaterthanone',printlambda=False,
                            Qj=None,Qi=None):
@@ -8028,6 +5261,7 @@ def twin_equation_solution(Uj,Ui,L_A,Lr_A,L_M,Lr_M,
 
 
 
+
 def def_gradient_stressfree(Cd,LA, LM,CId=None):
 
 
@@ -8098,6 +5332,7 @@ def def_gradient_stressfree(Cd,LA, LM,CId=None):
         
 
     return F_AM, U_AM, Q_M, T_MA, T_AM
+
 
 
 
@@ -8227,6 +5462,7 @@ def def_gradient_stressfree_ini(Product_uvw_2_Parent_uvw_all,parent_lattice_para
 
     return Fv, Uv, Qv, Product_uvw_2_Parent_uvw_all_norm, Parent_uvw_2_Product_uvw_all_norm, Parent_uvw2xyz, Product_uvw2xyz
 
+
 def def_gradient(Cd,LA, LM,StressT=np.zeros((3,3)),STA=np.zeros((3,3,3,3)),STM=np.zeros((3,3,3,3)),CId=None):
     """
     def_gradient - Crystallographic function for materials analysis.
@@ -8288,6 +5524,7 @@ def def_gradient(Cd,LA, LM,StressT=np.zeros((3,3)),STA=np.zeros((3,3,3,3)),STM=n
         
 
     return F_AM, U_AM, Q_M, T_MA, T_AM, LAStress, LMStress, Parent_strain, Product_strain, F_parent, F_product
+
 
 
 
@@ -8372,6 +5609,7 @@ def def_gradient_ini(Product_uvw_2_Parent_uvw_all,parent_lattice_param, product_
         
 
     return Fv, Uv, Qv, Product_uvw_2_Parent_uvw_all_norm, Parent_uvw_2_Product_uvw_all_norm, Parent_uvw2xyz, Product_uvw2xyz, Parent_strain, Product_strain, F_parent, F_product
+
 
 
 
@@ -8469,6 +5707,7 @@ def def_gradient_ini2(Product_uvw_2_Parent_uvw_all,parent_lattice_param, product
         
 
     return Fv, Uv, Qv, Product_uvw_2_Parent_uvw_all_norm, Parent_uvw_2_Product_uvw_all_norm, Parent_uvw2xyz, Product_uvw2xyz, Parent_strain, Product_strain, F_parent, F_product
+
 
 
 
@@ -9262,6 +6501,7 @@ def niti_twinning(B2_symops,B2_recsymops,B19p_recsymops,B19p_symops,Uv,Parent_uv
     #print('test')        
     return twin_systems           
 
+
 def get_twinningdata(orim,eus,Ldir_css,twin_systems,twt,phase, tension=True):
 
     """
@@ -9384,6 +6624,7 @@ def get_twinningdata(orim,eus,Ldir_css,twin_systems,twt,phase, tension=True):
     return TwinnigData
 
 
+
 def get_twinning_dislocation(K1,eta1,eta2,L,G=None,Gr=None):
 
     """
@@ -9454,6 +6695,7 @@ def get_twinning_dislocation(K1,eta1,eta2,L,G=None,Gr=None):
         dm=s/deta1
     return dm
 
+
 def gen_twinned_lattice_points(ParentLatticePoints,eta1,shear_angle,K1,shift=0.0,dK1=None,bvr=None,deta1=None):
 
     """
@@ -9508,6 +6750,7 @@ def gen_twinned_lattice_points(ParentLatticePoints,eta1,shear_angle,K1,shift=0.0
         TwinnedPoints.append(twpoints)
     return TwinnedPoints
 
+
 def write_txt(filename,Header,DATA):
 
     """
@@ -9554,6 +6797,7 @@ def write_txt(filename,Header,DATA):
     
     f.close()
 
+
 def read_txt(filename,delimiter='\t',skiprows=1):
 
     """
@@ -9588,6 +6832,7 @@ def read_txt(filename,delimiter='\t',skiprows=1):
     Data = np.loadtxt(filename,  skiprows=skiprows, delimiter=delimiter);
     return Header,Data
 
+
 def plane_line_intersection(n,V0,P0,P1):
     # n: normal vector of the Plane 
     # V0: any point that belongs to the Plane 
@@ -9604,89 +6849,6 @@ def plane_line_intersection(n,V0,P0,P1):
     return I
 
 
-def plot_cut2D(ax,Lattice_points,normal,horizontal,vertical,col,alpha=1):
-
-    """
-    Plot 2D cross-section of 3D points.
-    
-    Selects points near plane and plots 2D projection.
-    
-    Input:
-        points (array N×3): 3D points
-        cut_plane_normal (array [3]): Cutting plane normal
-        cut_plane_point (array [3]): Point on plane
-        **kwargs: Plot parameters
-    
-    Output:
-        fig, ax: Figure and 2D axis
-    
-    Usage Example:
-        >>> atoms = generate_lattite_atom_positions(L, n1=10, n2=10, n3=10)
-        >>> 
-        >>> # Cut at z=15
-        >>> fig, ax = plot_cut2D(atoms, [0,0,1], [0,0,15])
-        >>> ax.set_title('Cross-section at z=15')
-        >>> plt.show()
-    
-    Notes:
-        - Shows 2D slice of 3D structure
-        - Useful for interface analysis
-        - Can reveal internal structure
-    """
-    IP=[]
-    eps=1e-2
-    for point in Lattice_points:
-        point=np.array(point);
-        point_proj_x = horizontal.dot(point)
-        point_proj_y = vertical.dot(point)
-        point_proj_n = normal.dot(point)
-        if (point_proj_n<= eps).any():
-            if not (point_proj_n<= eps).all():
-                idxp0=np.where(point_proj_n> eps)[0][0]                                           
-                point[:,idxp0]=plane_line_intersection(normal,np.array([0,0,0]),point[:,0],point[:,1])
-                point_proj_x = horizontal.dot(point)
-                point_proj_y = vertical.dot(point)
-                IP.append([point_proj_x[idxp0],point_proj_y[idxp0]])
-            ax.plot(point_proj_x,point_proj_y,col,alpha=alpha)
-                
-#        else:
-#            ax.plot(point_proj_x,point_proj_y,col)
-        r=[]
-        theta =[]
-        eps=1e-4
-        IPnew=[]
-        for ip in IP:
-            #print(ip)
-            x=ip[0]
-            y=ip[1]
-            R=np.sqrt(x*x + y*y)
-            TH=np.arctan2(y, x)*180./np.pi
-            if TH<0:
-                TH=360-abs(TH)
-            if len(r)>0 and R>eps:
-                include=True
-                if min(abs(r-R))<eps: 
-                    idx = np.where(abs(r-R)==min(abs(r-R)))[0][0]
-                    if abs(theta[idx]-TH)<eps:
-                        include=False
-                        
-                if include:
-                    r.append(R)
-                    theta.append(TH)
-                    IPnew.append(ip)
-            else:
-                if R>eps:
-                    r.append(R)
-                    theta.append(TH)
-                    IPnew.append(ip)
-        idxs=np.argsort(theta)
-#        for IPi in range(0,len(idxs)-1):
-#            ax.plot([IPnew[idxs[IPi]][0],IPnew[idxs[IPi+1]][0]],[IPnew[idxs[IPi]][1],IPnew[idxs[IPi+1]][1]],'r')
-        IPnew=np.array(IPnew)
-        IPnew=IPnew[idxs]
-    return IPnew
-#        if len(IPnew)>0:
-#            ax.add_patch(Polygon(IPnew, color=col,closed=True,fill=False, hatch=hatch))
 
 def flipvector(v, Tol=1e-9):
 
@@ -9725,6 +6887,7 @@ def flipvector(v, Tol=1e-9):
         c=-1.0
     return vm,c
 
+
 def flipvector2negative(v, Tol=1e-9):
 
     """
@@ -9755,6 +6918,7 @@ def flipvector2negative(v, Tol=1e-9):
         c=-1.0
     return vm,c
   
+
 def vector2miller_ini(v, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
 
     """
@@ -9827,6 +6991,7 @@ def vector2miller_ini(v, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
             f"$[{{{(vm[0])}}}{{{(vm[1])}}}{{{(vm[2])}}}]$".replace('{-','\\overline{')
     return(vm)
 
+
 def vectors2miller(V, MIN=True, Tol=1e-9,tol=1e5,text=False):
 
     """
@@ -9846,3 +7011,78 @@ def vectors2miller(V, MIN=True, Tol=1e-9,tol=1e5,text=False):
  
 
     
+
+
+"""
+CRYSTLIB.PY - Crystal Structure and Lattice Operations Module
+
+This module provides comprehensive functions for crystallographic calculations
+and lattice operations in materials science research, with focus on crystal
+structures, lattice transformations, and phase relationships.
+
+Main Categories:
+================
+
+1. Lattice Vector Generation
+   - cubic_lattice_vec, monoclinic_lattice_vec, tetragonal_lattice_vec
+   - lattice_vec (general), reciprocal_basis
+
+2. Miller Index Operations
+   - uvtw2uvw, uvw2uvtw (4-index ↔ 3-index conversions)
+   - hkil2hkl, hkl2hkil (hexagonal notations)
+   - miller2fractional, xyz2fractional (coordinate transformations)
+   - vector2miller, vectors2miller (index determination)
+
+3. Lattice Correspondence
+   - B19p_B2_lattice_correspondence (NiTi transformations)
+   - cubic2tetragonal_lattice_correspondence
+   - Rp_B2_lattice_correspondence (R-phase)
+   - lattice_correspondence (general)
+
+4. Deformation & Strain Analysis
+   - def_gradient, def_gradient_stressfree
+   - mohr_circles, zero_normal_strains
+   - strains_along_13mohrcirle
+
+5. Twinning Analysis
+   - niti_twinning, get_twinningdata
+   - habitplane_equation_solution
+   - twin_equation_solution
+   - get_twinning_plane_points
+
+6. Lattice Point Generation
+   - generate_lattice_points, generate_lattice_faces
+   - generate_product_lattice_points
+   - generate_lattite_atom_positions
+   - gen_twinned_lattice_points
+
+7. Crystal Plane Operations
+   - select_plane, select_atomic_plane
+   - select_crystal_planes
+   - plane_line_intersection
+   - generate_plane_vertices
+
+8. Hexagonal Systems
+   - gensystemsHex, gensystemsHexIni
+   - genallHexSys
+
+9. Tensor Operations
+   - permut_tensor3, np_permut_tensor3 (Levi-Civita)
+   - kronecker, np_kronecker (Kronecker delta)
+
+10. Utility Functions
+    - find_gcd, perpendicular_vector
+    - vec2string, plane2string, dir2string
+    - flipvector, normArrayColumns
+    - write_txt, read_txt
+
+Key Applications:
+- Shape memory alloy analysis (NiTi, Cu-based)
+- Martensitic phase transformations
+- Crystallographic texture analysis
+- Deformation mechanics and twinning
+- EBSD data processing
+
+Author: lheller
+Created: 2019-2023
+"""

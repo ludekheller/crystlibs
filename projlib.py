@@ -97,6 +97,7 @@ try:
     from wand.image import Image
 except:
     pass
+
 def genoritri(resolution=1.0, mesh="spherified_cube_edge"):
     """
     Generate orientation grid for stereographic triangle using orix library.
@@ -145,6 +146,7 @@ def genoritri(resolution=1.0, mesh="spherified_cube_edge"):
     return trioris.data.T
 
 #Set of all orientations in space defined by rotation around 2 perpendicular axis and an angle resolution
+
 def genori(dangle=1.0,hemi='both', tol=1e-2, rot=np.eye(3), half='no'):
     """
     Generate a set of orientations by rotating around two perpendicular axes.
@@ -238,6 +240,7 @@ def genori(dangle=1.0,hemi='both', tol=1e-2, rot=np.eye(3), half='no'):
         return oris
 
 #generate regular grid as masked array npxnp covering the whole range of projected oris
+
 def xyz2spher(xyz,deg=False):
     """
     Convert Cartesian coordinates to spherical coordinates (polar and azimuthal angles).
@@ -298,6 +301,7 @@ def xyz2spher(xyz,deg=False):
         polar_angle*=180/np.pi
         azimuth_angle*=180/np.pi    
     return polar_angle,azimuth_angle 
+
 def spher2xyz(polar_angle,azimuth_angle,deg=False):
     """
     Convert spherical coordinates to Cartesian coordinates.
@@ -369,6 +373,7 @@ def spher2xyz(polar_angle,azimuth_angle,deg=False):
         x=np.cos(azimuth_angle)*xy
 
     return np.vstack((x,y,z)).T
+
 
 def genprojgrid(oris,gdata=None,nump=1001,proj='equalarea',method2='linear',gdout=False,poris=None,minmax='notfull'):
     """
@@ -523,6 +528,7 @@ def genprojgrid(oris,gdata=None,nump=1001,proj='equalarea',method2='linear',gdou
         return grid_x,grid_y, grid_z, nummask, mask
     else:
         return grid_x,grid_y, nummask, mask
+
 
 
 def gen_dirs_norms(L, Lr, uvws,hkls, R2Proj=np.eye(3),symops=None,recsymops=None,hemisphere = "upper", **kwargs):
@@ -726,6 +732,7 @@ def gen_dirs_norms(L, Lr, uvws,hkls, R2Proj=np.eye(3),symops=None,recsymops=None
                                             'equalarea':equalarea_directions(dvs),'stereo':stereoprojection_directions(dvs),'textshift':[0,0]})
                         
     return dirs,normals
+
 
 
 def fullcirc_hist(Mats, Dr=[0,0,1], symops=None, equalarea=False, scale='sqrt', nlevels=10, lvls=None,bins=128, ax=None, title=None, ret=False, kernel=False,  weights=None,Lim=None,interp=True,interpn=1000, smooth=False, vmin=None,
@@ -978,6 +985,7 @@ def fullcirc_hist(Mats, Dr=[0,0,1], symops=None, equalarea=False, scale='sqrt', 
     if ret:
         return hist, xedges, yedges, fig, ax
 #convert projected points into xyz
+
 def rp2xyz(r,p):
     """
     Convert polar coordinates (r, phi) to 3D Cartesian coordinates.
@@ -994,7 +1002,9 @@ def rp2xyz(r,p):
     xy = np.sqrt(1.-z**2)
     return xy*npsind(p),xy*npcosd(p),z
 
+
 def stereoprojection_directions(dirs):
+
     """
     Project 3D direction vectors onto 2D stereographic projection plane (Wulff net).
     
@@ -1085,6 +1095,71 @@ def stereoprojection_directions(dirs):
 #    abs(proj_dirs[1,:]-ry)<eps
     return proj_dirs
 
+# def stereoprojection_intotriangle(dirs):
+
+    """
+    Map directions into standard stereographic triangle.
+    
+    Input:
+        dirs: numpy array (3, N) - Direction vectors
+        eps, geteqdirs, geteqmats, Rin, symops: Optional parameters
+    
+    Output:
+        proj: numpy array (2, N) - Projection coordinates
+    """
+#     eps=1.0e-2
+#     normals = np.array([-1,0,1]);
+#     arclength = 40.#-np.arccos(np.sqrt(2)/np.sqrt(3))*180/np.pi;
+#     proj_normals, points = stereoprojection_planes(normals,arclength=arclength,iniangle=90)
+#     proj_tans = np.arctan(proj_normals[1,:]/proj_normals[0,:])
+
+#     if len(dirs.shape)==1:
+#         dirs = np.expand_dims(dirs,axis=1)
+
+#     proj_dirs = np.zeros(dirs.shape)
+#     inc=-1
+#     for co,diri in enumerate(dirs.T):
+#         #print('Direction {} from {}'.format(co+1,dirs.shape[1]))
+# #        print('===================================================')
+# #        print(diri)
+# #        print('===================================================')
+#         inc+=1
+#         el=equivalent_elements(diri,'cubic')
+#         #print(el)
+#         for eli in el:
+#             proj_eli = stereoprojection_directions(eli)
+# #            print(eli)
+# #            print(np.arctan(proj_eli[1,0]/proj_eli[0,0])-np.arccos(1./np.sqrt(3.)))
+# #            print(np.arctan(proj_eli[1,0]/proj_eli[0,0]))#-np.pi/4)
+# #            print((np.arccos(abs(eli[2])/np.sqrt(eli.dot(eli)))-np.arccos(1./np.sqrt(3.))))
+# #            if (eli>=-eps).all() and (np.arccos(abs(eli[2])/np.sqrt(eli.dot(eli)))-np.arccos(1./np.sqrt(3.)))<eps:
+# #            if (proj_eli[:,0]>=-eps).all() and (np.arccos(abs(eli[2])/np.sqrt(eli.dot(eli)))-np.arccos(1./np.sqrt(3.)))<eps:
+#             if ((proj_eli[:,0])>=-eps).all():                #proj_eli = stereoprojection_directions(eli)
+#                 atan=np.arctan2(proj_eli[1,0],proj_eli[0,0])
+#                 if (atan-np.pi/4)<eps:
+#                     idx=np.where(abs(proj_tans-atan)==min(abs(proj_tans-atan)))[0][0]
+# #                    print(proj_eli[:,0].dot(proj_eli[:,0])) 
+# #                    print(proj_normals[:,idx].dot(proj_normals[:,idx])) 
+# #                    print((proj_eli[:,0].dot(proj_eli[:,0])-proj_normals[:,idx].dot(proj_normals[:,idx])))
+# #                    print((proj_eli[:,0].dot(proj_eli[:,0])-proj_normals[:,idx].dot(proj_normals[:,idx]))<eps)
+#                     if (proj_eli[:,0].dot(proj_eli[:,0])-proj_normals[:,idx].dot(proj_normals[:,idx]))<eps:
+#                         proj_dirs[:,inc]=proj_eli[:,0]
+# #                        print('OK')
+# #                        print(proj_dirs[:,inc])
+#                         break
+#     return proj_dirs
+
+#def coodinate_from_equalarea_proj(projdirs):
+    #dirs = [x1,x2,...,xn;y1,y2,...,yn];
+    #example: dirs = [0,1,2,3;1,2,3,0]
+#    if len(projdirs.shape)==1:
+#        projdirs = np.expand_dims(projdirs,axis=1)
+#    z=-2+np.sqrt(8-projdirs[0,:]**2-projdirs[1,:]**2)
+
+#    z=-2+np.sqrt()
+    
+    
+    
 
 def equalarea_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
     """
@@ -1150,6 +1225,7 @@ def equalarea_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
         return proj_planes[0]
     else:          
         return proj_planes
+
 def stereo2xyz(projdir):
     """
     Convert 2D stereographic projection to 3D unit vectors.
@@ -1166,6 +1242,7 @@ def stereo2xyz(projdir):
     z = np.cos(r)
     xy = np.sqrt(1.-z**2)
     return xy*np.cos(p),xy*np.sin(p),z
+
 
 def equalarea2xyz(projdir):
     """
@@ -1203,7 +1280,9 @@ def equalarea2xyz(projdir):
     return x,y,z
 
 
+
 def equalarea_directions(dirs):
+
     """
     Project 3D direction vectors onto 2D equal-area projection plane (Schmidt net).
     
@@ -1258,7 +1337,7 @@ def equalarea_directions(dirs):
         >>> plt.show()
     """
     #dirs = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
-    #example: dirs = [0,1,2,3;1,2,3,0;0,3,2,1]
+    #example: dirs = np.array([[0,1,2,3],[1,2,3,0],[0,3,2,1]])
     
     #normalize and project
        
@@ -1269,6 +1348,7 @@ def equalarea_directions(dirs):
     #normalizing dirs
     dirs /= np.sqrt((dirs ** 2).sum(0))
     dirsxy = dirs[0:2,:];
+    #print(dirsxy)
     eps=1e-6
     normdirsxy = np.sqrt((dirsxy ** 2).sum(0))
     idxs=np.where(normdirsxy<eps)
@@ -1280,7 +1360,6 @@ def equalarea_directions(dirs):
                np.sin(alpha/2)*2.*dirsxy[1,:],
                 np.zeros(dirs[2,:].shape)))
     proj_dirs[:,idxs]=0.
-    
     #check
 #    if False:
 #        phi2=90*np.pi/180.
@@ -1317,7 +1396,117 @@ def equalarea_directions(dirs):
         
         
     return proj_dirs
+# def equalarea_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
 
+    """
+    Project plane traces onto equal-area (Schmidt) net.
+    
+    Input:
+        normals: numpy array (3, N) - Plane normal vectors
+        arclength: float - Arc length in degrees (default: 360)
+        iniangle: float - Starting angle in degrees (default: 0)
+        hemisphere: str - 'both', 'upper', or 'lower' (default: 'both')
+    
+    Output:
+        traces: list of arrays - Trace points for each plane
+    """
+#     #%normals = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
+#     #%varargin{1} arclength in deg
+#     #normals = np.transpose(np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]))
+#     #
+#     if len(normals.shape)==1:
+#         normals = np.expand_dims(normals,axis=1)
+
+#     normals = normals.astype(float)
+#     normals /= np.sqrt((normals ** 2).sum(0))
+
+#     proj_normals = equalarea_directions(normals)
+
+#     idxs = np.where(abs(normals[0,:])+abs(normals[1,:])==0)[0]
+    
+#     inplanedirs = np.vstack((-normals[1,:],normals[0,:],np.zeros(normals[0,:].shape)));
+#     inplanedirs[:,idxs] = np.vstack((np.zeros(normals[0,idxs].shape), -normals[2,idxs],normals[1,idxs]));
+    
+#     inplanedirs /= np.sqrt((inplanedirs ** 2).sum(0))
+
+#     thirdaxis=np.cross(normals,inplanedirs,axisa=0,axisb=0,axisc=0)
+# #    thirdaxis = np.vstack((normals[1,:]*inplanedirs[2,:]-normals[2,:]*inplanedirs[1,:],
+# #                           -1*(normals[0,:]*inplanedirs[2,:]-normals[2,:]*inplanedirs[0,:]),
+# #                           normals[0,:]*inplanedirs[1,:]-normals[1,:]*inplanedirs[0,:]));
+#     t=np.linspace(iniangle,iniangle+arclength,180*2+1)*np.pi/180;
+#     basicarc = np.vstack((np.cos(t),np.sin(t),np.zeros(t.shape)));
+    
+#     proj_planes=[];
+#     Zdir=[]
+#     for i in range(0,normals.shape[1]):
+#         Rot2Global = np.transpose(np.vstack((inplanedirs[:,i],thirdaxis[:,i],normals[:,i])));
+#         Ccp = np.matmul(Rot2Global,basicarc);
+#         Zdir=Ccp[2]
+#         if hemisphere == "both":            
+#             Ds = equalarea_directions(Ccp)
+#         else:
+#             if hemisphere == "upper":
+#                 idxs = np.where(Ccp[2,:]>=0)[0]
+#                 Ds = equalarea_directions(Ccp[:,idxs])
+#             elif hemisphere == "lower":
+#                 idxs = np.where(Ccp[2,:]<=0)[0]
+#                 Ds = equalarea_directions(Ccp[:,idxs])
+#         proj_planes.append(Ds)
+#     if len(proj_planes)==1:
+#         return proj_planes[0]
+#     else:          
+#         return proj_planes
+
+
+# def stereoprojection_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
+#     #%normals = [x1,x2,...,xn;y1,y2,...,yn;z1,z2,...,zn];
+#     #%varargin{1} arclength in deg
+#     #normals = np.transpose(np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]))
+#     #
+#     if len(normals.shape)==1:
+#         normals = np.expand_dims(normals,axis=1)
+
+#     normals = normals.astype(float)
+#     normals /= np.sqrt((normals ** 2).sum(0))
+
+#     proj_normals = stereoprojection_directions(normals)
+
+#     idxs = np.where(abs(normals[0,:])+abs(normals[1,:])==0)[0]
+    
+#     inplanedirs = np.vstack((-normals[1,:],normals[0,:],np.zeros(normals[0,:].shape)));
+#     inplanedirs[:,idxs] = np.vstack((np.zeros(normals[0,idxs].shape), -normals[2,idxs],normals[1,idxs]));
+    
+#     inplanedirs /= np.sqrt((inplanedirs ** 2).sum(0))
+
+#     thirdaxis=np.cross(normals,inplanedirs,axisa=0,axisb=0,axisc=0)
+# #    thirdaxis = np.vstack((normals[1,:]*inplanedirs[2,:]-normals[2,:]*inplanedirs[1,:],
+# #                           -1*(normals[0,:]*inplanedirs[2,:]-normals[2,:]*inplanedirs[0,:]),
+# #                           normals[0,:]*inplanedirs[1,:]-normals[1,:]*inplanedirs[0,:]));
+#     t=np.linspace(iniangle,iniangle+arclength,180*2+1)*np.pi/180;
+#     basicarc = np.vstack((np.cos(t),np.sin(t),np.zeros(t.shape)));
+    
+#     proj_planes=[];
+#     Zdir=[]
+#     points=[]
+#     for i in range(0,normals.shape[1]):
+#         Rot2Global = np.transpose(np.vstack((inplanedirs[:,i],thirdaxis[:,i],normals[:,i])));
+#         Ccp = np.matmul(Rot2Global,basicarc);
+#         points.append(Ccp)
+#         Zdir=Ccp[2]
+#         if hemisphere == "both":            
+#             Ds = stereoprojection_directions(Ccp)
+#         else:
+#             if hemisphere == "upper":
+#                 idxs = np.where(Ccp[2,:]>=0)[0]
+#                 Ds = stereoprojection_directions(Ccp[:,idxs])
+#             elif hemisphere == "lower":
+#                 idxs = np.where(Ccp[2,:]<=0)[0]
+#                 Ds = stereoprojection_directions(Ccp[:,idxs])
+#         proj_planes.append(Ds)
+#     if len(proj_planes)==1:
+#         return proj_planes[0],points[0]
+#     else:          
+#         return proj_planes, points
 
 
 def wulffnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
@@ -1408,6 +1597,7 @@ def wulffnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
     ax.set_ylim((-1.05,1.05))
 
     return fig,ax
+
 
 def wulffnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
     """
@@ -1510,6 +1700,7 @@ def wulffnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255
 
 
     return fig,ax
+
 def wulffnet_quarter(ax=None,basedirs=False):
     """
     Draw quarter stereographic (Wulff) net.
@@ -1604,6 +1795,7 @@ def wulffnet_quarter(ax=None,basedirs=False):
 
     return fig,ax
 
+
 def schmidtnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
     """
     Draw equal-area (Schmidt) net - full circle.
@@ -1690,7 +1882,8 @@ def schmidtnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.))
     return fig,ax
 
 
-def wulffnet_regular_grid(ax,dangle,dirout=False, plot=True):
+
+def wulffnet_regular_grid(ax,dangle):
     """
     Create regular angular grid on Wulff net.
     
@@ -1712,13 +1905,11 @@ def wulffnet_regular_grid(ax,dangle,dirout=False, plot=True):
     GridX=[];
     GridY=[];
     Dc=[1.,0.,0.];
-    dirs=[]
     for phi1 in Phi1:
         for phi2 in Phi2:        
             RotZ = active_rotation(phi1, 'z', deg=True) 
             RotY = active_rotation(phi2, 'y', deg=True)
             Ds = np.matmul(RotY,RotZ).dot(Dc)
-            dirs.append(Ds)
             proj_Ds = stereoprojection_directions(Ds)
             GridX.append(proj_Ds[0,0])
             GridY.append(proj_Ds[1,0])
@@ -1726,12 +1917,9 @@ def wulffnet_regular_grid(ax,dangle,dirout=False, plot=True):
     
 
     #fig,ax = wulffnet()
-    if plot:
-        ax.plot(GridX,GridY,'.',color='r',markersize=1)
-    if dirout:
-        return GridX,GridY,dirs
-    else:
-        return GridX,GridY
+    ax.plot(GridX,GridY,'.',color='r',markersize=1)
+    
+    return GridX,GridY
 
 def schmidtnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
     """
@@ -1822,43 +2010,7 @@ def schmidtnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./2
     return fig,ax
 
 
-def wulffnet_regular_grid(ax,dangle):
-    """
-    Create regular angular grid on Wulff net.
-    
-    Input:
-        ax: matplotlib axis
-        dangle: float - Angular spacing in degrees
-        dirout: bool - Return directions if True (default: False)
-        plot: bool - Plot grid if True (default: True)
-    
-    Output:
-        If dirout=True: numpy array (3, N) - Grid directions
-    """
-    #dphi=10.deg
-    #dtheta=10.deg
-    #dangle = 10.
-    
-    Phi1=np.linspace(0.,360.-dangle,int(360./dangle))
-    Phi2=np.linspace(0.,180.-dangle,int(180./dangle))
-    GridX=[];
-    GridY=[];
-    Dc=[1.,0.,0.];
-    for phi1 in Phi1:
-        for phi2 in Phi2:        
-            RotZ = active_rotation(phi1, 'z', deg=True) 
-            RotY = active_rotation(phi2, 'y', deg=True)
-            Ds = np.matmul(RotY,RotZ).dot(Dc)
-            proj_Ds = stereoprojection_directions(Ds)
-            GridX.append(proj_Ds[0,0])
-            GridY.append(proj_Ds[1,0])
-                
-    
 
-    #fig,ax = wulffnet()
-    ax.plot(GridX,GridY,'.',color='r',markersize=1)
-    
-    return GridX,GridY
 def schmidt_regular_grid(ax,Na=72,Nr=20,plot=True):
     """
     Create regular grid on Schmidt net.
@@ -1919,6 +2071,7 @@ def schmidt_regular_grid(ax,Na=72,Nr=20,plot=True):
         ax.plot(GridX,GridY,'.',color='r',markersize=1)
     
     return GridX,GridY,GridR,GridPhi,AreaRatio
+
 
 def pf_cmap02(GridX,GridY,GridR,GridPhi,AreaRatio,Intensity,NoCont=10,GridSize=1000,cmap='jet',method='cubic'):
     
@@ -2012,6 +2165,7 @@ def pf_cmap02(GridX,GridY,GridR,GridPhi,AreaRatio,Intensity,NoCont=10,GridSize=1
     
 
 
+
 def pf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True,s=50,facecolor=(210./255.,235./255.,255./255.),plot=True):
     """
     Generate pole figure from Euler angles.
@@ -2085,6 +2239,7 @@ def pf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True,s=50,facecolor=(210./25
         return fig,ax,cb,Intensity
     else:
         return GridX,GridY,GridR,GridPhi,AreaRatio,Intensity
+
 
 
 
@@ -2166,6 +2321,7 @@ def pf_cmap(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True,s=50,NoCont=10,Gri
     return fig,ax,ax2,cb,thetai,ri,Ii,CS,cmap
     
 
+
 def pf_cmap_cscale(fig,ax2,cmin,cmax,cmap):
     """
     Add colorbar to pole figure.
@@ -2188,6 +2344,7 @@ def pf_cmap_cscale(fig,ax2,cmin,cmax,cmap):
 
 
     
+
 def ipf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True):
     """
     Generate inverse pole figure from Euler angles.
@@ -2259,6 +2416,7 @@ def ipf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True):
     #plt.show()
     return fig,ax,cb,Intensity
         
+
 def stereotriangle(ax=None,basedirs=False,equalarea=False,grid=False,resolution=None,gridmarkersize=None,gridmarkercol=None,gridzorder=None,mesh=False):
     """
     Draw standard stereographic triangle for cubic system.
@@ -2440,6 +2598,7 @@ def stereotriangle(ax=None,basedirs=False,equalarea=False,grid=False,resolution=
     
     return fig,ax
 
+
 def colored_stereotriangle(basedirs=False,resolution = 1, markersize=1):
     """
     Draw stereographic triangle with IPF coloring.
@@ -2462,6 +2621,7 @@ def colored_stereotriangle(basedirs=False,resolution = 1, markersize=1):
     ax.scatter(proj_Ds[0,:],proj_Ds[1,:],c=Colors,s=markersize)#,'.',color='r',markersize=1)
     #plt.show()
     return fig,ax
+
 def filled_colored_stereotriangle(basedirs=False,resolution = 1, markersize=1,ax=None,**kwargs):
     """
     Draw filled triangle with smooth IPF coloring.
@@ -2488,6 +2648,7 @@ def filled_colored_stereotriangle(basedirs=False,resolution = 1, markersize=1,ax
     
     
     return fig,ax
+
 def colors4stereotriangle(resolution = 1):
     """
     Generate RGB colors for IPF coloring.
@@ -2505,6 +2666,7 @@ def colors4stereotriangle(resolution = 1):
     proj_Ds = stereoprojection_directions(grid_stereo.data.T)
     Colors=stereotriangle_colors(proj_Ds)
     return proj_Ds,Colors
+
 
 def stereotriangle_colors_from_d_IPF(d_IPF):
     """
@@ -2525,6 +2687,7 @@ def stereotriangle_colors_from_d_IPF(d_IPF):
     Colors=stereotriangle_colors(proj_Ds)    
     
     return Colors
+
 def stereotriangle_colors_from_eumats_dir(eumats,d=[1,0,0]):
     """
     Get IPF colors from orientation matrices.
@@ -2548,6 +2711,7 @@ def stereotriangle_colors_from_eumats_dir(eumats,d=[1,0,0]):
     Colors=stereotriangle_colors(proj_Ds)    
     
     return Colors
+
 
 def stereotriangle_colors(proj_Ds):
     """
@@ -2635,6 +2799,7 @@ def stereotriangle_colors(proj_Ds):
     return Colors
 
 
+
 def equivalent_elements(element,lattice):
     """
     Find symmetrically equivalent elements.
@@ -2661,6 +2826,7 @@ def equivalent_elements(element,lattice):
         #eq_elements.append(el)
          
     return eq_elements
+
 
 def stereoprojection_intotriangle_ini(dirs,eps=1.0e-5):
     """
@@ -2712,6 +2878,7 @@ def stereoprojection_intotriangle_ini(dirs,eps=1.0e-5):
 #                        print(proj_dirs[:,inc])
                         #break
     return proj_dirs
+
 def stereoprojection_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,Rin=None,symops=None):
     """
     Fast mapping of directions into standard triangle.
@@ -2764,6 +2931,7 @@ def stereoprojection_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats
         return proj_dirs, out
     else:
         return proj_dirs
+
 def stereoprojection_intotriangle(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,Rin=None,symops=None):
     """
     Map directions into standard stereographic triangle.
@@ -2823,6 +2991,7 @@ def stereoprojection_intotriangle(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=Fals
         return proj_dirs, out
     else:
         return proj_dirs
+
 def equalarea_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,Rin=None,symops=None):
     """
     Fast equal-area projection into triangle.
@@ -2874,6 +3043,7 @@ def equalarea_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,
         return proj_dirs, out
     else:
         return proj_dirs
+
 
 def equalarea_intotriangle(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False):
     """
@@ -2932,6 +3102,7 @@ def equalarea_intotriangle(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False):
         return proj_dirs, out
     else:
         return proj_dirs
+
 
 
 
@@ -3001,9 +3172,11 @@ def stereoprojection_planes(normals,arclength=360.,iniangle=0.,hemisphere='both'
         return  proj_planes, plane_points   
     else:
         return proj_planes
+
 def iszero(a):
     """Check if value is approximately zero (|a| < 1e-9)."""
     return abs(a)<1e-9
+
 
 def gcd(a,b):
     """Compute greatest common divisor of two numbers."""
@@ -3011,9 +3184,11 @@ def gcd(a,b):
         return a
     return gcd(b,a%b)
 
+
 def gcdarr(arr):
     """Compute GCD of all array elements."""
     return reduce(gcd,arr)
+
 
 def vector2miller(arr, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
     """
@@ -3035,6 +3210,7 @@ def vector2miller(arr, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
     else:
         return np.around(vm,decimals=decimals)
     
+
 
 def vector2millerround(v, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
     """
@@ -3088,6 +3264,7 @@ def vector2millerround(v, MIN=True, Tol=1e-9,tol=1e5,text=False,decimals=3):
             f"$[{{{(vm[0])}}}{{{(vm[1])}}}{{{(vm[2])}}}]$".replace('{-','\\overline{')
     return(vm)
 
+
 def vectors2miller(V, MIN=True, Tol=1e-9,tol=1e5,text=False):
     """
     Convert multiple vectors to Miller indices.
@@ -3104,3 +3281,4 @@ def vectors2miller(V, MIN=True, Tol=1e-9,tol=1e5,text=False):
         VM.append(vector2miller(v,MIN=MIN,Tol=Tol,tol=tol,text=text))
     return np.array(VM).T
  
+

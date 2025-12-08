@@ -23,6 +23,7 @@ from numba import njit
 # =====================================
 
 @njit
+
 def mat_to_quat(R):
     """
     Convert a rotation matrix to a quaternion representation.
@@ -81,6 +82,7 @@ def mat_to_quat(R):
 
 
 @njit
+
 def quat_to_mat(q):
     """
     Convert a quaternion to a rotation matrix.
@@ -115,6 +117,7 @@ def quat_to_mat(q):
 
 
 @njit
+
 def quat_mult(q1, q2):
     """
     Multiply two quaternions (Hamilton product).
@@ -152,6 +155,7 @@ def quat_mult(q1, q2):
 
 
 @njit
+
 def quat_misori_deg(q1, q2):
     """
     Calculate the misorientation angle between two quaternions in degrees.
@@ -188,6 +192,7 @@ def quat_misori_deg(q1, q2):
 
 
 @njit(parallel=True, fastmath=True)
+
 def misori_sym_deg_sample_to_crystal_fast(M1, M2, symops):
     """
     Compute misorientation angles (deg) between orientations M1 and M2
@@ -248,6 +253,7 @@ def misori_sym_deg_sample_to_crystal_fast(M1, M2, symops):
 
 
 @njit
+
 def quat_conjugate(q):
     """
     Compute the conjugate of a quaternion (inverse for unit quaternions).
@@ -275,6 +281,7 @@ def quat_conjugate(q):
 
 
 @njit
+
 def quat_multiply(q1, q2):
     """
     Quaternion multiplication (same as quat_mult, alternative implementation).
@@ -304,6 +311,7 @@ def quat_multiply(q1, q2):
 
 
 @njit
+
 def misori_sym_deg_quats(q1, q2, sym_quats):
     """
     Calculate minimum misorientation angle between two quaternions considering
@@ -347,6 +355,7 @@ def misori_sym_deg_quats(q1, q2, sym_quats):
 # Euler Angles and Rotation Matrices
 # =====================================
 
+
 def eu2quat(phi1, Phi, phi2):
     """
     Convert Bunge Euler angles to quaternion representation.
@@ -386,7 +395,9 @@ def eu2quat(phi1, Phi, phi2):
     return q
 
 
-def np_euler_matrix(ai, aj, ak):
+
+def np_euler_matrix(ai, aj, ak): 
+
     """
     Convert Euler angles to rotation matrix (ZXZ convention, Bunge notation).
     Single orientation version.
@@ -413,15 +424,21 @@ def np_euler_matrix(ai, aj, ak):
         >>> g_identity = np_euler_matrix(0, 0, 0)
         >>> print("Identity:", g_identity)
     """
-    g = np.eye(3)
+#    ai=20.*np.pi/180.
+#    aj=40.*np.pi/180.
+#    ak=80.*np.pi/180.
+#    np_euler_matrix(ai, aj, ak)
+#    np.matmul(passive_rotation(ak,'z'),np.matmul(passive_rotation(aj,'x'),passive_rotation(ai,'z')))
+    
+    g=np.eye(3)
     s1, s2, s3 = np.sin(ai), np.sin(aj), np.sin(ak)
     c1, c2, c3 = np.cos(ai), np.cos(aj), np.cos(ak)
     
-    g[0,0] = c1*c3 - s1*s3*c2
-    g[0,1] = s1*c3 + c1*s3*c2
+    g[0,0] = c1*c3-s1*s3*c2
+    g[0,1] = s1*c3+c1*s3*c2
     g[0,2] = s3*s2    
-    g[1,0] = -c1*s3 - s1*c3*c2 
-    g[1,1] = -s1*s3 + c1*c3*c2
+    g[1,0] = -c1*s3-s1*c3*c2 
+    g[1,1] = -s1*s3+c1*c3*c2
     g[1,2] = c3*s2 
     g[2,0] = s1*s2 
     g[2,1] = -c1*s2
@@ -487,7 +504,9 @@ def np_eulers_matrices(data, deg=False):
     return g
 
 
-def np_inverse_euler_matrix(ai, aj, ak):
+
+def np_inverse_euler_matrix(ai, aj, ak): 
+
     """
     Convert Euler angles to inverse (transpose) rotation matrix.
     Equivalent to the transpose of the forward rotation matrix.
@@ -513,28 +532,24 @@ def np_inverse_euler_matrix(ai, aj, ak):
         >>> print(result)
         >>> # Should be close to identity matrix
     """
-    U = np.eye(3)
+    U=np.eye(3)
 
     s1, s2, s3 = np.sin(ai), np.sin(aj), np.sin(ak)
     c1, c2, c3 = np.cos(ai), np.cos(aj), np.cos(ak)
 
-    U[0,0] = c1*c3 - s1*s3*c2
-    U[0,1] = -c1*s3 - s1*c3*c2
+    U[0,0] = c1*c3-s1*s3*c2
+    U[0,1] = -c1*s3-s1*c3*c2
     U[0,2] = s1*s2    
-    U[1,0] = s1*c3 + c1*s3*c2 
-    U[1,1] = -s1*s3 + c1*c3*c2
+    U[1,0] = s1*c3+c1*s3*c2 
+    U[1,1] = -s1*s3+c1*c3*c2
     U[1,2] = -c1*s2 
     U[2,0] = s3*s2 
     U[2,1] = c3*s2
     U[2,2] = c2   
     return U
 
-
-# =====================================
-# Rodrigues-Frank and Axis-Angle Representations
-# =====================================
-
 def ol_g_rtheta_rad(g):
+
     """
     Convert rotation matrix to axis-angle representation (Rodrigues-Frank vector).
     Returns rotation axis and angle.
@@ -558,37 +573,31 @@ def ol_g_rtheta_rad(g):
         >>> print("Rotation angle (deg):", np.degrees(angle))
         >>> # Should give axis ≈ [0, 0, 1] and angle ≈ π/2
     """
-    eps = 1.e-6
+    eps = 1.e-6;
     
-    ptheta = np.arccos((g[0][0] + g[1][1] + g[2][2] - 1) / 2)
-    r = [0., 0., 0.]
-    
-    if ptheta < eps:
-        # Small angle - axis is arbitrary
-        r[0] = 1
-        r[1] = 0
-        r[2] = 0
-    elif ptheta < (1 - eps)*np.pi:
-        # Normal case
-        r[0] = (g[1][2] - g[2][1]) / (2 * np.sin(ptheta))
-        r[1] = (g[2][0] - g[0][2]) / (2 * np.sin(ptheta))
-        r[2] = (g[0][1] - g[1][0]) / (2 * np.sin(ptheta))
+    ptheta = np.arccos((g[0][0] + g[1][1] + g[2][2] - 1) / 2);
+    r=[0.,0.,0.];
+    if ((ptheta) < eps):
+        r[0] = 1;
+        r[1] = 0;
+        r[2] = 0;
+    elif ((ptheta) < (1 - eps)*np.pi):
+        r[0] = (g[1][2] - g[2][1]) / (2 * np.sin(ptheta));
+        r[1] = (g[2][0] - g[0][2]) / (2 * np.sin(ptheta));
+        r[2] = (g[0][1] - g[1][0]) / (2 * np.sin(ptheta));
     else:
-        # Near 180 degrees
         r[0] = np.sqrt((g[0][0] + 1) / 2)
-        r[1] = np.sqrt((g[1][1] + 1) / 2)
-        r[2] = np.sqrt((g[2][2] + 1) / 2)
-    
+        r[1] = np.sqrt((g[1][1] + 1) / 2);
+        r[2] = np.sqrt((g[2][2] + 1) / 2);
     m = r.index(max(r))
-    for i in range(0, 3):
-        if not r == m:
-            if g[i][m] < 0:
-                r[i] *= 1
-    
-    return r, ptheta
-
+    for i in range(0,3):
+        if not r==m:
+            if g[i][m]<0:
+                r[i] *= 1;
+    return r,ptheta            
 
 def np_ol_g_rtheta_rad(g):
+
     """
     Convert rotation matrix to axis-angle representation (NumPy optimized version).
     
@@ -615,34 +624,33 @@ def np_ol_g_rtheta_rad(g):
         >>> print("Recovered axis:", axis_out)
         >>> print("Recovered angle (deg):", np.degrees(angle_out))
     """
-    eps = 1.e-6
+    eps = 1.e-6;
     
-    ptheta = np.arccos((np.trace(g) - 1) / 2)
-    r = np.array([0., 0., 0.])
-    
-    if ptheta < eps:
-        r[0] = 1
-        r[1] = 0
-        r[2] = 0
-    elif ptheta < (1 - eps)*np.pi:
-        r[0] = (g[1,2] - g[2,1]) / (2 * np.sin(ptheta))
-        r[1] = (g[2,0] - g[0,2]) / (2 * np.sin(ptheta))
-        r[2] = (g[0,1] - g[1,0]) / (2 * np.sin(ptheta))
+    ptheta = np.arccos((np.trace(g) - 1) / 2);
+    r=np.array([0.,0.,0.]);
+    if ((ptheta) < eps):
+        r[0] = 1;
+        r[1] = 0;
+        r[2] = 0;
+    elif ((ptheta) < (1 - eps)*np.pi):
+        r[0] = (g[1,2] - g[2,1]) / (2 * np.sin(ptheta));
+        r[1] = (g[2,0] - g[0,2]) / (2 * np.sin(ptheta));
+        r[2] = (g[0,1] - g[1,0]) / (2 * np.sin(ptheta));
     else:
         r[0] = np.sqrt((g[0,0] + 1) / 2)
-        r[1] = np.sqrt((g[1,1] + 1) / 2)
-        r[2] = np.sqrt((g[2,2] + 1) / 2)
-    
-    m = np.where(r == max(r))[0][0]
-    for i in range(0, 3):
-        if not i == m:
-            if g[i,m] < 0:
-                r[i] *= 1
-    
-    return r, ptheta
+        r[1] = np.sqrt((g[1,1] + 1) / 2);
+        r[2] = np.sqrt((g[2,2] + 1) / 2);
+    m = np.where(r==max(r))[0][0]
+    for i in range(0,3):
+        if not i==m:
+            if g[i,m]<0:
+                r[i] *= 1;
+    return r,ptheta            
 
 
 def ol_rtheta_g_rad(r, theta):
+
+
     """
     Convert axis-angle representation to rotation matrix using Rodrigues' formula.
     
@@ -672,22 +680,24 @@ def ol_rtheta_g_rad(r, theta):
     """
     g = [[0,0,0] for i in range(0,3)]
 
-    g[0][0] = r[0] * r[0] * (1 - np.cos(theta)) + np.cos(theta)
-    g[0][1] = r[0] * r[1] * (1 - np.cos(theta)) + r[2] * np.sin(theta)
-    g[0][2] = r[0] * r[2] * (1 - np.cos(theta)) - r[1] * np.sin(theta)
+    g[0][0] = r[0] * r[0] * (1 - np.cos (theta)) + np.cos (theta);
+    g[0][1] = r[0] * r[1] * (1 - np.cos (theta)) + r[2] * np.sin (theta);
+    g[0][2] = r[0] * r[2] * (1 - np.cos (theta)) - r[1] * np.sin (theta);
     
-    g[1][0] = r[1] * r[0] * (1 - np.cos(theta)) - r[2] * np.sin(theta)
-    g[1][1] = r[1] * r[1] * (1 - np.cos(theta)) + np.cos(theta)
-    g[1][2] = r[1] * r[2] * (1 - np.cos(theta)) + r[0] * np.sin(theta)
+    g[1][0] = r[1] * r[0] * (1 - np.cos (theta)) - r[2] * np.sin (theta);
+    g[1][1] = r[1] * r[1] * (1 - np.cos (theta)) + np.cos (theta);
+    g[1][2] = r[1] * r[2] * (1 - np.cos (theta)) + r[0] * np.sin (theta);
     
-    g[2][0] = r[2] * r[0] * (1 - np.cos(theta)) + r[1] * np.sin(theta)
-    g[2][1] = r[2] * r[1] * (1 - np.cos(theta)) - r[0] * np.sin(theta)
-    g[2][2] = r[2] * r[2] * (1 - np.cos(theta)) + np.cos(theta)
-    
+    g[2][0] = r[2] * r[0] * (1 - np.cos (theta)) + r[1] * np.sin (theta);
+    g[2][1] = r[2] * r[1] * (1 - np.cos (theta)) - r[0] * np.sin (theta);
+    g[2][2] = r[2] * r[2] * (1 - np.cos (theta)) + np.cos (theta);
+
     return g
 
 
 def np_ol_rtheta_g_rad(r, theta):
+
+
     """
     Convert axis-angle representation to rotation matrix (NumPy version).
     Uses Rodrigues' rotation formula.
@@ -715,21 +725,22 @@ def np_ol_rtheta_g_rad(r, theta):
         >>> print("G @ G.T (should be identity):")
         >>> print(orthogonal)
     """
-    g = np.zeros((3,3))
+    g=np.eye(3)
 
-    g[0,0] = r[0] * r[0] * (1 - np.cos(theta)) + np.cos(theta)
-    g[0,1] = r[0] * r[1] * (1 - np.cos(theta)) + r[2] * np.sin(theta)
-    g[0,2] = r[0] * r[2] * (1 - np.cos(theta)) - r[1] * np.sin(theta)
+    g[0,0] = r[0] * r[0] * (1 - np.cos (theta)) + np.cos (theta);
+    g[0,1] = r[0] * r[1] * (1 - np.cos (theta)) + r[2] * np.sin (theta);
+    g[0,2] = r[0] * r[2] * (1 - np.cos (theta)) - r[1] * np.sin (theta);
     
-    g[1,0] = r[1] * r[0] * (1 - np.cos(theta)) - r[2] * np.sin(theta)
-    g[1,1] = r[1] * r[1] * (1 - np.cos(theta)) + np.cos(theta)
-    g[1,2] = r[1] * r[2] * (1 - np.cos(theta)) + r[0] * np.sin(theta)
+    g[1,0] = r[1] * r[0] * (1 - np.cos (theta)) - r[2] * np.sin (theta);
+    g[1,1] = r[1] * r[1] * (1 - np.cos (theta)) + np.cos (theta);
+    g[1,2] = r[1] * r[2] * (1 - np.cos (theta)) + r[0] * np.sin (theta);
     
-    g[2,0] = r[2] * r[0] * (1 - np.cos(theta)) + r[1] * np.sin(theta)
-    g[2,1] = r[2] * r[1] * (1 - np.cos(theta)) - r[0] * np.sin(theta)
-    g[2,2] = r[2] * r[2] * (1 - np.cos(theta)) + np.cos(theta)
-    
+    g[2,0] = r[2] * r[0] * (1 - np.cos (theta)) + r[1] * np.sin (theta);
+    g[2,1] = r[2] * r[1] * (1 - np.cos (theta)) - r[0] * np.sin (theta);
+    g[2,2] = r[2] * r[2] * (1 - np.cos (theta)) + np.cos (theta);
+
     return g
+
 
 
 def np_gmat2rodrigues(g):
@@ -764,6 +775,7 @@ def np_gmat2rodrigues(g):
     axis, angle = np_ol_g_rtheta_rad(g)
     rodrigues = axis * np.tan(angle/2)
     return rodrigues
+
 
 
 def np_rodrigues2gmat(rodrigues):
@@ -806,6 +818,7 @@ def np_rodrigues2gmat(rodrigues):
 # =====================================
 # Vectorized Quaternion Operations
 # =====================================
+
 
 def np_g2quats(umatsa):
     """
@@ -892,6 +905,7 @@ def np_g2quats(umatsa):
     return Q
 
 
+
 def Qlog(QM):
     """
     Compute the logarithm of quaternions (quaternion logarithm map).
@@ -930,6 +944,7 @@ def Qlog(QM):
     qlog[1:4,:,:] = qlog[1:4,:,:] * np.tile(np.arccos(QM[0,:,:]/np.linalg.norm(QM[:,:,:], axis=0)),(3,1,1))
     
     return qlog
+
 
 
 def Qproduct(P, Q):
@@ -996,6 +1011,7 @@ def Qproduct(P, Q):
     return np.stack((Q0, Q1, Q2, Q3))
 
 
+
 def QMatproduct(sym, Q):
     """
     Multiply a single symmetry quaternion with multiple quaternions.
@@ -1035,6 +1051,7 @@ def QMatproduct(sym, Q):
 # Orientation Sampling and Gridding
 # =====================================
 
+
 def grid_s1(resol, grids=6):
     """
     Generate uniformly distributed points on S¹ (circle).
@@ -1066,6 +1083,7 @@ def grid_s1(resol, grids=6):
     points = [interval / 2 + i * interval for i in range(number_points)]
 
     return points
+
 
 
 def hopf2quat(Points):
@@ -1112,6 +1130,7 @@ def hopf2quat(Points):
     return quats
 
 
+
 def nside2npix(nside):
     """
     Calculate the number of pixels in a HEALPix map.
@@ -1137,6 +1156,7 @@ def nside2npix(nside):
         >>> print("Pixels for nside=128:", npix_high)  # 196608
     """
     return 12 * nside * nside
+
 
 
 def pix2ang_nest(nside, ipix, pix2x, pix2y):
@@ -1229,6 +1249,7 @@ def pix2ang_nest(nside, ipix, pix2x, pix2y):
     return theta, phi
 
 
+
 def mk_pix2xy():
     """
     Create lookup tables for HEALPix pixel index to (x,y) coordinate conversion.
@@ -1275,6 +1296,7 @@ def mk_pix2xy():
         pix2y.append(IY)
 
     return pix2x, pix2y
+
 
 
 def simple_grid(resol):
@@ -1332,3 +1354,819 @@ def simple_grid(resol):
     quats = hopf2quat(S3_Points)
 
     return quats
+
+
+def rotation_from_axis_angle(ax,an,deg=False):
+
+    """
+    Generate rotation matrix from axis-angle representation using Rodrigues formula.
+    
+    Creates 3×3 rotation matrix for rotation by 'angle' radians around 'axis'.
+    Implements Rodrigues' rotation formula for arbitrary axis rotations.
+    
+    Input:
+        axis (array [3]): Rotation axis (will be normalized)
+        angle (float): Rotation angle in radians
+    
+    Output:
+        numpy.ndarray (3×3): Rotation matrix R
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # 90° rotation around z-axis
+        >>> axis = np.array([0, 0, 1])
+        >>> angle = np.pi / 2
+        >>> R = rotation_from_axis_angle(axis, angle)
+        >>> print(R)
+        >>> # [[0, -1, 0],
+        >>> #  [1,  0, 0],
+        >>> #  [0,  0, 1]]
+        >>> 
+        >>> # Verify: rotate [1,0,0] to [0,1,0]
+        >>> v = np.array([1, 0, 0])
+        >>> v_rot = R.dot(v)
+        >>> print(v_rot)  # [0, 1, 0]
+        >>> 
+        >>> # 120° rotation around [111]
+        >>> axis_111 = np.array([1, 1, 1])
+        >>> R_111 = rotation_from_axis_angle(axis_111, 2*np.pi/3)
+    
+    Notes:
+        - Axis is automatically normalized
+        - Right-hand rule: thumb along axis, fingers show rotation
+        - Preserves vector lengths (orthogonal matrix)
+        - det(R) = 1 (proper rotation)
+        - Used in crystallographic symmetry operations
+    
+    Formula (Rodrigues):
+        R = I + sin(θ)K + (1-cos(θ))K²
+        where K is the skew-symmetric matrix of the axis
+    """
+    if deg:
+        an=an*np.pi/180
+    ax/=norm(ax)
+    return np.eye(3)*np.cos(an)+np.sin(an)*np.cross(ax,np.eye(3)) + (1-np.cos(an))*np.outer(ax,ax)
+
+def ol_g_R(g):
+
+    """
+    Convert rotation matrix to Rodrigues-Frank vector (list version).
+    
+    Calculates Rodrigues-Frank vector R = r·tan(θ/2) from rotation matrix,
+    where r is the rotation axis and θ is the rotation angle.
+    
+    Input:
+        g (list 3×3): Rotation matrix
+    
+    Output:
+        list [3]: Rodrigues-Frank vector
+    
+    Usage Example:
+        >>> # 90° rotation around Z
+        >>> g = [[0, -1, 0],
+        ...      [1,  0, 0],
+        ...      [0,  0, 1]]
+        >>> R = ol_g_R(g)
+        >>> print(R)  # [0, 0, 1] (since tan(45°)=1)
+    
+    Notes:
+        - Compact representation: 3 parameters vs 9 for matrix
+        - R = axis · tan(angle/2)
+        - Magnitude ||R|| = tan(θ/2)
+        - Direction = rotation axis
+        - Singular at θ = 180° (infinite magnitude)
+    
+    Formula:
+        R = r · tan(θ/2)
+        where (r, θ) from ol_g_rtheta_rad(g)
+    """
+    #Quey
+    r,theta = ol_g_rtheta_rad (g)
+    R=[0.,0.,0.]
+    for i in range(0,3):
+        R[i]=r[i]*np.tan(theta/2)
+    return R
+
+
+def np_ol_g_R(g):
+
+    """
+    Convert rotation matrix to Rodrigues-Frank vector (NumPy version).
+    
+    NumPy implementation returning Rodrigues-Frank vector as numpy array.
+    
+    Input:
+        g (numpy.ndarray 3×3): Rotation matrix
+    
+    Output:
+        numpy.ndarray [3]: Rodrigues-Frank vector
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Identity rotation
+        >>> g_id = np.eye(3)
+        >>> R_id = np_ol_g_R(g_id)
+        >>> print(R_id)  # [0, 0, 0]
+        >>> 
+        >>> # General rotation
+        >>> g = rotation_from_axis_angle([1,1,1], np.pi/3)
+        >>> R = np_ol_g_R(g)
+        >>> print(f"Rodrigues vector: {R}")
+    
+    Notes:
+        - Efficient numpy implementation
+        - Useful in grain boundary analysis
+        - Common in crystal plasticity codes
+    """
+    #Quey
+    r,theta = np_ol_g_rtheta_rad (g)
+    R=r*np.tan(theta/2)
+
+    return R
+
+
+def ol_R_g (R):
+
+
+    """
+    Convert Rodrigues-Frank vector to rotation matrix (list version).
+    
+    Reconstructs rotation matrix from Rodrigues-Frank representation.
+    
+    Input:
+        R (list [3]): Rodrigues-Frank vector
+    
+    Output:
+        list (3×3): Rotation matrix
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Rodrigues vector for 90° around Z
+        >>> R = [0, 0, 1]  # tan(45°) = 1
+        >>> g = ol_R_g(R)
+        >>> # Should give 90° rotation around Z
+    
+    Notes:
+        - Inverse of ol_g_R()
+        - Extracts angle: θ = 2·arctan(||R||)
+        - Extracts axis: r = R/||R||
+    
+    Formula:
+        θ = 2·arctan(||R||)
+        r = R / ||R||
+        g = ol_rtheta_g_rad(r, θ)
+    """
+    norm = np.sqrt(sum([ri*ri for ri in R]))
+    r = [ri/norm for ri in R]
+    theta = 2*np.arctan(norm)
+
+
+    g=ol_rtheta_g_rad(r, theta)
+
+
+    return g
+
+
+def np_ol_R_g (R):
+
+
+    """
+    Convert Rodrigues-Frank vector to rotation matrix (NumPy version).
+    
+    NumPy implementation of Rodrigues-Frank to rotation matrix conversion.
+    
+    Input:
+        R (numpy.ndarray [3]): Rodrigues-Frank vector
+    
+    Output:
+        numpy.ndarray (3×3): Rotation matrix
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Small rotation
+        >>> R_small = np.array([0.01, 0.02, 0.03])
+        >>> g = np_ol_R_g(R_small)
+        >>> print(f"Rotation angle: {np.degrees(2*np.arctan(np.linalg.norm(R_small))):.2f}°")
+        >>> 
+        >>> # Round trip test
+        >>> g_orig = rotation_from_axis_angle([1,0,0], 0.5)
+        >>> R_test = np_ol_g_R(g_orig)
+        >>> g_recovered = np_ol_R_g(R_test)
+        >>> print(np.allclose(g_orig, g_recovered))  # True
+    
+    Notes:
+        - Inverse of np_ol_g_R()
+        - Handles small rotations accurately
+        - Returns identity for zero vector
+    """
+    norm = np.sqrt(R.dot(R))
+    r=R/norm
+    theta = 2*np.arctan(norm)
+
+
+    g=np_ol_rtheta_g_rad(r, theta)
+
+
+    return g
+
+
+        
+
+def ol_g_R2(g):
+
+    """
+    Alternative Rodrigues-Frank conversion (list version, method 2).
+    
+    Second implementation of rotation matrix to Rodrigues-Frank vector.
+    May use different numerical approach for stability.
+    
+    Input:
+        g (list 3×3): Rotation matrix
+    
+    Output:
+        list [3]: Rodrigues-Frank vector
+    
+    Usage Example:
+        >>> g = [[0, -1, 0],
+        ...      [1,  0, 0],
+        ...      [0,  0, 1]]
+        >>> R = ol_g_R2(g)
+    
+    Notes:
+        - Alternative implementation for numerical comparison
+        - Should give same result as ol_g_R()
+        - Useful for validation
+    """
+    #Poulsen
+    gmm = g[0][0]+g[1][1]+g[2][2]
+    R=[0.,0.,0.]
+    epsilon = permut_tensor3()
+    delta = kronecker()
+    for i in range(0,3):
+        for j in range(0,3):
+            for k in range(0,3):
+                R[i]=R[i]+(epsilon[i][j][k]*g[j][k])/(1+gmm)
+                
+    return R
+
+
+def np_ol_g_R2(g,epsilon, delta):
+
+    """
+    Alternative Rodrigues-Frank conversion (NumPy version, method 2).
+    
+    NumPy implementation of alternative Rodrigues-Frank calculation.
+    
+    Input:
+        g (numpy.ndarray 3×3): Rotation matrix
+    
+    Output:
+        numpy.ndarray [3]: Rodrigues-Frank vector
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> g = np.eye(3)
+        >>> R = np_ol_g_R2(g)
+    
+    Notes:
+        - Alternative implementation
+        - For numerical stability comparison
+    """
+    #Poulsen
+    gmm = np.trace(g)
+    R = np.einsum('ijk,jk',epsilon,g)/(1+gmm)    
+    return R
+
+
+def ol_R_g2(R):
+
+    """
+    Alternative Rodrigues-Frank to rotation matrix (list version, method 2).
+    
+    Second implementation of Rodrigues-Frank to rotation matrix conversion.
+    
+    Input:
+        R (list [3]): Rodrigues-Frank vector
+    
+    Output:
+        list (3×3): Rotation matrix
+    
+    Usage Example:
+        >>> R = [0, 0, 0.5]
+        >>> g = ol_R_g2(R)
+    
+    Notes:
+        - Alternative implementation
+        - Should match ol_R_g() results
+    """
+    #Poulsen
+    r2=sum([ri*ri for ri in R])
+    
+    epsilon = permut_tensor3()
+    delta = kronecker()
+    g=[]
+    for i in range(0,3):
+        gj=[]
+        for j in range(0,3):
+            er=0.
+            for k in range(0,3):
+                er=er+2*epsilon[i][j][k]*R[k]
+            gj.append(1./(1+r2)*((1-r2)*delta[i][j]+2*R[i]*R[j]+er))
+        g.append(gj)
+            
+                    
+    return g
+
+
+def np_ol_R_g2(R,epsilon, delta):
+
+    """
+    Alternative Rodrigues-Frank to rotation matrix (NumPy version, method 2).
+    
+    NumPy implementation of alternative conversion method.
+    
+    Input:
+        R (numpy.ndarray [3]): Rodrigues-Frank vector
+    
+    Output:
+        numpy.ndarray (3×3): Rotation matrix
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> R = np.array([0.1, 0.2, 0.3])
+        >>> g = np_ol_R_g2(R)
+    
+    Notes:
+        - Alternative implementation for comparison
+    """
+    #Poulsen
+    r2=R.dot(R)
+    g= 1./(1+r2)*((1-r2)*delta+2*np.einsum('i,j',R,R)+np.einsum('ijk,k',2*epsilon,R))
+    return g
+
+
+def np_ol_R_q2(R):
+
+    """
+    Convert Rodrigues-Frank vector to quaternion (method 2).
+    
+    Transforms Rodrigues-Frank representation to unit quaternion [w,x,y,z].
+    
+    Input:
+        R (numpy.ndarray [3]): Rodrigues-Frank vector
+    
+    Output:
+        numpy.ndarray [4]: Unit quaternion [w, x, y, z]
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Small rotation
+        >>> R = np.array([0.01, 0, 0])
+        >>> q = np_ol_R_q2(R)
+        >>> print(q)  # Near [1, 0.01, 0, 0]
+        >>> print(f"Norm: {np.linalg.norm(q)}")  # 1.0
+    
+    Notes:
+        - Output is normalized quaternion
+        - w ≥ 0 convention
+        - Quaternion avoids singularities of Rodrigues-Frank
+    
+    Formula:
+        θ = 2·arctan(||R||)
+        q = [cos(θ/2), r·sin(θ/2)]
+        where r = R/||R||
+    """
+    #Poulsen
+    q=np.empty(4)
+    r2 = R.dot(R)
+    q[0]=1./np.sqrt(1+r2);
+    q[1:]=R/np.sqrt(1+r2)
+
+    return q
+
+
+def np_ol_g_q2(g):
+
+    """
+    Convert rotation matrix to quaternion (method 2).
+    
+    Extracts unit quaternion representation from rotation matrix.
+    
+    Input:
+        g (numpy.ndarray 3×3): Rotation matrix
+    
+    Output:
+        numpy.ndarray [4]: Unit quaternion [w, x, y, z]
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # 90° around Z
+        >>> g = np.array([[0, -1, 0],
+        ...               [1,  0, 0],
+        ...               [0,  0, 1]], dtype=float)
+        >>> q = np_ol_g_q2(g)
+        >>> print(q)  # [0.707, 0, 0, 0.707]
+    
+    Notes:
+        - Uses Rodrigues-Frank as intermediate
+        - Normalized output
+        - Stable for all rotation angles
+    
+    Formula:
+        g → R → q
+        (via np_ol_g_R and np_ol_R_q2)
+    """
+    #Poulsen
+    eps = 1e-6;
+    q=np.empty(4)
+    q[0] = 0.5*np.sqrt(np.trace(g)+1)
+    
+    if abs(q[0]) > eps:
+        q[1]=1./4./q[0]*(g[2,1]-g[1,2])
+        q[2]=1./4./q[0]*(g[2,0]-g[0,2])
+        q[3]=1./4./q[0]*(g[0,1]-g[1,0])
+    else:
+        for i in range(0,2):
+            q[i+1]=np.sqrt((g[i,i]+1)/2)
+        
+        m = 1+np.where(q[1:]==max(q[1:]))[0][0]
+        for i in range(0,3):
+            q[i]*=np.sign(g[i - 1][m - 1])
+            
+            
+    
+    return q
+#def np_ol_q_U2(q):
+#    #Poulsen
+#    g=np.empty((3,3))
+#    
+#    for i in range(0,2):
+#        g[i,i]=2*(q[0]**2+q[i+1]**2)-1
+#    
+#    g[1,0] = 2*(q[1]*q[2]+q[0]*q[3])
+#    g[0,1] = 2*(q[1]*q[2]-q[0]*q[3])
+#
+#    g[2,0] = 2*(q[1]*q[3]-q[0]*q[2])
+#    g[0,2] = 2*(q[1]*q[3]+q[0]*q[2])
+#    
+#    g[2,1] = 2*(q[2]*q[3]+q[0]*q[1])
+#    g[1,2] = 2*(q[2]*q[3]-q[0]*q[1])
+#
+#    return g
+#
+
+def np_ol_q_g(q):
+
+    """
+    Convert quaternion to rotation matrix.
+    
+    Transforms unit quaternion [w,x,y,z] to 3×3 rotation matrix.
+    
+    Input:
+        q (numpy.ndarray [4]): Unit quaternion [w, x, y, z]
+    
+    Output:
+        numpy.ndarray (3×3): Rotation matrix
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Identity quaternion
+        >>> q_id = np.array([1, 0, 0, 0])
+        >>> g_id = np_ol_q_g(q_id)
+        >>> print(np.allclose(g_id, np.eye(3)))  # True
+        >>> 
+        >>> # 180° around X
+        >>> q_180x = np.array([0, 1, 0, 0])
+        >>> g_180x = np_ol_q_g(q_180x)
+        >>> print(g_180x)
+        >>> # [[ 1,  0,  0],
+        >>> #  [ 0, -1,  0],
+        >>> #  [ 0,  0, -1]]
+    
+    Notes:
+        - Input should be normalized
+        - Avoids gimbal lock
+        - Efficient for interpolation
+    
+    Formula:
+        g₁₁ = 1 - 2(y² + z²)
+        g₁₂ = 2(xy - zw)
+        g₁₃ = 2(xz + yw)
+        ... (full 3×3 matrix)
+    """
+    #Poulsen
+    g=np.empty((3,3))
+    
+    g[0,0]=q[0]**2+q[1]**2-q[2]**2-q[3]**2
+    g[1,1]=q[0]**2-q[1]**2+q[2]**2-q[3]**2
+    g[2,2]=q[0]**2-q[1]**2-q[2]**2+q[3]**2
+    
+    for i in range(0,2):
+        g[i,i]=2*(q[0]**2+q[i+1]**2)-1
+    
+    g[1,0] = 2*(q[1]*q[2]-q[0]*q[3])
+    g[0,1] = 2*(q[1]*q[2]+q[0]*q[3])
+
+    g[2,0] = 2*(q[1]*q[3]+q[0]*q[2])
+    g[0,2] = 2*(q[1]*q[3]-q[0]*q[2])
+    
+    g[2,1] = 2*(q[2]*q[3]-q[0]*q[1])
+    g[1,2] = 2*(q[2]*q[3]+q[0]*q[1])
+
+    return g
+
+
+
+        
+
+def active_rotation(an, aboutaxis, deg=False):
+
+    """
+    Perform active rotation of vector v by rotation matrix g.
+    
+    Rotates the vector itself while keeping coordinate system fixed.
+    v' = g · v (matrix-vector multiplication).
+    
+    Input:
+        g (array 3×3): Rotation matrix
+        v (array [3]): Vector to rotate
+    
+    Output:
+        numpy.ndarray [3]: Rotated vector v'
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # 90° rotation around Z (active)
+        >>> g_z90 = np.array([[0, -1, 0],
+        ...                   [1,  0, 0],
+        ...                   [0,  0, 1]])
+        >>> v = np.array([1, 0, 0])
+        >>> v_rot = active_rotation(g_z90, v)
+        >>> print(v_rot)  # [0, 1, 0]
+        >>> 
+        >>> # Verify: [1,0,0] rotates to [0,1,0]
+        >>> assert np.allclose(v_rot, [0, 1, 0])
+    
+    Notes:
+        - Active = rotate the object
+        - Compare with passive_rotation (rotate coordinates)
+        - Common in physics and mechanics
+        - v' = g · v
+    
+    Formula:
+        v'_i = g_{ij} v_j
+    """
+    if deg:
+        an=an*np.pi/180.        
+    if aboutaxis.lower()=='z':
+        R = np.array([[np.cos(an),-np.sin(an),0],[np.sin(an),np.cos(an),0],[0,0,1]]);
+    elif aboutaxis.lower()=='x':
+        R = np.array([[1,0,0],[0,np.cos(an),-np.sin(an)],[0,np.sin(an),np.cos(an)]]);
+    elif aboutaxis.lower()=='y':
+        R = np.array([[np.cos(an),0,np.sin(an)],[0,1,0],[-np.sin(an),0,np.cos(an)]]);
+    
+    return R
+    
+
+
+def passive_rotation(an, aboutaxis, deg=False):
+
+    """
+    Perform passive rotation (coordinate transformation).
+    
+    Rotates the coordinate system while vector stays fixed in space.
+    v' = g^T · v (transpose of rotation matrix).
+    
+    Input:
+        g (array 3×3): Rotation matrix
+        v (array [3]): Vector in old coordinates
+    
+    Output:
+        numpy.ndarray [3]: Vector components in new coordinates
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Rotate coordinates 90° around Z
+        >>> g_z90 = np.array([[0, -1, 0],
+        ...                   [1,  0, 0],
+        ...                   [0,  0, 1]])
+        >>> v = np.array([0, 1, 0])
+        >>> v_new_coords = passive_rotation(g_z90, v)
+        >>> print(v_new_coords)  # [1, 0, 0]
+    
+    Notes:
+        - Passive = rotate coordinate system
+        - v' = g^T · v (transpose)
+        - Common in crystallography (sample↔crystal)
+        - Inverse of active rotation for same g
+    
+    Formula:
+        v'_i = g_{ji} v_j = g^T_{ij} v_j
+    """
+    R=np.transpose(active_rotation(an, aboutaxis, deg=deg));    
+    
+    return R
+    
+
+def euler_angles_reduction(Phi1,PHI,Phi2):
+
+
+    """
+    Reduce Euler angles to fundamental zone using symmetry operations.
+    
+    Applies crystal symmetry operations to find equivalent orientation
+    with Euler angles in the fundamental zone (asymmetric unit).
+    
+    Input:
+        phi1, Phi, phi2 (float): Euler angles in radians (Bunge convention)
+        symops (list): List of 3×3 symmetry operation matrices
+    
+    Output:
+        tuple: (phi1_red, Phi_red, phi2_red) - Reduced Euler angles in radians
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Cubic symmetry (simplified - just identity for demo)
+        >>> symops = [np.eye(3)]
+        >>> 
+        >>> # Reduce orientation
+        >>> phi1, Phi, phi2 = np.radians([45, 30, 60])
+        >>> phi1_r, Phi_r, phi2_r = euler_angles_reduction(phi1, Phi, phi2, symops)
+        >>> print(f"Reduced: φ1={np.degrees(phi1_r):.1f}°")
+    
+    Notes:
+        - Fundamental zone depends on crystal symmetry
+        - Cubic: 0≤φ1≤90°, 0≤Φ≤45°, 0≤φ2≤90°
+        - Reduces orientation distribution function (ODF) storage
+        - Essential for texture analysis
+    """
+    if not type(Phi1)==list:
+        Phi1 = [Phi1]
+        PHI = [PHI]
+        Phi2 = [Phi2]
+    Phi1_red=[]
+    Phi2_red=[]
+    PHI_red=[]
+    
+    for phi1,phi,phi2 in zip(Phi1,PHI,Phi2):
+    #converting PHI to 0-2*pi
+        phi = phi-round(phi/(2*np.pi))
+        if phi<0:
+            phi=phi+2*np.pi
+
+        #if phi>PI, applying reflection */
+        #phi becomes within [0,PI] */
+
+        if phi>np.pi:
+            phi=2*np.pi-phi
+            phi1 = phi1 + np.pi
+            phi2 = phi2 + np.pi
+
+        #treating the std case where phi != 0 */
+        if (abs(phi) > 1e-6 and abs(phi-np.pi)> 1e-6):
+            # ranging phi2 within [0,(2*np.pi)] */
+            phi2 = phi2-round(phi2/(2*np.pi))
+            if phi2<0:
+                phi2 =phi2 + 2*np.pi
+        
+        
+        # treating degeneracy: phi = 0: phi1 += phi2 and phi2 = 0. */
+        elif (abs(phi) > 1e-6):
+            phi1=phi1+phi2
+            phi2 = 0
+        else: # the same at phi = 180 */
+            phi1=phi1-phi2
+            phi2 = 0
+        
+        # ranging phi1 within [0,(2*PI)] */
+        phi1 = phi1-round(phi1/(2*np.pi))
+        if phi1<0:
+            phi1 = phi1 + 2*np.pi
+
+        Phi1_red.append(phi1)
+        Phi2_red.append(phi2)
+        PHI_red.append(phi)
+    if len(Phi1_red)==1:
+        return Phi1_red[0],PHI_red[0],Phi2_red[0]
+    else:
+        return Phi1_red,PHI_red,Phi2_red
+
+
+
+        
+
+def symmetry_elements(lattice):
+
+    """
+    Generate symmetry operation matrices for crystal system.
+    
+    Returns list of 3×3 rotation matrices representing all symmetry
+    operations for specified crystal system.
+    
+    Input:
+        crystal_system (str): 'cubic', 'hexagonal', 'tetragonal', 
+                             'orthorhombic', 'monoclinic', 'triclinic'
+    
+    Output:
+        list: List of numpy.ndarray (3×3) symmetry matrices
+    
+    Usage Example:
+        >>> symops = symmetry_elements('cubic')
+        >>> print(f"Cubic has {len(symops)} symmetry operations")
+        >>> # 24 operations for cubic (point group m-3m)
+        >>> 
+        >>> # Verify they're proper rotations
+        >>> for g in symops:
+        ...     assert np.abs(np.linalg.det(g) - 1.0) < 1e-10
+    
+    Notes:
+        - Cubic (Oh): 24 operations
+        - Hexagonal (D6h): 12 operations (typically)
+        - Tetragonal (D4h): 8 operations
+        - All matrices are proper rotations (det=1)
+        - Used in texture analysis and pole figures
+    """
+    U=[]
+    #identity
+    U.append(np.eye(3))
+    if lattice.lower()=='cubic':
+        #3xpi/2 Rotations about 100,010,001=>9 operations
+        U.append(np.array([[1,0,0],[0,0,-1],[0,1,0]]).T)
+        U.append(np.array([[1,0,0],[0,-1,0],[0,0,-1]]).T)
+        U.append(np.array([[1,0,0],[0,0,1],[0,-1,0]]).T)
+        
+        
+        U.append(np.array([[0,0,1],[0,1,0],[-1,0,0]]).T)
+        U.append(np.array([[-1,0,0],[0,1,0],[0,0,-1]]).T)
+        U.append(np.array([[0,0,-1],[0,1,0],[1,0,0]]).T)
+
+
+        U.append(np.array([[0,-1,0],[1,0,0],[0,0,1]]).T)
+        U.append(np.array([[-1,0,0],[0,-1,0],[0,0,1]]).T)
+        U.append(np.array([[0,1,0],[-1,0,0],[0,0,1]]).T)
+
+
+        #1xpi Rotation about [110][-110][011][0-11][101][10-1]
+        U.append(np.array([[0,1,0],[1,0,0],[0,0,-1]]).T)
+        U.append(np.array([[-1,0,0],[0,0,1],[0,1,0]]).T)
+        U.append(np.array([[0,0,1],[0,-1,0],[1,0,0]]).T)
+        U.append(np.array([[0,-1,0],[-1,0,0],[0,0,-1]]).T)
+        U.append(np.array([[-1,0,0],[0,0,-1],[0,-1,0]]).T)
+        U.append(np.array([[0,0,-1],[0,-1,0],[-1,0,0]]).T)
+        
+        #2xpi/3 rotations about [111][11-1][-111][-11-1]
+        U.append(np.array([[0,0,1],[1,0,0],[0,1,0]]).T)
+        U.append(np.array([[0,1,0],[0,0,1],[1,0,0]]).T)
+        U.append(np.array([[0,-1,0],[0,0,1],[-1,0,0]]).T)
+        U.append(np.array([[0,0,-1],[-1,0,0],[0,1,0]]).T)
+        U.append(np.array([[0,-1,0],[0,0,-1],[1,0,0]]).T)
+        U.append(np.array([[0,0,1],[-1,0,0],[0,-1,0]]).T)
+        U.append(np.array([[0,1,0],[0,0,-1],[-1,0,0]]).T)
+        U.append(np.array([[0,0,-1],[1,0,0],[0,-1,0]]).T)
+
+    if lattice.lower()=='tetragonal':
+        #1xpi/2 Rotations about 001=>3 operations
+
+        U.append(np.array([[0,-1,0],[1,0,0],[0,0,1]]).T)
+        U.append(np.array([[-1,0,0],[0,-1,0],[0,0,1]]).T)
+        U.append(np.array([[0,1,0],[-1,0,0],[0,0,1]]).T)
+
+        #1xpi Rotations about 100,010=>2 operations
+
+        U.append(np.array([[1,0,0],[0,-1,0],[0,0,-1]]).T)
+        U.append(np.array([[-1,0,0],[0,1,0],[0,0,-1]]).T)
+        
+
+
+        
+        #1xpi Rotation about [110][-110]=>2 operations
+        U.append(np.array([[0,1,0],[1,0,0],[0,0,-1]]).T)
+        U.append(np.array([[0,-1,0],[-1,0,0],[0,0,-1]]).T)
+        
+       
+    if lattice.lower()=='monoclinic':        
+        U.append(np.array([[-1,0,0],[0,1,0],[0,0,-1]]).T)
+
+        
+#        for i in range(0,len(U)):
+#            for j in range(0,len(U)):
+#                if (U[i]==U[j]).all() and i<>j:
+#                    print('spatne')
+#        
+#for u in U:
+#    print(u)
+#    print('')
+#    return U
+#     
+    return U
+           
