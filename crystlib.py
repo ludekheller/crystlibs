@@ -1881,15 +1881,15 @@ def np_ol_R_g (R):
         - Handles small rotations accurately
         - Returns identity for zero vector
     """
-  norm = np.sqrt(R.dot(R))
-  r=R/norm
-  theta = 2*np.arctan(norm)
-  
-
-  g=np_ol_rtheta_g_rad(r, theta);
+    norm = np.sqrt(R.dot(R))
+    r=R/norm
+    theta = 2*np.arctan(norm)
 
 
-  return g 
+    g=np_ol_rtheta_g_rad(r, theta);
+
+
+    return g
 
 
         
