@@ -19,6 +19,352 @@ import sympy
 from scipy.spatial import ConvexHull
 from projlib import  *
 
+
+
+
+def array2tuple(arr, decimals=2):
+    """
+    Convert a numpy array to a tuple with rounded elements.
+    
+    Input:
+        arr: numpy array or list - Array of numerical values
+        decimals: int - Number of decimal places to round to (default: 2)
+    
+    Output:
+        tuple - Rounded values as a tuple
+    
+    Usage Example:
+        >>> arr = np.array([1.234, 2.567, 3.891])
+        >>> result = array2tuple(arr, decimals=2)
+        >>> print(result)
+        (1.23, 2.57, 3.89)
+        
+        >>> arr2 = [0.1234, 0.5678]
+        >>> result2 = array2tuple(arr2, decimals=1)
+        >>> print(result2)
+        (0.1, 0.6)
+    """
+    fac = 10**decimals
+    return tuple([round(el*fac)/fac for el in arr])
+
+
+def generate_hkls(hklmax, syms, hkls=[]):
+    """
+    Generate unique Miller indices (hkl) considering crystal symmetry operations.
+    This version rounds values to avoid floating point comparison issues.
+    
+    Input:
+        hklmax: int - Maximum Miller index value (generates from -hklmax to +hklmax)
+        syms: list of numpy arrays - List of 3x3 symmetry operation matrices
+        hkls: list - Optional custom list of Miller indices to consider (default: [])
+    
+    Output:
+        hkls: list of tuples - Unique Miller indices
+        hkls2: dict - Dictionary mapping each unique hkl to its symmetry equivalents
+        fam: dict - Dictionary of unique families with their multiplicities
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> # Define cubic symmetry operations (identity and 90° rotation around z)
+        >>> identity = np.eye(3)
+        >>> rot_z = np.array([[0, -1, 0],
+        ...                   [1,  0, 0],
+        ...                   [0,  0, 1]])
+        >>> syms = [identity, rot_z]
+        >>> 
+        >>> # Generate hkls up to index 2
+        >>> hkls, hkls2, fam = generate_hkls(2, syms)
+        >>> print("First few unique hkls:", hkls[:3])
+        >>> print("Symmetry equivalents of (1,0,0):", hkls2.get((1.0, 0.0, 0.0)))
+        >>> print("Families:", list(fam.items())[:3])
+    """
+    # hklmax=3
+    if len(hkls) == 0:
+        hkl_range = list(range(-hklmax, hklmax+1, 1))[::-1]  # range(-hklmax,hklmax+1,1)
+    else:
+        hkl_range = hkls
+    
+    hkls = []
+    hkls2 = {}
+    
+    # Iterate through all possible hkl combinations
+    for h in hkl_range:
+        for k in hkl_range:
+            for l in hkl_range:
+                if h == 0 and k == 0 and l == 0:
+                    continue
+            
+                mhkl = (h, k, l)
+                eq_els = []
+                
+                # Apply all symmetry operations
+                for sym in syms:
+                    idxs = np.where(abs(sym) < 1e-10)
+                    sym[idxs[0], idxs[1]] = 0.0
+                    eq_els.append(array2tuple(sym.dot(mhkl)))
+                
+                isin = False
+                if len(hkls) == 0:
+                    hkls.append(array2tuple(np.array(eq_els[0])))
+                    
+                # Find unique symmetry equivalents
+                unique_eq_el = [array2tuple(eq_els[0])]  
+                for eq_el in eq_els:
+                    isin2 = False
+                    for ueq_el in unique_eq_el:
+                        if ueq_el == eq_el:
+                            isin2 = True
+                    if not isin2:
+                        unique_eq_el.append(array2tuple(eq_el))
+                    
+                    # Check if equivalent already exists in list
+                    for mplane in hkls:
+                        if mplane == eq_el:                                                                
+                            isin = True
+                            break
+                
+                if len(hkls2) == 0:
+                    hkls2[array2tuple(eq_els[0])] = unique_eq_el
+                
+                if not isin:
+                    hkls.append(array2tuple(np.array(eq_el)))
+                    hkls2[array2tuple(eq_el)] = unique_eq_el
+    
+    # Generate family information
+    fam = {}
+    for key in list(hkls2.keys()):
+        fam.update(get_unique_families(tuple([tuple(array2tuple(hkl)) for hkl in hkls2[key]])))
+
+    return hkls, hkls2, fam
+
+
+def generate_hkls01(hklmax, syms, hkls=[]):
+    """
+    Generate unique Miller indices (hkl) considering crystal symmetry operations.
+    Alternative version without rounding.
+    
+    Input:
+        hklmax: int - Maximum Miller index value (generates from -hklmax to +hklmax)
+        syms: list of numpy arrays - List of 3x3 symmetry operation matrices
+        hkls: list - Optional custom list of Miller indices to consider (default: [])
+    
+    Output:
+        hkls: list of tuples - Unique Miller indices
+        hkls2: dict - Dictionary mapping each unique hkl to its symmetry equivalents
+        fam: dict - Dictionary of unique families with their multiplicities
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> # Define tetragonal symmetry operations
+        >>> identity = np.eye(3)
+        >>> rot_90 = np.array([[0, -1, 0],
+        ...                    [1,  0, 0],
+        ...                    [0,  0, 1]])
+        >>> syms = [identity, rot_90]
+        >>> 
+        >>> hkls, hkls2, fam = generate_hkls01(1, syms)
+        >>> print("Generated hkls:", hkls)
+        >>> print("Number of unique planes:", len(hkls))
+    """
+    # hklmax=3
+    if len(hkls) == 0:
+        hkl_range = range(-hklmax, hklmax+1, 1)
+    else:
+        hkl_range = hkls
+    
+    hkls = []
+    hkls2 = {}
+    
+    for h in hkl_range:
+        for k in hkl_range:
+            for l in hkl_range:
+                if h == 0 and k == 0 and l == 0:
+                    continue
+            
+                mhkl = (h, k, l)
+                eq_els = []
+                for sym in syms:
+                    idxs = np.where(abs(sym) < 1e-10)
+                    sym[idxs[0], idxs[1]] = 0.0
+                    eq_els.append(tuple(sym.dot(mhkl)))
+                
+                isin = False
+                if len(hkls) == 0:
+                    hkls.append(tuple(eq_els[0]))
+                    
+                unique_eq_el = [eq_els[0]]  
+                for eq_el in eq_els:
+                    isin2 = False
+                    for ueq_el in unique_eq_el:
+                        if ueq_el == eq_el:
+                            isin2 = True
+                    if not isin2:
+                        unique_eq_el.append(eq_el)
+                    for mplane in hkls:
+                        if (mplane == eq_el):                                                                
+                            isin = True
+                            break
+                
+                if len(hkls2) == 0:
+                    hkls2[tuple(eq_els[0])] = unique_eq_el
+                if not isin:
+                    hkls.append(eq_el)
+                    hkls2[eq_el] = unique_eq_el
+    
+    fam = {}
+    for key in list(hkls2.keys()):
+        fam.update(get_unique_families(hkls2[key]))
+
+    return hkls, hkls2, fam
+
+
+def generate_hkls02(hklmax, syms, G, hkls=[]):
+    """
+    Generate unique Miller indices (hkl) with metric tensor transformation.
+    This version applies symmetry operations in the correct metric space.
+    
+    Input:
+        hklmax: int - Maximum Miller index value (generates from -hklmax to +hklmax)
+        syms: list of numpy arrays - List of 3x3 symmetry operation matrices
+        G: numpy array (3x3) - Metric tensor matrix
+        hkls: list - Optional custom list of Miller indices to consider (default: [])
+    
+    Output:
+        hkls: list of tuples - Unique Miller indices
+        hkls2: dict - Dictionary mapping each unique hkl to its symmetry equivalents
+        fam: dict - Dictionary of unique families with their multiplicities
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> # Define hexagonal metric tensor
+        >>> a = 3.0  # lattice parameter
+        >>> c = 5.0  # c-axis parameter
+        >>> G = np.array([[a**2, -a**2/2, 0],
+        ...               [-a**2/2, a**2, 0],
+        ...               [0, 0, c**2]])
+        >>> 
+        >>> # Define hexagonal symmetry
+        >>> identity = np.eye(3)
+        >>> rot_60 = np.array([[0.5, -np.sqrt(3)/2, 0],
+        ...                    [np.sqrt(3)/2, 0.5, 0],
+        ...                    [0, 0, 1]])
+        >>> syms = [identity, rot_60]
+        >>> 
+        >>> hkls, hkls2, fam = generate_hkls02(2, syms, G)
+        >>> print("Number of unique reflections:", len(hkls))
+    """
+    # hklmax=3
+    if len(hkls) == 0:
+        hkl_range = range(-hklmax, hklmax+1, 1)
+    else:
+        hkl_range = hkls
+    
+    hkls = []
+    hkls2 = {}
+    
+    Gi = np.linalg.inv(G)
+    
+    for h in hkl_range:
+        for k in hkl_range:
+            for l in hkl_range:
+                if h == 0 and k == 0 and l == 0:
+                    continue
+                
+                mhkl = (h, k, l)
+                eq_els = []
+                
+                # Apply symmetry with metric tensor transformation
+                for sym in syms:
+                    idxs = np.where(abs(sym) < 1e-10)
+                    sym[idxs[0], idxs[1]] = 0.0
+                    eq_els.append(tuple(Gi.dot(sym.dot(G.dot(mhkl)))))
+                
+                isin = False
+                if len(hkls) == 0:
+                    hkls.append(tuple(eq_els[0]))
+                    
+                unique_eq_el = [eq_els[0]]  
+                for eq_el in eq_els:
+                    isin2 = False
+                    for ueq_el in unique_eq_el:
+                        if ueq_el == eq_el:
+                            isin2 = True
+                    if not isin2:
+                        unique_eq_el.append(eq_el)
+                    for mplane in hkls:
+                        if (mplane == eq_el):                                                                
+                            isin = True
+                            break
+                
+                hkls2[tuple(eq_els[0])] = unique_eq_el
+                if not isin:
+                    hkls.append(eq_el)
+                    hkls2[eq_el] = unique_eq_el
+    
+    fam = {}
+    for key in list(hkls2.keys()):
+        fam.update(get_unique_families(hkls2[key]))
+
+    return hkls, hkls2, fam
+
+
+def get_unique_families(hkls):
+    """
+    Returns unique families of Miller indices based on permutation symmetry.
+    Families are considered equivalent if they are permutations of each other
+    (considering absolute values).
+    
+    Input:
+        hkls: list or tuple - List of Miller indices tuples [(h1,k1,l1), (h2,k2,l2), ...]
+    
+    Output:
+        dict - Dictionary mapping representative hkl to its multiplicity
+               {(h,k,l): count, ...}
+    
+    Usage Example:
+        >>> hkls = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (0, 1, 1)]
+        >>> families = get_unique_families(hkls)
+        >>> print(families)
+        {(1, 0, 0): 3, (1, 1, 0): 2}
+        >>> # (1,0,0), (0,1,0), (0,0,1) are in the same family with multiplicity 3
+        >>> # (1,1,0) and (0,1,1) are in the same family with multiplicity 2
+        
+        >>> # Example with negative indices
+        >>> hkls2 = [(1, 1, 1), (-1, 1, 1), (1, -1, 1)]
+        >>> families2 = get_unique_families(hkls2)
+        >>> print(families2)
+        {(1, 1, 1): 3}
+    """
+    import collections
+    
+    def is_perm(hkl1, hkl2):
+        """Check if two Miller indices are permutations of each other."""
+        h1 = np.abs(hkl1)
+        h2 = np.abs(hkl2)
+        return all([i == j for i, j in zip(sorted(h1), sorted(h2))])
+
+    unique = collections.defaultdict(list)
+    
+    # Group hkls by permutation equivalence
+    for hkl1 in hkls:
+        found = False
+        for hkl2 in unique.keys():
+            if is_perm(hkl1, hkl2):
+                found = True
+                unique[hkl2].append(hkl1)
+                break
+        if not found:
+            unique[hkl1].append(hkl1)
+
+    # Create final dictionary with representative hkl and multiplicity
+    pretty_unique = {}
+    for k, v in unique.items():
+        pretty_unique[sorted(v)[-1]] = len(v)
+
+    return pretty_unique
+
+
+
 def find_gcd(x, y): 
 
     """
