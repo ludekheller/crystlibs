@@ -728,9 +728,7 @@ def gen_dirs_norms(L, Lr, uvws,hkls, R2Proj=np.eye(3),symops=None,recsymops=None
     return dirs,normals
 
 
-def fullcirc_hist(Mats, Dr=[0,0,1], symops=None, equalarea=False, scale='sqrt', nlevels=10, lvls=None,bins=128, ax=None, title=None, ret=False,kernel=False,  weights=None,Lim=None,interp=True,interpn=1000, smooth=False, vmin=None,
-                  bandwidth=None, vmax=None,colorbar=True,ticks=None, R2Proj=None,contour=True, mrd=False, **kwargs):
-
+def fullcirc_hist(Mats, Dr=[0,0,1], symops=None, equalarea=False, scale='sqrt', nlevels=10, lvls=None,bins=128, ax=None, title=None, ret=False, 
     """
     Create a pole figure with density contours from orientation matrices.
     
@@ -757,6 +755,8 @@ def fullcirc_hist(Mats, Dr=[0,0,1], symops=None, equalarea=False, scale='sqrt', 
         >>> Mats = np_eulers_matrices(euler, deg=True)
         >>> fig, ax = fullcirc_hist(Mats, Dr=[0,0,1], equalarea=True)
     """
+                  kernel=False,  weights=None,Lim=None,interp=True,interpn=1000, smooth=False, vmin=None, 
+                  bandwidth=None, vmax=None,colorbar=True,ticks=None, R2Proj=None,contour=True, mrd=False, **kwargs):
     #generating inverse poles of Dr from orientation matrices Mats
     Dr=np.array(Dr)/np.linalg.norm(Dr)
     if symops is None:
