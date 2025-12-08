@@ -1807,8 +1807,6 @@ def np_ol_g_R(g):
     return R
 
 def ol_R_g (R):
-
-
     """
     Convert Rodrigues-Frank vector to rotation matrix (list version).
     
@@ -1838,15 +1836,15 @@ def ol_R_g (R):
         r = R / ||R||
         g = ol_rtheta_g_rad(r, θ)
     """
-  norm = np.sqrt(sum([ri*ri for ri in R]))
-  r = [ri/norm for ri in R]
-  theta = 2*np.arctan(norm)
-  
-
-  g=ol_rtheta_g_rad(r, theta);
+    norm = np.sqrt(sum([ri*ri for ri in R]))
+    r = [ri/norm for ri in R]
+    theta = 2*np.arctan(norm)
 
 
-  return g 
+    g=ol_rtheta_g_rad(r, theta)
+
+
+    return g
 
 def np_ol_R_g (R):
 
