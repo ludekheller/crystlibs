@@ -1886,7 +1886,7 @@ def np_ol_R_g (R):
     theta = 2*np.arctan(norm)
 
 
-    g=np_ol_rtheta_g_rad(r, theta);
+    g=np_ol_rtheta_g_rad(r, theta)
 
 
     return g
@@ -6423,13 +6423,12 @@ def generate_lattice_vectors(Points,uvw2xyz,S=1,Q=np.eye(3),xlim=[],ylim=[],zlim
 
     return LatticeVectors
     
-def plot_lattice(Points,LatticeVectors,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3),\
+def plot_lattice(Points,LatticeVectors,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3),shift=np.zeros(3),atoms=True,linewidth=1,move=np.zeros(3),normal=np.array([0,0,0]),halfspace='upper',s=200,plot=True):
     """
     plot_lattice - Crystallographic function for materials analysis.
     
     See full documentation in extended modules for detailed usage.
     """
-                 shift=np.zeros(3),atoms=True,linewidth=1,move=np.zeros(3),normal=np.array([0,0,0]),halfspace='upper',s=200,plot=True):
     #colors=['r','b','g']
     #normal=np.array([1,1,1.5])
     
@@ -6576,14 +6575,13 @@ def plot_lattice(Points,LatticeVectors,ax=None,colors=['r','b','g'],edgecolors=[
             return fig,ax,LatticeVectorsNew
     else:
         return fig,ax
-def plot_lattice_proj(LatticeVectors,normalproj,verticalproj, ax=None, linewidth=2,color='b',eps=1e-1,Q=np.eye(3),Qprojr=np.eye(2),
+def plot_lattice_proj(LatticeVectors,normalproj,verticalproj, ax=None, linewidth=2,color='b',eps=1e-1,Q=np.eye(3),Qprojr=np.eye(2),shift=np.zeros(3),shiftproj=0,move=np.zeros(3),normal=np.array([0,0,0]),shifthalfspace=np.zeros(3),
+                      halfspace='upper',shiftplot=np.array([0,0]),out=False):
     """
     plot_lattice_proj - Crystallographic function for materials analysis.
     
     See full documentation in extended modules for detailed usage.
     """
-                      shift=np.zeros(3),shiftproj=0,move=np.zeros(3),normal=np.array([0,0,0]),shifthalfspace=np.zeros(3),
-                      halfspace='upper',shiftplot=np.array([0,0]),out=False):
     if not isinstance(normalproj, np.ndarray):
         normalproj=np.array(normalproj);
     normalproj=normalproj/np.sqrt(normalproj.dot(normalproj))
@@ -6992,14 +6990,13 @@ def select_atomic_region(LatticePoints,normal,side='lower',eps=1e-1,shift=0.):
     
     return PointsOut
     
-def plot_atomic_plane2D(LatticePoints,normal,vertical,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],plot=True,\
+def plot_atomic_plane2D(LatticePoints,normal,vertical,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],plot=True,salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],linewidths=[1,1,1],markersizes=[200,200,200],
+                      Q=np.eye(3),xlim=[],ylim=[],out=False,zorder=1):
     """
     plot_atomic_plane2D - Crystallographic function for materials analysis.
     
     See full documentation in extended modules for detailed usage.
     """
-                      salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],linewidths=[1,1,1],markersizes=[200,200,200],
-                      Q=np.eye(3),xlim=[],ylim=[],out=False,zorder=1):
     if not isinstance(normal, np.ndarray):
         normal=np.array(normal);
     if not isinstance(vertical, np.ndarray):
@@ -7088,13 +7085,13 @@ def get_twinning_plane_points(K1,Pointsout,horizontal,vertical):
     twpoints=verts[:,np.abs(projnormal.dot(verts))<1e-10]
     return twpoints
     
-def plot_atomic_plane3D(LatticePoints,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],\
+def plot_atomic_plane3D(LatticePoints,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3)):
     """
     plot_atomic_plane3D - Crystallographic function for materials analysis.
     
     See full documentation in extended modules for detailed usage.
     """
-                      salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3)):
+
     if ax==None:
         fig = plt.figure() 
         ax = fig.add_subplot(111, projection='3d', proj_type = 'ortho') 
