@@ -1,0 +1,171 @@
+# PLOTLIB - Documentation Summary
+
+**Module**: `plotlib.py`  
+**Purpose**: Crystallographic Visualization  
+**Total Functions**: 26  
+**Last Updated**: December 08, 2025
+
+---
+
+## Function Overview
+
+### get_cmap
+
+`def get_cmap(colors, nbins=1000, name='my_cmap'):`
+
+Create a custom colormap from a list of colors with smooth gradients.
+
+### get_colors
+
+`def get_colors(values, cmap, vmin=None, vmax=None, cmin=0, cmax=None, to255=True, nancolor=[0, 0, 0, 1]):`
+
+Map data values to colors using a colormap.
+
+### plot_atomic_plane2D
+
+`def plot_atomic_plane2D(LatticePoints,normal,vertical,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],plot=True,salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],linewidths=[1,1,1],markersizes=[200,200,200], Q=np.eye(3),xlim=[],ylim=[],out=False,zorder=1):`
+
+plot_atomic_plane2D - Crystallographic function for materials analysis.
+
+### plot_atomic_plane3D
+
+`def plot_atomic_plane3D(LatticePoints,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3)):`
+
+plot_atomic_plane3D - Crystallographic function for materials analysis.
+
+### plot_atomlattice2D
+
+`def plot_atomlattice2D(atoms_xyz_position,uvw2xyz,normal,vertical,S=1,R=np.eye(3),ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5]):`
+
+plot_atomlattice2D - Crystallographic function for materials analysis.
+
+### plot_cut2D
+
+`def plot_cut2D(ax,Lattice_points,normal,horizontal,vertical,col,alpha=1):`
+
+Plot 2D cross-section of 3D points.
+
+### plot_lattice
+
+`def plot_lattice(Points,LatticeVectors,ax=None,colors=['r','b','g'],edgecolors=['r','b','g'],salpha=1.,lalpha=1.,gridcolor=[0.5,0.5,0.5],Q=np.eye(3),shift=np.zeros(3),atoms=True,linewidth=1,move=np.zeros(3),normal=np.array([0,0,0]),halfspace='upper',s=200,plot=True):`
+
+plot_lattice - Crystallographic function for materials analysis.
+
+### plot_lattice2D
+
+`def plot_lattice2D(ax,VV,description,Parentlattice_points,Parent_lattice,\ Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2,xlim=None):`
+
+Plot 2D projection of lattice.
+
+### plot_lattice3D
+
+`def plot_lattice3D(ax,VV,description,Parentlattice_points,Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2):`
+
+Complete 3D lattice visualization.
+
+### plot_lattice_2Dprojection
+
+`def plot_lattice_2Dprojection(ax,VV,description,Parentlattice_points,Parent_lattice,\ Productlattice_points,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,normals,verticals, linewidth=2,xlim=None):`
+
+Project lattice along specific crystallographic direction.
+
+### plot_lattice_boundaries
+
+`def plot_lattice_boundaries(axl,LatticePointsNew,allPoints=None,polygon=False,tol=1e-1,**kwargs):`
+
+Plot unit cell boundaries in 3D.
+
+### plot_lattice_plane
+
+`def plot_lattice_plane(axl,PlanePoints,**kwargs):`
+
+Plot a crystallographic plane in 3D lattice.
+
+### plot_lattice_proj
+
+`def plot_lattice_proj(LatticeVectors,normalproj,verticalproj, ax=None, linewidth=2,color='b',eps=1e-1,Q=np.eye(3),Qprojr=np.eye(2),shift=np.zeros(3),shiftproj=0,move=np.zeros(3),normal=np.array([0,0,0]),shifthalfspace=np.zeros(3), halfspace='upper',shiftplot=np.array([0,0]),out=False):`
+
+plot_lattice_proj - Crystallographic function for materials analysis.
+
+### plot_latticefaces3D
+
+`def plot_latticefaces3D(ax,Parentlattices,linewidth=2,alpha=0.15,edgecolor='r',linestyle='-',facecolor=(1, 0, 0, 0.15)):`
+
+plot_latticefaces3D - Crystallographic function for materials analysis.
+
+### plot_latticesfaces3D
+
+`def plot_latticesfaces3D(ax,VV,description,Parentlattices,Productlattices,Product_uvw_2_Parent_uvw_all_norm,Product_uvw2xyz,linewidth=2,alpha=0.15,xlim=[-2,2]):`
+
+Plot two lattices with transparent faces.
+
+### plot_mohr_circles
+
+`def plot_mohr_circles(mcircles,VV,DD,xyz2uvw,scale,xticks=None,yticks=None,ax=None,Parent_lattice='B2'):`
+
+Plot all three Mohr's circles.
+
+### plot_planes_on_mohr_circle
+
+`def plot_planes_on_mohr_circle(ax,scale,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl, colors,text=False,Parent_lattice='B2'):`
+
+Plot specific crystallographic planes on Mohr's circle.
+
+### plot_planes_on_stereotriangle
+
+`def plot_planes_on_stereotriangle(ax,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl,colors):`
+
+Plot planes on stereographic triangle.
+
+### plot_planes_on_wulffnet
+
+`def plot_planes_on_wulffnet(ax,SelNormalsOnCircle,SelShearsOnCircle,Parent_xyz2hkl,colors):`
+
+Plot plane normals on Wulff net (equal-angle projection).
+
+### plot_points_proj
+
+`def plot_points_proj(Points,normalproj,verticalproj, ax=None, marker="o",markersize=10, color='b',Q=np.eye(3),Qprojr=np.eye(2),shift=np.zeros(3),move=np.zeros(3)):`
+
+plot_points_proj - Crystallographic function for materials analysis.
+
+### plot_princip_dir_on_stereotriangle
+
+`def plot_princip_dir_on_stereotriangle(ax,VV,description,markersize=10,markerfacecolor='None',markeredgecolor='k',markeredgewidth=1.5):`
+
+Plot principal strain/stress directions on stereographic triangle.
+
+### plot_princip_dir_on_wulffnet
+
+`def plot_princip_dir_on_wulffnet(ax,VV,description,markersize=10,markerfacecolor='None',markeredgecolor='k',markeredgewidth=1.5):`
+
+Plot principal directions on Wulff net.
+
+### plotcolmap
+
+`def plotcolmap(fname=None, withdraw=False):`
+
+Plot a single colormap from a saved pickle file.
+
+### plotcolmaps
+
+`def plotcolmaps(fname=None, withdraw=False):`
+
+Plot multiple colormaps from a saved pickle file.
+
+### set_aspect_equal_3d
+
+`def set_aspect_equal_3d(ax):`
+
+Fix equal aspect ratio bug for 3D matplotlib plots.
+
+### shiftedColorMap
+
+`def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):`
+
+Shift the center of a colormap to a specific data value.
+
+
+---
+
+**Total**: 26 functions
