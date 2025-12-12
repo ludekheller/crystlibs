@@ -2,12 +2,24 @@
 
 **Module**: `orilib.py`  
 **Purpose**: Orientation Analysis and Transformations  
-**Total Functions**: 44  
-**Last Updated**: December 08, 2025
+**Total Functions**: 59  
+**Last Updated**: December 12, 2025
 
 ---
 
 ## Function Overview
+
+### Mat2Quat
+
+`def Mat2Quat(umatsa): #orientation matrix to quaternion`
+
+Convert rotation matrix to quaternion representation.
+
+### Mat2Quat_ini
+
+`def Mat2Quat_ini(umatsa): #orientation matrix to quaternion`
+
+Initialize matrix to quaternion conversion.
 
 ### QMatproduct
 
@@ -33,11 +45,41 @@ Compute quaternion product for arrays of quaternions.
 
 Perform active rotation of vector v by rotation matrix g.
 
+### disorimat
+
+`def disorimat(umatsa,symops,prnt=False,withfirst=False,eqmats=False):`
+
+Calculate disorientation matrix considering crystal symmetry.
+
+### disorimat_ini
+
+`def disorimat_ini(umatsa,symops):`
+
+
+
+### disorimat_test01
+
+`def disorimat_test01(umatsa,symops):`
+
+Test version 1 for disorientation matrix calculation.
+
+### disorimat_test02
+
+`def disorimat_test02(umatsa,symops):`
+
+Test version 2 for disorientation matrix calculation.
+
 ### eu2quat
 
 `def eu2quat(phi1, Phi, phi2):`
 
 Convert Bunge Euler angles to quaternion representation.
+
+### euler_angles_from_matrix
+
+`def euler_angles_from_matrix(Rl,deg=False):`
+
+Extract Euler angles from a rotation matrix.
 
 ### euler_angles_reduction
 
@@ -57,6 +99,12 @@ Generate uniformly distributed points on S¹ (circle).
 
 Convert Hopf coordinates to quaternions.
 
+### mat2quat02
+
+`def mat2quat02(matrix): #orientation matrix to quaternion`
+
+Alternative matrix to quaternion conversion (version 2).
+
 ### mat_to_quat
 
 `def mat_to_quat(R):`
@@ -74,6 +122,18 @@ Calculate minimum misorientation angle between two quaternions considering
 `def misori_sym_deg_sample_to_crystal_fast(M1, M2, symops):`
 
 Compute misorientation angles (deg) between orientations M1 and M2
+
+### misorimat
+
+`def misorimat(umatsa):`
+
+Calculate misorientation matrix between two orientations.
+
+### misorimat_ini
+
+`def misorimat_ini(umatsa):`
+
+Initialize misorientation matrix calculation (initialization version).
 
 ### mk_pix2xy
 
@@ -213,6 +273,12 @@ Convert rotation matrix to axis-angle representation (Rodrigues-Frank vector).
 
 Convert axis-angle representation to rotation matrix using Rodrigues' formula.
 
+### orilistMult
+
+`def orilistMult(Mats,Dr):`
+
+Multiply a list of orientation matrices by symmetry operations.
+
 ### passive_rotation
 
 `def passive_rotation(an, aboutaxis, deg=False):`
@@ -273,7 +339,31 @@ Generate a uniform grid of quaternions covering orientation space (SO(3)).
 
 Generate symmetry operation matrices for crystal system.
 
+### symmetry_reduced_oris
+
+`def symmetry_reduced_oris(umatsa, symops):`
+
+Reduce orientations to fundamental zone using crystal symmetry.
+
+### symposMult
+
+`def symposMult(sympos,Mats):`
+
+Multiply symmetry operations to generate composite symmetry operations.
+
+### symposMult02
+
+`def symposMult02(sympos,Mats):`
+
+Alternative implementation of symmetry operations multiplication.
+
+### trace_to_angle
+
+`def trace_to_angle(tr, out="deg"):`
+
+Convert rotation matrix trace to rotation angle.
+
 
 ---
 
-**Total**: 44 functions
+**Total**: 59 functions

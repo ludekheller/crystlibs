@@ -1,10 +1,52 @@
 # ORILIB - Comprehensive Quick Reference
 
 **Module**: `orilib.py`  
-**Functions**: 44  
-**Last Updated**: December 08, 2025
+**Functions**: 59  
+**Last Updated**: December 12, 2025
 
 This reference provides function signatures with brief descriptions and example usage patterns.
+
+---
+
+## Mat2Quat
+
+```python
+def Mat2Quat(umatsa): #orientation matrix to quaternion
+```
+
+Convert rotation matrix to quaternion representation.
+    General matrix to quaternion conversion. Alternative implementation
+    that may use different numerical approach than mat_to_quat.
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Random rotation matrix
+        >>> from scipy.spatial.transform import Rotation as Rot
+# ...
+```
+
+---
+
+## Mat2Quat_ini
+
+```python
+def Mat2Quat_ini(umatsa): #orientation matrix to quaternion
+```
+
+Initialize matrix to quaternion conversion.
+    Preliminary/initialization version of rotation matrix to quaternion
+    conversion. May be an earlier implementation or setup function.
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Simple 90° rotation around Z
+        >>> R = np.array([[0, -1, 0],
+# ...
+```
 
 ---
 
@@ -89,6 +131,77 @@ Perform active rotation of vector v by rotation matrix g.
 
 ---
 
+## disorimat
+
+```python
+def disorimat(umatsa,symops,prnt=False,withfirst=False,eqmats=False):
+```
+
+Calculate disorientation matrix considering crystal symmetry.
+    Computes the minimum misorientation between two orientations by
+    considering all symmetrically equivalent variants. This is the
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # EBSD grain orientations
+        >>> grain1_euler = np.radians([120, 45, 80])
+# ...
+```
+
+---
+
+## disorimat_ini
+
+```python
+def disorimat_ini(umatsa,symops):
+```
+
+---
+
+## disorimat_test01
+
+```python
+def disorimat_test01(umatsa,symops):
+```
+
+Test version 1 for disorientation matrix calculation.
+    First test implementation of disorientation computation. Used for
+    validating algorithms before final implementation.
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Create test orientations
+        >>> M1 = np_euler_matrix(0, 0, 0)
+# ...
+```
+
+---
+
+## disorimat_test02
+
+```python
+def disorimat_test02(umatsa,symops):
+```
+
+Test version 2 for disorientation matrix calculation.
+    Experimental/testing version of disorientation calculation. The
+    disorientation is the minimum misorientation considering crystal
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Test with known misorientations
+        >>> M1 = np.eye(3)
+# ...
+```
+
+---
+
 ## eu2quat
 
 ```python
@@ -104,6 +217,27 @@ Convert Bunge Euler angles to quaternion representation.
         >>> # 45-degree rotation around each axis
         >>> phi1 = np.radians(45)
         >>> Phi = np.radians(45)
+# ...
+```
+
+---
+
+## euler_angles_from_matrix
+
+```python
+def euler_angles_from_matrix(Rl,deg=False):
+```
+
+Extract Euler angles from a rotation matrix.
+    Inverse operation of np_euler_matrix. Converts a rotation matrix back
+    to Bunge Euler angles (ZXZ convention).
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Create rotation matrix from Euler angles
+        >>> phi1, Phi, phi2 = np.radians([45, 60, 30])
 # ...
 ```
 
@@ -170,6 +304,27 @@ Convert Hopf coordinates to quaternions.
 
 ---
 
+## mat2quat02
+
+```python
+def mat2quat02(matrix): #orientation matrix to quaternion
+```
+
+Alternative matrix to quaternion conversion (version 2).
+    Different algorithm for converting rotation matrix to quaternion.
+    May handle numerical edge cases differently than mat_to_quat.
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Create rotation matrix
+        >>> angle = np.pi/3  # 60 degrees
+# ...
+```
+
+---
+
 ## mat_to_quat
 
 ```python
@@ -226,6 +381,48 @@ Compute misorientation angles (deg) between orientations M1 and M2
         >>> from scipy.spatial.transform import Rotation as R
         >>> 
         >>> # Generate some random orientations
+# ...
+```
+
+---
+
+## misorimat
+
+```python
+def misorimat(umatsa):
+```
+
+Calculate misorientation matrix between two orientations.
+    Computes the relative rotation (misorientation) between two crystal
+    orientations. The misorientation matrix represents the rotation needed
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Two grain orientations
+        >>> euler1 = np.radians([30, 45, 60])
+# ...
+```
+
+---
+
+## misorimat_ini
+
+```python
+def misorimat_ini(umatsa):
+```
+
+Initialize misorientation matrix calculation (initialization version).
+    Preliminary version of misorientation matrix computation. Sets up
+    the calculation framework for determining misorientation between
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> from scipy.spatial.transform import Rotation as R
+        >>> 
+        >>> # Two random orientations
 # ...
 ```
 
@@ -385,6 +582,8 @@ Alternative Rodrigues-Frank to rotation matrix (NumPy version, method 2).
 >>> import numpy as np
         >>> R = np.array([0.1, 0.2, 0.3])
         >>> g = np_ol_R_g2(R)
+    Notes:
+# ...
 ```
 
 ---
@@ -443,6 +642,8 @@ Alternative Rodrigues-Frank conversion (NumPy version, method 2).
 >>> import numpy as np
         >>> g = np.eye(3)
         >>> R = np_ol_g_R2(g)
+    Notes:
+# ...
 ```
 
 ---
@@ -598,6 +799,9 @@ Alternative Rodrigues-Frank to rotation matrix (list version, method 2).
 ```python
 >>> R = [0, 0, 0.5]
         >>> g = ol_R_g2(R)
+    Notes:
+        - Alternative implementation
+# ...
 ```
 
 ---
@@ -639,6 +843,7 @@ Alternative Rodrigues-Frank conversion (list version, method 2).
         ...      [1,  0, 0],
         ...      [0,  0, 1]]
         >>> R = ol_g_R2(g)
+# ...
 ```
 
 ---
@@ -677,6 +882,27 @@ Convert axis-angle representation to rotation matrix using Rodrigues' formula.
         >>> # 90-degree rotation around Z axis
         >>> axis = [0, 0, 1]
         >>> angle = np.pi/2
+# ...
+```
+
+---
+
+## orilistMult
+
+```python
+def orilistMult(Mats,Dr):
+```
+
+Multiply a list of orientation matrices by symmetry operations.
+    Applies symmetry operations to orientation matrices to generate all
+    symmetrically equivalent orientations.
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> from scipy.spatial.transform import Rotation as R
+        >>> 
+        >>> # Create orientation matrices
 # ...
 ```
 
@@ -877,6 +1103,90 @@ Generate symmetry operation matrices for crystal system.
         >>> print(f"Cubic has {len(symops)} symmetry operations")
         >>> # 24 operations for cubic (point group m-3m)
         >>> 
+# ...
+```
+
+---
+
+## symmetry_reduced_oris
+
+```python
+def symmetry_reduced_oris(umatsa, symops):
+```
+
+Reduce orientations to fundamental zone using crystal symmetry.
+    Applies symmetry operations to bring all orientations into the
+    fundamental zone (asymmetric unit) of orientation space. This
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> from scipy.spatial.transform import Rotation as R
+        >>> 
+        >>> # Generate random orientations
+# ...
+```
+
+---
+
+## symposMult
+
+```python
+def symposMult(sympos,Mats):
+```
+
+Multiply symmetry operations to generate composite symmetry operations.
+    Computes the product of two sets of symmetry operations to generate
+    all possible combinations.
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Define some symmetry operations
+        >>> # 90° rotation around Z
+# ...
+```
+
+---
+
+## symposMult02
+
+```python
+def symposMult02(sympos,Mats):
+```
+
+Alternative implementation of symmetry operations multiplication.
+    Similar to symposMult but may use different algorithm or ordering.
+    Generates all products of two symmetry operation sets.
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Point group symmetry operations
+        >>> identity = np.eye(3)
+# ...
+```
+
+---
+
+## trace_to_angle
+
+```python
+def trace_to_angle(tr, out="deg"):
+```
+
+Convert rotation matrix trace to rotation angle.
+    Uses the trace (sum of diagonal elements) of a rotation matrix to
+    calculate the rotation angle. Based on the relation:
+
+**Example**:
+```python
+>>> import numpy as np
+        >>> 
+        >>> # Create rotation matrix
+        >>> theta_original = np.radians(45)
 # ...
 ```
 

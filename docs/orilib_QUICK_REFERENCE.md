@@ -1,10 +1,22 @@
 # ORILIB - Quick Reference
 
 **Module**: `orilib.py`  
-**Functions**: 44  
-**Last Updated**: December 08, 2025
+**Functions**: 59  
+**Last Updated**: December 12, 2025
 
 ---
+
+**Mat2Quat**
+```python
+def Mat2Quat(umatsa): #orientation matrix to quaternion
+```
+*Convert rotation matrix to quaternion representation*
+
+**Mat2Quat_ini**
+```python
+def Mat2Quat_ini(umatsa): #orientation matrix to quaternion
+```
+*Initialize matrix to quaternion conversion*
 
 **QMatproduct**
 ```python
@@ -30,11 +42,40 @@ def active_rotation(an, aboutaxis, deg=False):
 ```
 *Perform active rotation of vector v by rotation matrix g*
 
+**disorimat**
+```python
+def disorimat(umatsa,symops,prnt=False,withfirst=False,eqmats=False):
+```
+*Calculate disorientation matrix considering crystal symmetry*
+
+**disorimat_ini**
+```python
+def disorimat_ini(umatsa,symops):
+```
+
+**disorimat_test01**
+```python
+def disorimat_test01(umatsa,symops):
+```
+*Test version 1 for disorientation matrix calculation*
+
+**disorimat_test02**
+```python
+def disorimat_test02(umatsa,symops):
+```
+*Test version 2 for disorientation matrix calculation*
+
 **eu2quat**
 ```python
 def eu2quat(phi1, Phi, phi2):
 ```
 *Convert Bunge Euler angles to quaternion representation*
+
+**euler_angles_from_matrix**
+```python
+def euler_angles_from_matrix(Rl,deg=False):
+```
+*Extract Euler angles from a rotation matrix*
 
 **euler_angles_reduction**
 ```python
@@ -53,6 +94,12 @@ def grid_s1(resol, grids=6):
 def hopf2quat(Points):
 ```
 *Convert Hopf coordinates to quaternions*
+
+**mat2quat02**
+```python
+def mat2quat02(matrix): #orientation matrix to quaternion
+```
+*Alternative matrix to quaternion conversion (version 2)*
 
 **mat_to_quat**
 ```python
@@ -73,6 +120,18 @@ def misori_sym_deg_sample_to_crystal_fast(M1, M2, symops):
 ```
 *Compute misorientation angles (deg) between orientations M1 and M2
     consid...*
+
+**misorimat**
+```python
+def misorimat(umatsa):
+```
+*Calculate misorientation matrix between two orientations*
+
+**misorimat_ini**
+```python
+def misorimat_ini(umatsa):
+```
+*Initialize misorientation matrix calculation (initialization version)*
 
 **mk_pix2xy**
 ```python
@@ -212,6 +271,12 @@ def ol_rtheta_g_rad(r, theta):
 ```
 *Convert axis-angle representation to rotation matrix using Rodrigues' formula*
 
+**orilistMult**
+```python
+def orilistMult(Mats,Dr):
+```
+*Multiply a list of orientation matrices by symmetry operations*
+
 **passive_rotation**
 ```python
 def passive_rotation(an, aboutaxis, deg=False):
@@ -271,4 +336,28 @@ def simple_grid(resol):
 def symmetry_elements(lattice):
 ```
 *Generate symmetry operation matrices for crystal system*
+
+**symmetry_reduced_oris**
+```python
+def symmetry_reduced_oris(umatsa, symops):
+```
+*Reduce orientations to fundamental zone using crystal symmetry*
+
+**symposMult**
+```python
+def symposMult(sympos,Mats):
+```
+*Multiply symmetry operations to generate composite symmetry operations*
+
+**symposMult02**
+```python
+def symposMult02(sympos,Mats):
+```
+*Alternative implementation of symmetry operations multiplication*
+
+**trace_to_angle**
+```python
+def trace_to_angle(tr, out="deg"):
+```
+*Convert rotation matrix trace to rotation angle*
 

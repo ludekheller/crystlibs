@@ -53,8 +53,10 @@ Tools for crystallographic orientation representations including Euler angles, q
 - Active and passive rotations
 - HEALPix orientation sampling
 - Crystal symmetry operations
+- **Misorientation and disorientation analysis**
+- **Symmetry-reduced orientations**
 
-**Documentation:**
+**Documentation:****Documentation:**
 - 📘 [Complete Documentation](./docs/orilib_DOCUMENTATION_COMPLETE.md)
 - 📄 [Documentation Summary](./docs/orilib_DOCUMENTATION_SUMMARY.md)
 - 📋 [Quick Reference](./docs/orilib_QUICK_REFERENCE.md)
@@ -311,10 +313,10 @@ plt.show()
 | Module | Functions | Lines of Code | Size | Primary Focus |
 |--------|-----------|---------------|------|---------------|
 | crystlib.py | 71 | 7,089 | 275 KB | Crystal structures, lattice operations |
-| orilib.py | 44 | 2,173 | 64 KB | Orientation transformations |
+| orilib.py | 60 | 2,500+ | 80 KB | Orientation transformations |
 | plotlib.py | 26 | 2,379 | 87 KB | Visualization and plotting |
 | projlib.py | 45 | 3,285 | 118 KB | Stereographic projections |
-| **Total** | **186** | **14,926** | **544 KB** | Complete toolkit |
+| **Total** | **202** | **15,400+** | **624 KB** | Complete toolkit |
 
 ---
 
