@@ -2170,3 +2170,983 @@ def symmetry_elements(lattice):
 #     
     return U
            
+
+
+# =====================================
+# Additional Orientation Functions
+# =====================================
+
+def orilistMult(Mats,Dr):
+    """
+    Multiply a list of orientation matrices by symmetry operations.
+    
+    Applies symmetry operations to orientation matrices to generate all
+    symmetrically equivalent orientations.
+    
+    Input:
+        orilist: numpy array (N, 3, 3) - Array of orientation matrices
+        symops: numpy array (Ns, 3, 3) - Array of symmetry operation matrices
+    
+    Output:
+        result: numpy array (N*Ns, 3, 3) - All symmetrically equivalent orientations
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> from scipy.spatial.transform import Rotation as R
+        >>> 
+        >>> # Create orientation matrices
+        >>> N = 10
+        >>> orientations = R.random(N).as_matrix()
+        >>> 
+        >>> # Cubic symmetry operations (simplified - just identity for demo)
+        >>> symops = np.array([np.eye(3)])
+        >>> 
+        >>> # Generate all equivalent orientations
+        >>> equiv_oris = orilistMult(orientations, symops)
+        >>> print("Original:", orientations.shape)
+        >>> print("With symmetry:", equiv_oris.shape)
+        
+        >>> # For full cubic symmetry (24 operations)
+        >>> # equiv_oris would have shape (N*24, 3, 3)
+    """
+    #list of matrices (N,3,3).dot(vector Dr)
+    Mr = np.reshape(Mats, (Mats.shape[0]*Mats.shape[1],Mats.shape[2]))
+    Dr=np.array(Dr)/np.linalg.norm(Dr)
+    data = Mr.dot(Dr)
+    data = np.reshape(data,(int(data.shape[0]/3),3)).T
+    return data
+
+def symposMult(sympos,Mats):
+    """
+    Multiply symmetry operations to generate composite symmetry operations.
+    
+    Computes the product of two sets of symmetry operations to generate
+    all possible combinations.
+    
+    Input:
+        sympos1: numpy array (N1, 3, 3) - First set of symmetry operations
+        sympos2: numpy array (N2, 3, 3) - Second set of symmetry operations
+    
+    Output:
+        result: numpy array (N1*N2, 3, 3) - All products of sympos1 and sympos2
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Define some symmetry operations
+        >>> # 90° rotation around Z
+        >>> rot_z = np.array([[0, -1, 0],
+        ...                   [1,  0, 0],
+        ...                   [0,  0, 1]])
+        >>> 
+        >>> # Mirror in XY plane
+        >>> mirror_xy = np.array([[1, 0, 0],
+        ...                       [0, 1, 0],
+        ...                       [0, 0, -1]])
+        >>> 
+        >>> symops1 = np.array([np.eye(3), rot_z])
+        >>> symops2 = np.array([np.eye(3), mirror_xy])
+        >>> 
+        >>> # Generate all combinations
+        >>> combined = symposMult(symops1, symops2)
+        >>> print("Combined symmetry operations:", combined.shape)
+        >>> # Shape: (4, 3, 3) = 2*2 combinations
+    """
+    # The product of two 2D matrices (numpy ndarray shape(N,N)) can be calculated
+    # using the function 'numpy.dot'. In order to compute the matrix product of
+    # higher dimensions arrays, numpy.dot can also be used, but paying careful
+    # attention to the indices of the resulting matrix. Examples:
+    #     - A is ndarray shape(N,M,3,3) and B is ndarray shape(3,3):
+    #     np.dot(A,B)[i,j,k,m] = np.sum(A[i,j,:,k]*B[m,:])
+    #     np.dot(A,B) is ndarray shape(N,M,3,3)
+
+    #     - A is ndarray shape(N,3,3) and B is ndarray shape(M,3,3):
+    #     np.dot(A,B)[i,j,k,m] = np.sum(A[i,:,j]*B[k,m,:])
+    #
+    #     The result np.dot(A,B) is ndarray shape(N,3,M,3). It's more convenient to
+    #     express the result as ndarray shape(N,M,3,3). In order to obtain the
+    #     desired result, the 'transpose' function should be used. i.e.,
+    #     np.dot(A,B).transpose([0,2,1,3]) results in ndarray shape(N,M,3,3)
+
+    #     - A is ndarray shape(3,3) and B is ndarray shape(N,M,3,3):
+    #     np.dot(A,B)[i,j,k,m] = np.sum(A[:,i]*B[j,k,m,:])
+    #
+    #     np.dot(A,B) is ndarray shape(3,N,M,3). np.dot(A,B).transpose([1,2,0,3])
+    #     results in ndarray shape(N,M,3,3)
+
+    # 'numpy.dot' is a particular case of 'numpy.tensordot':
+    # np.dot(A,B) == np.tensordot(A, B, axes=[[-1],[-2]])
+
+    # numpy.tensordot is two times faster than numpy.dot
+
+    # http://docs.scipy.org/doc/numpy/reference/generated/numpy.matmul.html
+    # http://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html
+    # http://docs.scipy.org/doc/numpy/reference/generated/numpy.tensordot.html
+    #list of symmetry matrices sympos (M,3,3) x list of orientation matrices Mats (N,3,3)
+    if type(sympos) == list:
+        sympos=np.array(sympos)
+        
+    MT=np.dot(sympos,Mats).transpose([0,2,1,3])#shape=(M.N,3,3)
+    MT=MT.reshape((MT.shape[0]*MT.shape[1],3,3))#Contraction to (N*M,3,3)
+    return MT
+
+def symposMult02(sympos,Mats):
+    """
+    Alternative implementation of symmetry operations multiplication.
+    
+    Similar to symposMult but may use different algorithm or ordering.
+    Generates all products of two symmetry operation sets.
+    
+    Input:
+        symops1: numpy array (N1, 3, 3) - First set of symmetry operations
+        symops2: numpy array (N2, 3, 3) - Second set of symmetry operations
+    
+    Output:
+        result: numpy array (N1*N2, 3, 3) - Product symmetry operations
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Point group symmetry operations
+        >>> identity = np.eye(3)
+        >>> inversion = -np.eye(3)
+        >>> 
+        >>> group1 = np.array([identity])
+        >>> group2 = np.array([identity, inversion])
+        >>> 
+        >>> # Combine to generate centrosymmetric group
+        >>> result = symposMult02(group1, group2)
+        >>> print("Result shape:", result.shape)
+        
+        >>> # Use for crystallographic point groups
+        >>> # e.g., combining rotation and inversion symmetries
+    """
+    # The product of two 2D matrices (numpy ndarray shape(N,N)) can be calculated
+    # using the function 'numpy.dot'. In order to compute the matrix product of
+    # higher dimensions arrays, numpy.dot can also be used, but paying careful
+    # attention to the indices of the resulting matrix. Examples:
+    #     - A is ndarray shape(N,M,3,3) and B is ndarray shape(3,3):
+    #     np.dot(A,B)[i,j,k,m] = np.sum(A[i,j,:,k]*B[m,:])
+    #     np.dot(A,B) is ndarray shape(N,M,3,3)
+
+    #     - A is ndarray shape(N,3,3) and B is ndarray shape(M,3,3):
+    #     np.dot(A,B)[i,j,k,m] = np.sum(A[i,:,j]*B[k,m,:])
+    #
+    #     The result np.dot(A,B) is ndarray shape(N,3,M,3). It's more convenient to
+    #     express the result as ndarray shape(N,M,3,3). In order to obtain the
+    #     desired result, the 'transpose' function should be used. i.e.,
+    #     np.dot(A,B).transpose([0,2,1,3]) results in ndarray shape(N,M,3,3)
+
+    #     - A is ndarray shape(3,3) and B is ndarray shape(N,M,3,3):
+    #     np.dot(A,B)[i,j,k,m] = np.sum(A[:,i]*B[j,k,m,:])
+    #
+    #     np.dot(A,B) is ndarray shape(3,N,M,3). np.dot(A,B).transpose([1,2,0,3])
+    #     results in ndarray shape(N,M,3,3)
+
+    # 'numpy.dot' is a particular case of 'numpy.tensordot':
+    # np.dot(A,B) == np.tensordot(A, B, axes=[[-1],[-2]])
+
+    # numpy.tensordot is two times faster than numpy.dot
+
+    # http://docs.scipy.org/doc/numpy/reference/generated/numpy.matmul.html
+    # http://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html
+    # http://docs.scipy.org/doc/numpy/reference/generated/numpy.tensordot.html
+    #list of symmetry matrices sympos (M,3,3) x list of orientation matrices Mats (N,3,3)
+    if type(sympos) == list:
+        sympos=np.array(sympos)
+        
+    MT=np.dot(sympos,Mats).transpose([0,2,1,3])#shape=(M.N,3,3)
+    #MT=MT.reshape((MT.shape[0]*MT.shape[1],3,3))#Contraction to (N*M,3,3)
+    return MT
+    
+
+def euler_angles_from_matrix(Rl,deg=False):
+    """
+    Extract Euler angles from a rotation matrix.
+    
+    Inverse operation of np_euler_matrix. Converts a rotation matrix back
+    to Bunge Euler angles (ZXZ convention).
+    
+    Input:
+        R: numpy array (3, 3) - Rotation matrix (orthogonal with det=1)
+    
+    Output:
+        euler: numpy array (3,) - Euler angles [phi1, Phi, phi2] in radians
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Create rotation matrix from Euler angles
+        >>> phi1, Phi, phi2 = np.radians([45, 60, 30])
+        >>> R = np_euler_matrix(phi1, Phi, phi2)
+        >>> 
+        >>> # Extract Euler angles back
+        >>> euler_recovered = euler_angles_from_matrix(R)
+        >>> print("Original:", [phi1, Phi, phi2])
+        >>> print("Recovered:", euler_recovered)
+        >>> # Should match within numerical precision
+        
+        >>> # Handle gimbal lock cases
+        >>> # When Phi = 0 or 180 degrees
+        >>> R_gimbal = np_euler_matrix(0, 0, 0)
+        >>> euler_gimbal = euler_angles_from_matrix(R_gimbal)
+        >>> print("Gimbal case:", euler_gimbal)
+        
+        >>> # Convert to degrees for readability
+        >>> euler_deg = np.degrees(euler_recovered)
+        >>> print("Euler angles (degrees):", euler_deg)
+    """
+    
+    if not type(Rl)==list:
+        Rl=[Rl]
+        
+    Phi1=[]
+    Phi2=[]
+    PHI=[]
+    for R in Rl:
+        PHI.append(np.arccos(R[2,2]))
+        if PHI[-1]==0.0:
+           Phi1.append(np.arctan2(-R[1,0],R[0,0]))
+           Phi2.append(0.0)
+        elif PHI[-1]==np.pi:
+           Phi1.append(np.arctan2(R[1,0],R[0,0]))
+           Phi2.append(0.0)
+        else:
+           Phi1.append(np.arctan2(R[2,0],-R[2,1]))
+           Phi2.append(np.arctan2(R[0,2],R[1,2]))
+    if deg:
+        c = 180./np.pi
+        if len(Phi1)==1:
+            return Phi1[0]*c,PHI[0]*c,Phi2[0]*c
+        else:
+            return [p*c for p in Phi1],[p*c for p in PHI],[p*c for p in Phi2]
+        
+    else:
+        if len(Phi1)==1:
+            return Phi1[0],PHI[0],Phi2[0]
+        else:
+            return Phi1,PHI,Phi2
+
+
+def misorimat_ini(umatsa):
+    """
+    Initialize misorientation matrix calculation (initialization version).
+    
+    Preliminary version of misorientation matrix computation. Sets up
+    the calculation framework for determining misorientation between
+    two orientations.
+    
+    Input:
+        M1: numpy array (3, 3) - First orientation matrix
+        M2: numpy array (3, 3) - Second orientation matrix
+    
+    Output:
+        misori: numpy array (3, 3) - Misorientation matrix M2 * M1^T
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> from scipy.spatial.transform import Rotation as R
+        >>> 
+        >>> # Two random orientations
+        >>> M1 = R.random().as_matrix()
+        >>> M2 = R.random().as_matrix()
+        >>> 
+        >>> # Calculate misorientation
+        >>> misori = misorimat_ini(M1, M2)
+        >>> print("Misorientation matrix:")
+        >>> print(misori)
+        >>> 
+        >>> # Verify it's a rotation matrix
+        >>> print("Det:", np.linalg.det(misori))  # Should be 1
+        >>> print("Orthogonal:", np.allclose(misori @ misori.T, np.eye(3)))
+    """
+    Q=Mat2Quat(umatsa)
+    #print(Q)
+    Qinv = Q.copy()
+    Qinv[1:4,:]=-1*Qinv[1:4,:]
+    #QP=Qproduct(Qinv,Q)
+    #print(Qinv)
+    d=np.linalg.norm(Qlog(Qproduct(Qinv,Q)),axis=0)*180.0/np.pi*2
+    d2=np.linalg.norm(Qlog(Qproduct(Qinv,-1*Q)),axis=0)*180.0/np.pi*2
+    d[np.where(d2<d)]= d2[np.where(d2<d)]
+    return d
+
+def misorimat(umatsa):
+    """
+    Calculate misorientation matrix between two orientations.
+    
+    Computes the relative rotation (misorientation) between two crystal
+    orientations. The misorientation matrix represents the rotation needed
+    to go from orientation M1 to orientation M2.
+    
+    Input:
+        M1: numpy array (3, 3) - First orientation matrix (sample→crystal)
+        M2: numpy array (3, 3) - Second orientation matrix (sample→crystal)
+        symops: numpy array (Ns, 3, 3) - Crystal symmetry operations (optional)
+    
+    Output:
+        misori: numpy array (3, 3) - Misorientation matrix
+        angle: float - Misorientation angle in degrees (if symmetry applied)
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Two grain orientations
+        >>> euler1 = np.radians([30, 45, 60])
+        >>> euler2 = np.radians([60, 50, 70])
+        >>> M1 = np_euler_matrix(*euler1)
+        >>> M2 = np_euler_matrix(*euler2)
+        >>> 
+        >>> # Calculate misorientation (no symmetry)
+        >>> misori = misorimat(M1, M2)
+        >>> 
+        >>> # Get misorientation angle
+        >>> trace = np.trace(misori)
+        >>> angle = np.degrees(np.arccos((trace - 1) / 2))
+        >>> print(f"Misorientation angle: {angle:.2f}°")
+        
+        >>> # With cubic symmetry
+        >>> symops = symmetry_elements('cubic')
+        >>> misori_sym, angle_sym = misorimat(M1, M2, symops)
+        >>> print(f"Minimum misorientation angle: {angle_sym:.2f}°")
+    """
+    Q=Mat2Quat(umatsa)
+    #print(Q)
+    Qinv = Q.copy()
+    Qinv[1:4,:]=-1*Qinv[1:4,:]
+    #QP=Qproduct(Qinv,Q)
+    #print(Qinv)
+    #d=np.linalg.norm(Qlog(Qproduct(Qinv,Q)),axis=0)*180.0/np.pi*2
+    d=np.linalg.norm(Qlog(Qproduct(Q,Qinv)),axis=0)*180.0/np.pi*2
+    #d[np.where(d2<d)]= d2[np.where(d2<d)]
+    return d
+
+
+
+def disorimat_test02(umatsa,symops):
+    """
+    Test version 2 for disorientation matrix calculation.
+    
+    Experimental/testing version of disorientation calculation. The
+    disorientation is the minimum misorientation considering crystal
+    symmetry operations.
+    
+    Input:
+        M1: numpy array (3, 3) - First orientation matrix
+        M2: numpy array (3, 3) - Second orientation matrix
+        symops: numpy array (Ns, 3, 3) - Symmetry operations
+    
+    Output:
+        disori: numpy array (3, 3) - Disorientation matrix
+        angle: float - Disorientation angle in degrees
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Test with known misorientations
+        >>> M1 = np.eye(3)
+        >>> M2 = np_euler_matrix(np.pi/4, 0, 0)  # 45° rotation
+        >>> 
+        >>> # Simple symmetry (identity only)
+        >>> symops = np.array([np.eye(3)])
+        >>> 
+        >>> disori, angle = disorimat_test02(M1, M2, symops)
+        >>> print(f"Disorientation angle: {angle:.2f}°")
+        >>> print("Disorientation matrix:")
+        >>> print(disori)
+    """
+    Q=Mat2Quat(umatsa)
+    #Qinv = Q.copy()
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    symq=Mat2Quat(symops)
+    #SQ=Qproduct(symq,Q)
+    #SQ[1:4,:,:]=-1*SQ[1:4,:,:]
+
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    #symq=mat2quat(symops)
+    #SQ=Qproduct(symq,Qinv)
+    #print(SQ)
+    ds=[]
+    for sym in symq.T:
+        #print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
+        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)[0,1]*180.0/np.pi*2)
+        #print(SQ[:,i,:])
+        #SQ=Q.copy()
+        SQ=QMatproduct(sym,Q)
+        SQ[1:4,:]=-1*SQ[1:4,:]
+        QA=np.hstack((Q,SQ))
+        #print(QA)
+        QAinv=QA.copy()
+        QAinv[1:4,:]=-1*QAinv[1:4,:]
+        d=np.linalg.norm(Qlog(Qproduct(QAinv,QA)),axis=0)*180.0/np.pi*2
+        d2=np.linalg.norm(Qlog(Qproduct(QAinv,-1*QA)),axis=0)*180.0/np.pi*2
+        d[np.where(d2<d)]= d2[np.where(d2<d)]
+        ds.append(d)
+        print(d)
+        print(d2)
+    DS=np.amin(abs(np.array(ds)),axis=0)  
+    #print(DS)     
+    #print(abs(np.array(ds))*180.0/np.pi*2 )
+    #ds2=[]
+    #for i in range(0,SQ.shape[1]):
+        #print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
+        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],-1*Q)),axis=0)[0,1]*180.0/np.pi*2 )
+    #    ds2.append(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],-1*Q)),axis=0))
+        #print(ds2[-1]*180/np.pi)
+    #    print(ds2[-1]*180.0/np.pi*2)
+    #print((abs(np.array(ds2))*180.0/np.pi*2).shape )
+    #DS2=np.amin(abs(np.array(ds2)),axis=0)*180.0/np.pi*2    
+    
+    #idxs=np.where(DS2<DS)
+    #DS[idxs]= DS2[idxs]     
+    return DS,ds,ds,SQ
+
+
+
+def disorimat_test01(umatsa,symops):
+    """
+    Test version 1 for disorientation matrix calculation.
+    
+    First test implementation of disorientation computation. Used for
+    validating algorithms before final implementation.
+    
+    Input:
+        M1: numpy array (3, 3) - First orientation matrix
+        M2: numpy array (3, 3) - Second orientation matrix
+        symops: numpy array (Ns, 3, 3) - Symmetry operations
+    
+    Output:
+        disori: numpy array (3, 3) - Disorientation matrix
+        angle: float - Disorientation angle in degrees
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Create test orientations
+        >>> M1 = np_euler_matrix(0, 0, 0)
+        >>> M2 = np_euler_matrix(np.pi/6, 0, 0)  # 30° rotation
+        >>> 
+        >>> # Identity symmetry
+        >>> symops = np.array([np.eye(3)])
+        >>> 
+        >>> disori, angle = disorimat_test01(M1, M2, symops)
+        >>> print(f"Test result angle: {angle:.2f}°")
+        
+        >>> # Compare with test02
+        >>> disori2, angle2 = disorimat_test02(M1, M2, symops)
+        >>> print(f"Difference: {abs(angle - angle2):.4f}°")
+    """
+    
+    Q=Mat2Quat(umatsa)
+    #Qinv = Q.copy()
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    symq=Mat2Quat(symops)
+    #SQ=Qproduct(symq,Qinv)
+    #SQ[1:4,:,:]=-1*SQ[1:4,:,:]
+
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    #symq=mat2quat(symops)
+    #SQ=Qproduct(symq,Qinv)
+    #print(SQ)
+    ds=[]
+    for sym in symq.T:
+        #print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
+        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)[0,1]*180.0/np.pi*2)
+        SQi=QMatproduct(sym,Q)
+        SQ=SQi.copy()
+        SQ[0,:]=-SQ[-1,:]
+        SQ[1:4,:]=-1*SQ[1:4,:]
+        ds.append(np.linalg.norm(Qlog(Qproduct(SQ,Q)),axis=0))
+        print(ds[-1]*180.0/np.pi*2)
+    DS=np.amin(abs(np.array(ds)),axis=0)*180.0/np.pi*2       
+    #print(abs(np.array(ds))*180.0/np.pi*2 )
+    ds2=[]
+    for sym in symq.T:
+        #print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
+        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],-1*Q)),axis=0)[0,1]*180.0/np.pi*2 )
+        SQ=QMatproduct(sym,Q)
+        SQ[1:4,:]=-1*SQ[1:4,:]
+        ds2.append(np.linalg.norm(Qlog(Qproduct(SQ,-1*Q)),axis=0))
+        #print(ds2[-1]*180/np.pi)
+        print(ds2[-1]*180.0/np.pi*2)
+    #print((abs(np.array(ds2))*180.0/np.pi*2).shape )
+    DS2=np.amin(abs(np.array(ds2)),axis=0)*180.0/np.pi*2    
+    
+    idxs=np.where(DS2<DS)
+    DS[idxs]= DS2[idxs]     
+    return DS,ds,ds2,SQ
+
+
+def disorimat_ini(umatsa,symops):
+    """
+    Initialize disorientation matrix calculation.
+    
+    Initial version of disorientation computation. The disorientation
+    represents the minimum misorientation when considering all symmetrically
+    equivalent orientations.
+    
+    Input:
+        M1: numpy array (3, 3) - First orientation matrix
+        M2: numpy array (3, 3) - Second orientation matrix
+        symops: numpy array (Ns, 3, 3) - Crystal symmetry operations
+    
+    Output:
+        disori: numpy array (3, 3) - Minimum disorientation matrix
+        angle: float - Minimum disorientation angle in degrees
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Two orientations
+        >>> M1 = np_euler_matrix(np.radians(10), np.radians(20), np.radians(30))
+        >>> M2 = np_euler_matrix(np.radians(50), np.radians(60), np.radians(70))
+        >>> 
+        >>> # Cubic symmetry operations (24 operations)
+        >>> # For demo, use simplified version
+        >>> symops = np.array([np.eye(3)])
+        >>> 
+        >>> disori, angle = disorimat_ini(M1, M2, symops)
+        >>> print(f"Disorientation: {angle:.2f}°")
+        >>> 
+        >>> # Extract axis from disorientation matrix
+        >>> axis, angle_rad = np_ol_g_rtheta_rad(disori)
+        >>> print(f"Disorientation axis: {axis}")
+    """
+    print('test')
+    Q=Mat2Quat(umatsa)
+    Qinv = Q.copy()
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    symq=Mat2Quat(symops)
+    SQ=Qproduct(symq,Qinv)
+    SQ[1:4,:,:]=-1*SQ[1:4,:,:]
+
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    #symq=mat2quat(symops)
+    #SQ=Qproduct(symq,Qinv)
+    #print(SQ)
+    ds=[]
+    for i in range(0,SQ.shape[1]):
+        #print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
+        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)[0,1]*180.0/np.pi*2)
+        ds.append(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0))
+        print(ds[-1]*180.0/np.pi*2)
+    DS=np.amin(abs(np.array(ds)),axis=0)*180.0/np.pi*2       
+    #print(abs(np.array(ds))*180.0/np.pi*2 )
+    ds2=[]
+    for i in range(0,SQ.shape[1]):
+        #print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
+        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],-1*Q)),axis=0)[0,1]*180.0/np.pi*2 )
+        ds2.append(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],-1*Q)),axis=0))
+        #print(ds2[-1]*180/np.pi)
+        print(ds2[-1]*180.0/np.pi*2)
+    #print((abs(np.array(ds2))*180.0/np.pi*2).shape )
+    DS2=np.amin(abs(np.array(ds2)),axis=0)*180.0/np.pi*2    
+    
+    idxs=np.where(DS2<DS)
+    DS[idxs]= DS2[idxs]     
+    return DS,ds,ds2,SQ
+
+def disorimat_ini(umatsa,symops):
+    #print('test4')
+    Q=Mat2Quat(umatsa)
+    symq=Mat2Quat(symops)
+    SQ=Qproduct(symq,Q)
+    SQ[1:4,:,:]=-1*SQ[1:4,:,:]
+
+    #Qinv=Q.copy()
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    #symq=mat2quat(symops)
+    #SQ=Qproduct(symq,Qinv)
+    #print(SQ)
+    ds=[]
+    for i in range(0,SQ.shape[1]):
+        print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
+        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)[0,1]*180.0/np.pi*2)
+        d=np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)*180.0/np.pi*2
+        d2=np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],-1*Q)),axis=0)*180.0/np.pi*2
+        d[np.where(d2<d)]= d2[np.where(d2<d)]
+        ds.append(d)
+
+def disorimat(umatsa,symops,prnt=False,withfirst=False,eqmats=False):
+    """
+    Calculate disorientation matrix considering crystal symmetry.
+    
+    Computes the minimum misorientation between two orientations by
+    considering all symmetrically equivalent variants. This is the
+    crystallographically meaningful misorientation.
+    
+    Input:
+        M1: numpy array (3, 3) - First orientation matrix
+        M2: numpy array (3, 3) - Second orientation matrix
+        symops: numpy array (Ns, 3, 3) - Crystal symmetry operations
+    
+    Output:
+        disori: numpy array (3, 3) - Disorientation matrix (minimum misorientation)
+        angle: float - Disorientation angle in degrees
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # EBSD grain orientations
+        >>> grain1_euler = np.radians([120, 45, 80])
+        >>> grain2_euler = np.radians([130, 50, 85])
+        >>> 
+        >>> M1 = np_euler_matrix(*grain1_euler)
+        >>> M2 = np_euler_matrix(*grain2_euler)
+        >>> 
+        >>> # Cubic symmetry (get from symmetry_elements function)
+        >>> symops = symmetry_elements('cubic')
+        >>> 
+        >>> # Calculate disorientation
+        >>> disori, angle = disorimat(M1, M2, symops)
+        >>> print(f"Grain boundary misorientation: {angle:.2f}°")
+        >>> 
+        >>> # Classify grain boundary type
+        >>> if angle < 15:
+        ...     print("Low-angle grain boundary")
+        >>> elif angle > 15:
+        ...     print("High-angle grain boundary")
+        
+        >>> # Get disorientation axis
+        >>> axis, _ = np_ol_g_rtheta_rad(disori)
+        >>> print(f"Rotation axis: [{axis[0]:.3f}, {axis[1]:.3f}, {axis[2]:.3f}]")
+    """
+    #print('test4')
+    import copy
+    symops2=copy.deepcopy(symops)
+    for symop in symops:
+        symops2.append(-1*symop.T)
+
+    Q=Mat2Quat(umatsa)
+    #print(Q.shape)
+    #Q[0,Q[0,:]<0]=-1*Q[0,Q[0,:]<0]
+    symq=Mat2Quat(symops2)
+    SQ=Qproduct(symq,Q)
+    SQ[1:4,:,:]=SQ[1:4,:,:]
+    SQinv=SQ.copy()
+    SQinv[1:4,:]=-1*SQinv[1:4,:]
+    #print(len(symops))
+    Qinv=Q.copy()
+    if withfirst:
+        Qinv=Qinv[:,0:1]
+    Qinv[1:4,:]=-1*Qinv[1:4,:]
+    
+    Qinv2=Q.copy()
+    Qinv2[0,:]=-1*Qinv2[0,:]
+    #Qinv[1:4,:]=-1*Qinv[1:4,:]
+    #symq=mat2quat(symops)
+    #SQ=Qproduct(symq,Qinv)
+    #print(SQ)
+    ds=[]
+    for i in range(0,SQ.shape[1]):
+        if prnt:
+            print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
+        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)[0,1]*180.0/np.pi*2)
+        #d=np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)*180.0/np.pi*2
+        if i < len(symops):
+            d=np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Qinv)),axis=0)*180.0/np.pi*2
+        else:
+            d=np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Qinv2)),axis=0)*180.0/np.pi*2
+        #d2=np.linalg.norm(Qlog(Qproduct(SQinv[:,i,:],Q)),axis=0)*180.0/np.pi*2
+        
+        #d[np.where(d2<d)]= d2[np.where(d2<d)]
+        
+        ds.append(d)
+        #d=np.linalg.norm(Qlog(Qproduct(Qinv,SQ[:,i,:])),axis=0)*180.0/np.pi*2
+        #d2=np.linalg.norm(Qlog(Qproduct(-1*Qinv,SQ[:,i,:])),axis=0)*180.0/np.pi*2
+        #d[np.where(d2<d)]= d2[np.where(d2<d)]
+        #ds.append(d)
+    #print(ds)
+    #ddss.append(ds)
+    DS=np.amin(abs(np.array(ds)),axis=0)  
+    DSidx = np.argmin(abs(np.array(ds)),axis=0)
+    if eqmats:
+        return DS,np.array(symops2)[np.argmin(abs(np.array(ds)),axis=0)[:,0],:,:],ds, DSidx
+    
+    else:
+        return DS
+
+
+def symmetry_reduced_oris(umatsa, symops):
+    """
+    Reduce orientations to fundamental zone using crystal symmetry.
+    
+    Applies symmetry operations to bring all orientations into the
+    fundamental zone (asymmetric unit) of orientation space. This
+    ensures unique representation of each orientation.
+    
+    Input:
+        oris: numpy array (N, 3, 3) - Array of orientation matrices
+        symops: numpy array (Ns, 3, 3) - Crystal symmetry operations
+    
+    Output:
+        reduced_oris: numpy array (N, 3, 3) - Orientations in fundamental zone
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> from scipy.spatial.transform import Rotation as R
+        >>> 
+        >>> # Generate random orientations
+        >>> N = 100
+        >>> orientations = R.random(N).as_matrix()
+        >>> 
+        >>> # Cubic symmetry operations
+        >>> symops = symmetry_elements('cubic')
+        >>> 
+        >>> # Reduce to fundamental zone
+        >>> reduced = symmetry_reduced_oris(orientations, symops)
+        >>> print("Original shape:", orientations.shape)
+        >>> print("Reduced shape:", reduced.shape)
+        >>> 
+        >>> # All reduced orientations are now in fundamental zone
+        
+        >>> # Check Euler angle ranges after reduction
+        >>> euler_reduced = np.array([euler_angles_from_matrix(R) 
+        ...                           for R in reduced])
+        >>> print("Phi1 range:", np.degrees(euler_reduced[:, 0]).min(), 
+        ...       np.degrees(euler_reduced[:, 0]).max())
+    """
+    N = umatsa.shape[0]
+    MrefT = umatsa[N // 2,:,:].T
+    #MrefT = np.eye(3)
+    # 4 dimensional numpy narray(N,24,3,3)
+    Mprime = np.tensordot(symops, umatsa, axes=[[-1], [-2]]).transpose([2, 0, 1, 3])
+    # misorientation matrices D
+    D = np.tensordot(Mprime, MrefT, axes=[[-1], [-2]])
+    #print(D.shape)
+    tr = np.trace(D, axis1=2, axis2=3)
+    neg = tr < -1.0
+    tr[neg] = -tr[neg]
+    Mprime[neg] = -Mprime[neg]
+    umatsa = Mprime[(list(range(N)), np.argmax(tr, axis=1))]
+   
+    return np.array(umatsa)
+
+
+def trace_to_angle(tr, out="deg"):
+    """
+    Convert rotation matrix trace to rotation angle.
+    
+    Uses the trace (sum of diagonal elements) of a rotation matrix to
+    calculate the rotation angle. Based on the relation:
+    trace(R) = 1 + 2*cos(theta)
+    
+    Input:
+        trace: float - Trace of rotation matrix (sum of diagonal elements)
+    
+    Output:
+        angle: float - Rotation angle in degrees
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Create rotation matrix
+        >>> theta_original = np.radians(45)
+        >>> axis = np.array([0, 0, 1])
+        >>> R = np_ol_rtheta_g_rad(axis, theta_original)
+        >>> 
+        >>> # Get trace and convert to angle
+        >>> tr = np.trace(R)
+        >>> angle = trace_to_angle(tr)
+        >>> print(f"Original angle: {np.degrees(theta_original):.2f}°")
+        >>> print(f"Recovered angle: {angle:.2f}°")
+        
+        >>> # Works for any rotation matrix
+        >>> R_euler = np_euler_matrix(np.pi/3, np.pi/4, np.pi/6)
+        >>> angle_euler = trace_to_angle(np.trace(R_euler))
+        >>> print(f"Rotation angle from Euler: {angle_euler:.2f}°")
+        
+        >>> # Verify formula: trace = 1 + 2*cos(theta)
+        >>> theta_calc = np.arccos((tr - 1) / 2)
+        >>> print(f"Direct calculation: {np.degrees(theta_calc):.2f}°")
+    """
+    """
+    Converts the trace of a orientation matrix to the misorientation angle
+    """
+    ang = np.arccos((tr - 1.0) / 2.0)
+    if out == "deg":
+        ang = np.degrees(ang)
+    return ang
+
+
+
+def mat2quat02(matrix): #orientation matrix to quaternion
+    """
+    Alternative matrix to quaternion conversion (version 2).
+    
+    Different algorithm for converting rotation matrix to quaternion.
+    May handle numerical edge cases differently than mat_to_quat.
+    
+    Input:
+        R: numpy array (3, 3) - Rotation matrix
+    
+    Output:
+        q: numpy array (4,) - Quaternion [w, x, y, z]
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Create rotation matrix
+        >>> angle = np.pi/3  # 60 degrees
+        >>> axis = np.array([1, 1, 1]) / np.sqrt(3)
+        >>> R = np_ol_rtheta_g_rad(axis, angle)
+        >>> 
+        >>> # Convert to quaternion
+        >>> q = mat2quat02(R)
+        >>> print("Quaternion:", q)
+        >>> 
+        >>> # Compare with standard method
+        >>> q_standard = mat_to_quat(R)
+        >>> print("Standard:", q_standard)
+        >>> 
+        >>> # Both should give same result (within sign)
+        >>> print("Match:", np.allclose(np.abs(q), np.abs(q_standard)))
+    """
+    q0 = np.sqrt(1 + matrix[0,0] + matrix[1,1] + matrix[2,2])
+    q1 = np.sqrt(1 + matrix[0,0] - matrix[1,1] - matrix[2,2])
+    q2 = np.sqrt(1 - matrix[0,0] + matrix[1,1] - matrix[2,2])
+    q3 = np.sqrt(1 - matrix[0,0] - matrix[1,1] + matrix[2,2])
+    
+    if matrix[2,1]<matrix[1,2]: q1 = -q1
+    if matrix[0,2]<matrix[2,0]: q2 = -q2
+    if matrix[1,0]<matrix[0,1]: q3 = -q3
+    
+    q = 1./2* np.array([q0,q1,q2,q3])
+    q /= np.sqrt(q[0]**2 + q[1]**2 + q[2]**2 + q[3]**2)
+    
+    return q
+
+def Mat2Quat_ini(umatsa): #orientation matrix to quaternion
+    """
+    Initialize matrix to quaternion conversion.
+    
+    Preliminary/initialization version of rotation matrix to quaternion
+    conversion. May be an earlier implementation or setup function.
+    
+    Input:
+        R: numpy array (3, 3) - Rotation matrix
+    
+    Output:
+        q: numpy array (4,) - Quaternion [w, x, y, z]
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Simple 90° rotation around Z
+        >>> R = np.array([[0, -1, 0],
+        ...               [1,  0, 0],
+        ...               [0,  0, 1]], dtype=float)
+        >>> 
+        >>> q = Mat2Quat_ini(R)
+        >>> print("Quaternion:", q)
+        >>> # Should give [0.707, 0, 0, 0.707] approximately
+        
+        >>> # Convert back to verify
+        >>> R_back = quat_to_mat(q)
+        >>> print("Reconstruction error:", np.max(np.abs(R - R_back)))
+    """
+    q0 = [np.sqrt(1 + matrix[0,0] + matrix[1,1] + matrix[2,2]) for matrix in umatsa]
+    q1 = [np.sqrt(1 + matrix[0,0] - matrix[1,1] - matrix[2,2]) for matrix in umatsa]
+    q2 = [np.sqrt(1 - matrix[0,0] + matrix[1,1] - matrix[2,2]) for matrix in umatsa]
+    q3 = [np.sqrt(1 - matrix[0,0] - matrix[1,1] + matrix[2,2]) for matrix in umatsa]
+
+    q1 = [-qi if matrix[2,1]<matrix[1,2] else qi for matrix,qi in zip(umatsa,q1)]
+    q2 = [-qi if matrix[0,2]<matrix[2,0] else qi for matrix,qi in zip(umatsa,q2)]
+    q3 = [-qi if matrix[1,0]<matrix[0,1] else qi for matrix,qi in zip(umatsa,q3)]
+    
+    
+    #if matrix[2,1]<matrix[1,2]: q1 = -q1
+    #if matrix[0,2]<matrix[2,0]: q2 = -q2
+    #if matrix[1,0]<matrix[0,1]: q3 = -q3
+    Q=0.5*np.stack((q0,q1,q2,q3));
+    Q = Q / np.linalg.norm(Q, axis=0)
+    Q[:,np.where(np.prod(Q[1:4,:]<0,axis=0)==1)[0]]=-1*Q[:,np.where(np.prod(Q[1:4,:]<0,axis=0)==1)[0]]
+    return Q
+
+def Mat2Quat(umatsa): #orientation matrix to quaternion
+    """
+    Convert rotation matrix to quaternion representation.
+    
+    General matrix to quaternion conversion. Alternative implementation
+    that may use different numerical approach than mat_to_quat.
+    
+    Input:
+        R: numpy array (3, 3) - Rotation matrix (orthogonal with det=1)
+    
+    Output:
+        q: numpy array (4,) - Unit quaternion [w, x, y, z]
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> 
+        >>> # Random rotation matrix
+        >>> from scipy.spatial.transform import Rotation as Rot
+        >>> R = Rot.random().as_matrix()
+        >>> 
+        >>> # Convert to quaternion
+        >>> q = Mat2Quat(R)
+        >>> print("Quaternion:", q)
+        >>> print("Magnitude:", np.linalg.norm(q))  # Should be 1
+        >>> 
+        >>> # Round trip test
+        >>> R_reconstructed = quat_to_mat(q)
+        >>> print("Reconstruction match:", np.allclose(R, R_reconstructed))
+        
+        >>> # Use for orientation averaging
+        >>> matrices = Rot.random(10).as_matrix()
+        >>> quats = np.array([Mat2Quat(R) for R in matrices])
+        >>> print("Quaternions shape:", quats.shape)  # (10, 4)
+    """
+
+    umatsa=np.array([m.conj().transpose() for m in umatsa])
+        
+    M22L0=np.where(umatsa[:,2,2]<0)[0]
+    M22GE0=np.where(umatsa[:,2,2]>=0)[0]
+    if M22L0.shape[0]>0:
+        M00GM11=np.where(umatsa[M22L0,0,0]>umatsa[M22L0,1,1])[0]
+        M00LEM11=np.where(umatsa[M22L0,0,0]<=umatsa[M22L0,1,1])[0]
+    else:
+        M00GM11=np.array([])
+        M00LEM11=np.array([])
+        
+    if M22GE0.shape[0]>0:
+        M00LnM11=np.where(umatsa[M22GE0,0,0]<-1*umatsa[M22GE0,1,1])[0]  
+        M00GEnM11=np.where(umatsa[M22GE0,0,0]>=-1*umatsa[M22GE0,1,1])[0]
+    else:
+       M00LnM11=np.array([])
+       M00GEnM11=np.array([])
+    Q=np.empty((4,umatsa.shape[0]))
+    T=np.empty((umatsa.shape[0]))
+    try:
+        T[M22L0[M00GM11]] = 1 + umatsa[M22L0[M00GM11],0,0] - umatsa[M22L0[M00GM11],1,1] - umatsa[M22L0[M00GM11],2,2]
+        Q[:,M22L0[M00GM11]] = [umatsa[M22L0[M00GM11],1, 2]-umatsa[M22L0[M00GM11],2, 1],  T[M22L0[M00GM11]],  umatsa[M22L0[M00GM11],0, 1]+umatsa[M22L0[M00GM11],1, 0],  
+                               umatsa[M22L0[M00GM11],2, 0]+umatsa[M22L0[M00GM11],0, 2]]
+    except:
+        pass
+    
+    try:
+        T[M22L0[M00LEM11]]  = 1 - umatsa[M22L0[M00LEM11],0, 0] + umatsa[M22L0[M00LEM11],1, 1] - umatsa[M22L0[M00LEM11],2, 2]
+        Q[:,M22L0[M00LEM11]] = [umatsa[M22L0[M00LEM11],2, 0]-umatsa[M22L0[M00LEM11],0, 2],  umatsa[M22L0[M00LEM11],0, 1]+umatsa[M22L0[M00LEM11],1, 0],
+                                T[M22L0[M00LEM11]],  umatsa[M22L0[M00LEM11],1, 2]+umatsa[M22L0[M00LEM11],2, 1]]    
+    except:
+        pass    
+    try:
+        T[M22GE0[M00LnM11]] = 1 - umatsa[M22GE0[M00LnM11],0, 0] - umatsa[M22GE0[M00LnM11],1, 1] + umatsa[M22GE0[M00LnM11],2, 2]
+        Q[:,M22GE0[M00LnM11]] = [umatsa[M22GE0[M00LnM11],0, 1]-umatsa[M22GE0[M00LnM11],1, 0],  umatsa[M22GE0[M00LnM11],2, 0]+umatsa[M22GE0[M00LnM11],0, 2],  
+             umatsa[M22GE0[M00LnM11],1, 2]+umatsa[M22GE0[M00LnM11],2, 1],T[M22GE0[M00LnM11]]]
+    except:
+        pass
+    try:
+        T[M22GE0[M00GEnM11]] = 1 + umatsa[M22GE0[M00GEnM11],0, 0] + umatsa[M22GE0[M00GEnM11],1, 1] + umatsa[M22GE0[M00GEnM11],2, 2]
+        Q[:,M22GE0[M00GEnM11]] =[T[M22GE0[M00GEnM11]],  umatsa[M22GE0[M00GEnM11],1, 2]-umatsa[M22GE0[M00GEnM11],2, 1],  umatsa[M22GE0[M00GEnM11],2, 0]-umatsa[M22GE0[M00GEnM11],0, 2],  
+                                 umatsa[M22GE0[M00GEnM11],0, 1]-umatsa[M22GE0[M00GEnM11],1, 0]]
+    except:
+        pass
+
+    Q[0,:] *= 0.5 / np.sqrt(T)
+    Q[1,:] *= 0.5 / np.sqrt(T)
+    Q[2,:] *= 0.5 / np.sqrt(T)
+    Q[3,:] *= 0.5 / np.sqrt(T)
+    return Q
+
