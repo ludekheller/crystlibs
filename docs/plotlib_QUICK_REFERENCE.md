@@ -1,10 +1,88 @@
 # PLOTLIB - Quick Reference
 
 **Module**: `plotlib.py`  
-**Functions**: 26  
-**Last Updated**: December 08, 2025
+**Functions**: 57  
+**Last Updated**: December 19, 2025
 
 ---
+
+**dataAnnot**
+```python
+def dataAnnot(self,**kwargs):
+```
+*Annotate data points with crystallographic information*
+
+**dataShow**
+```python
+def dataShow(self,**kwargs):
+```
+*Display data information in plot or console*
+
+**figsave**
+```python
+def figsave(self, **kwargs):
+```
+*Save figure to file(s) with optional cropping*
+
+**figsaveproc**
+```python
+def figsaveproc(self, fname, **kwargs):
+```
+*Process and save figure to file*
+
+**format_annot**
+```python
+def format_annot(self,x, y,**kwargs):
+```
+*Format annotation text for data points*
+
+**format_coord**
+```python
+def format_coord(self,x, y,**kwargs):
+```
+*Format coordinates for display in plot toolbar*
+
+**format_coord_test**
+```python
+def format_coord_test(self,x, y,**kwargs):
+```
+*Test version of coordinate formatting for debugging*
+
+**genPoris**
+```python
+def genPoris(self,**kwargs):
+```
+*Generate pole figure orientation data for given crystal direction*
+
+**generateSphericalHistSampleData**
+```python
+def generateSphericalHistSampleData(self,**kwargs):
+```
+*Generate spherical histogram from orientation data*
+
+**generateSphericalKDESampleData**
+```python
+def generateSphericalKDESampleData(self,**kwargs):
+```
+*Generate spherical kernel density estimate from orientation data*
+
+**getColormap**
+```python
+def getColormap(self,**kwargs):
+```
+*Generate orientation density colormap from sample data*
+
+**getFigparam**
+```python
+def getFigparam(self, fontsize=None, save=False, phase='A,', figsize=None, **kwargs):
+```
+*Get figure parameter dictionary for saving high-quality figures*
+
+**getScales**
+```python
+def getScales(self, vmcbar, numticks=None, ticks=None, tickslabels=None, geq=False, leq=False, cmapbins=100, cmapbinsmult=None):
+```
+*Generate color scale parameters including ticks, labels, and colormap*
 
 **get_cmap**
 ```python
@@ -17,6 +95,96 @@ def get_cmap(colors, nbins=1000, name='my_cmap'):
 def get_colors(values, cmap, vmin=None, vmax=None, cmin=0, cmax=None, to255=True, nancolor=[0, 0, 0, 1]):
 ```
 *Map data values to colors using a colormap*
+
+**onclicactivate**
+```python
+def onclicactivate(self,**kwargs):
+```
+*Activate mouse click event handling for the plot*
+
+**onclick**
+```python
+def onclick(self,event):
+```
+*Mouse click event handler for data selection*
+
+**onclick2**
+```python
+def onclick2(self,event):
+```
+*Alternative click handler for different interaction mode*
+
+**onclick3**
+```python
+def onclick3(self,event):
+```
+*Third click handler variant for specialized interactions*
+
+**onmove**
+```python
+def onmove(self,event):
+```
+*Mouse move event handler for interactive data display*
+
+**onpress**
+```python
+def onpress(self,event):
+```
+*Keyboard press event handler for plot interaction*
+
+**onpressActivate**
+```python
+def onpressActivate(self):
+```
+*Activate keyboard event handling for the plot*
+
+**plotColorbar**
+```python
+def plotColorbar(self,**kwargs):
+```
+*Add colorbar to the plot with custom ticks and labels*
+
+**plotColormap**
+```python
+def plotColormap(self,**kwargs):
+```
+*Plot orientation density colormap with contours on stereographic projection*
+
+**plotColormaps**
+```python
+def plotColormaps(self,sel='all',**kwargs):
+```
+*Plot multiple colormaps in multi-panel figure (typically 2x2)*
+
+**plotDirsNorms**
+```python
+def plotDirsNorms(self,**kwargs):
+```
+*Plot crystallographic directions and plane normals on stereographic projection*
+
+**plotHist**
+```python
+def plotHist():
+```
+*Plot histogram of orientation data on stereographic projection*
+
+**plotProj**
+```python
+def plotProj(self, **kwargs):
+```
+*Create a stereographic projection (pole figure) with appropriate grid*
+
+**plotScatter**
+```python
+def plotScatter(self,**kwargs):
+```
+*Create scatter plot of crystallographic orientations or data points*
+
+**plotScatterAsHist**
+```python
+def plotScatterAsHist(self,**kwargs):
+```
+*Display scatter plot data as histogram representation*
 
 **plot_atomic_plane2D**
 ```python
@@ -149,6 +317,24 @@ def plotcolmap(fname=None, withdraw=False):
 def plotcolmaps(fname=None, withdraw=False):
 ```
 *Plot multiple colormaps from a saved pickle file*
+
+**processScatterData**
+```python
+def processScatterData(self,**kwargs):
+```
+*Process scatter plot data by transforming orientations to projection coordinates*
+
+**scatterDataAnnot**
+```python
+def scatterDataAnnot(self,**kwargs):
+```
+*Annotate scatter plot data points with information*
+
+**setAttributes**
+```python
+def setAttributes(self, **kwargs):
+```
+*Set or update plotter attributes dynamically*
 
 **set_aspect_equal_3d**
 ```python

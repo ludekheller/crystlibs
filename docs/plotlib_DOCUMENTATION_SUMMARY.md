@@ -2,12 +2,90 @@
 
 **Module**: `plotlib.py`  
 **Purpose**: Crystallographic Visualization  
-**Total Functions**: 26  
-**Last Updated**: December 08, 2025
+**Total Functions**: 57  
+**Last Updated**: December 19, 2025
 
 ---
 
 ## Function Overview
+
+### dataAnnot
+
+`def dataAnnot(self,**kwargs):`
+
+Annotate data points with crystallographic information.
+
+### dataShow
+
+`def dataShow(self,**kwargs):`
+
+Display data information in plot or console.
+
+### figsave
+
+`def figsave(self, **kwargs):`
+
+Save figure to file(s) with optional cropping.
+
+### figsaveproc
+
+`def figsaveproc(self, fname, **kwargs):`
+
+Process and save figure to file.
+
+### format_annot
+
+`def format_annot(self,x, y,**kwargs):`
+
+Format annotation text for data points.
+
+### format_coord
+
+`def format_coord(self,x, y,**kwargs):`
+
+Format coordinates for display in plot toolbar.
+
+### format_coord_test
+
+`def format_coord_test(self,x, y,**kwargs):`
+
+Test version of coordinate formatting for debugging.
+
+### genPoris
+
+`def genPoris(self,**kwargs):`
+
+Generate pole figure orientation data for given crystal direction.
+
+### generateSphericalHistSampleData
+
+`def generateSphericalHistSampleData(self,**kwargs):`
+
+Generate spherical histogram from orientation data.
+
+### generateSphericalKDESampleData
+
+`def generateSphericalKDESampleData(self,**kwargs):`
+
+Generate spherical kernel density estimate from orientation data.
+
+### getColormap
+
+`def getColormap(self,**kwargs):`
+
+Generate orientation density colormap from sample data.
+
+### getFigparam
+
+`def getFigparam(self, fontsize=None, save=False, phase='A,', figsize=None, **kwargs):`
+
+Get figure parameter dictionary for saving high-quality figures.
+
+### getScales
+
+`def getScales(self, vmcbar, numticks=None, ticks=None, tickslabels=None, geq=False, leq=False, cmapbins=100, cmapbinsmult=None):`
+
+Generate color scale parameters including ticks, labels, and colormap.
 
 ### get_cmap
 
@@ -20,6 +98,96 @@ Create a custom colormap from a list of colors with smooth gradients.
 `def get_colors(values, cmap, vmin=None, vmax=None, cmin=0, cmax=None, to255=True, nancolor=[0, 0, 0, 1]):`
 
 Map data values to colors using a colormap.
+
+### onclicactivate
+
+`def onclicactivate(self,**kwargs):`
+
+Activate mouse click event handling for the plot.
+
+### onclick
+
+`def onclick(self,event):`
+
+Mouse click event handler for data selection.
+
+### onclick2
+
+`def onclick2(self,event):`
+
+Alternative click handler for different interaction mode.
+
+### onclick3
+
+`def onclick3(self,event):`
+
+Third click handler variant for specialized interactions.
+
+### onmove
+
+`def onmove(self,event):`
+
+Mouse move event handler for interactive data display.
+
+### onpress
+
+`def onpress(self,event):`
+
+Keyboard press event handler for plot interaction.
+
+### onpressActivate
+
+`def onpressActivate(self):`
+
+Activate keyboard event handling for the plot.
+
+### plotColorbar
+
+`def plotColorbar(self,**kwargs):`
+
+Add colorbar to the plot with custom ticks and labels.
+
+### plotColormap
+
+`def plotColormap(self,**kwargs):`
+
+Plot orientation density colormap with contours on stereographic projection.
+
+### plotColormaps
+
+`def plotColormaps(self,sel='all',**kwargs):`
+
+Plot multiple colormaps in multi-panel figure (typically 2x2).
+
+### plotDirsNorms
+
+`def plotDirsNorms(self,**kwargs):`
+
+Plot crystallographic directions and plane normals on stereographic projection.
+
+### plotHist
+
+`def plotHist():`
+
+Plot histogram of orientation data on stereographic projection.
+
+### plotProj
+
+`def plotProj(self, **kwargs):`
+
+Create a stereographic projection (pole figure) with appropriate grid.
+
+### plotScatter
+
+`def plotScatter(self,**kwargs):`
+
+Create scatter plot of crystallographic orientations or data points.
+
+### plotScatterAsHist
+
+`def plotScatterAsHist(self,**kwargs):`
+
+Display scatter plot data as histogram representation.
 
 ### plot_atomic_plane2D
 
@@ -153,6 +321,24 @@ Plot a single colormap from a saved pickle file.
 
 Plot multiple colormaps from a saved pickle file.
 
+### processScatterData
+
+`def processScatterData(self,**kwargs):`
+
+Process scatter plot data by transforming orientations to projection coordinates.
+
+### scatterDataAnnot
+
+`def scatterDataAnnot(self,**kwargs):`
+
+Annotate scatter plot data points with information.
+
+### setAttributes
+
+`def setAttributes(self, **kwargs):`
+
+Set or update plotter attributes dynamically.
+
 ### set_aspect_equal_3d
 
 `def set_aspect_equal_3d(ax):`
@@ -168,4 +354,4 @@ Shift the center of a colormap to a specific data value.
 
 ---
 
-**Total**: 26 functions
+**Total**: 57 functions

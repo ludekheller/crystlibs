@@ -314,9 +314,9 @@ plt.show()
 |--------|-----------|---------------|------|---------------|
 | crystlib.py | 71 | 7,089 | 275 KB | Crystal structures, lattice operations |
 | orilib.py | 60 | 2,500+ | 80 KB | Orientation transformations |
-| plotlib.py | 26 | 2,379 | 87 KB | Visualization and plotting |
+| plotlib.py | 57 | 3,700+ | 149 KB | Visualization and plotting |
 | projlib.py | 45 | 3,285 | 118 KB | Stereographic projections |
-| **Total** | **202** | **15,400+** | **624 KB** | Complete toolkit |
+| **Total** | **233** | **18,800+** | **742 KB** | Complete toolkit |
 
 ---
 

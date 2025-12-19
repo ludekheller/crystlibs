@@ -1,10 +1,225 @@
 # PLOTLIB - Comprehensive Quick Reference
 
 **Module**: `plotlib.py`  
-**Functions**: 26  
-**Last Updated**: December 08, 2025
+**Functions**: 57  
+**Last Updated**: December 19, 2025
 
 This reference provides function signatures with brief descriptions and example usage patterns.
+
+---
+
+## dataAnnot
+
+```python
+def dataAnnot(self,**kwargs):
+```
+
+Annotate data points with crystallographic information.
+
+---
+
+## dataShow
+
+```python
+def dataShow(self,**kwargs):
+```
+
+Display data information in plot or console.
+
+---
+
+## figsave
+
+```python
+def figsave(self, **kwargs):
+```
+
+Save figure to file(s) with optional cropping.
+        Supports multiple image formats and automatic cropping of whitespace.
+        Can save to multiple formats simultaneously.
+
+**Example**:
+```python
+>>> p = plotter()
+            >>> p.plotProj(ProjType='equalarea')
+            >>> 
+            >>> # Save single format
+# ...
+```
+
+---
+
+## figsaveproc
+
+```python
+def figsaveproc(self, fname, **kwargs):
+```
+
+Process and save figure to file.
+        Internal method called by figsave() to handle actual file writing.
+
+**Example**:
+```python
+>>> # Typically called internally by figsave()
+            >>> # But can be used directly:
+            >>> p = plotter()
+            >>> p.plotProj()
+# ...
+```
+
+---
+
+## format_annot
+
+```python
+def format_annot(self,x, y,**kwargs):
+```
+
+Format annotation text for data points.
+
+---
+
+## format_coord
+
+```python
+def format_coord(self,x, y,**kwargs):
+```
+
+Format coordinates for display in plot toolbar.
+
+---
+
+## format_coord_test
+
+```python
+def format_coord_test(self,x, y,**kwargs):
+```
+
+Test version of coordinate formatting for debugging.
+
+---
+
+## genPoris
+
+```python
+def genPoris(self,**kwargs):
+```
+
+Generate pole figure orientation data for given crystal direction.
+            Creates dense sampling of orientations where specified crystal direction
+            aligns with projection direction, useful for inverse pole figures.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> 
+                >>> # Generate orientations for [001] pole figure
+# ...
+```
+
+---
+
+## generateSphericalHistSampleData
+
+```python
+def generateSphericalHistSampleData(self,**kwargs):
+```
+
+Generate spherical histogram from orientation data.
+            Bins orientations on sphere using equal-area binning scheme,
+            useful for discrete texture representation.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> from scipy.spatial.transform import Rotation as R
+                >>> 
+# ...
+```
+
+---
+
+## generateSphericalKDESampleData
+
+```python
+def generateSphericalKDESampleData(self,**kwargs):
+```
+
+Generate spherical kernel density estimate from orientation data.
+            Computes density using Von Mises-Fisher distributions on the sphere,
+            accounting for crystal symmetry and bandwidth optimization.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> from scipy.spatial.transform import Rotation as R
+                >>> 
+# ...
+```
+
+---
+
+## getColormap
+
+```python
+def getColormap(self,**kwargs):
+```
+
+Generate orientation density colormap from sample data.
+            Computes orientation density using spherical KDE or histograms,
+            interpolates to grid, and prepares colormap data.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> from scipy.spatial.transform import Rotation as R
+                >>> 
+# ...
+```
+
+---
+
+## getFigparam
+
+```python
+def getFigparam(self, fontsize=None, save=False, phase='A,', figsize=None, **kwargs):
+```
+
+Get figure parameter dictionary for saving high-quality figures.
+
+**Example**:
+```python
+>>> p = plotter()
+            >>> 
+            >>> # Get default parameters
+            >>> params = p.getFigparam()
+# ...
+```
+
+---
+
+## getScales
+
+```python
+def getScales(self, vmcbar, numticks=None, ticks=None, tickslabels=None, geq=False, leq=False, cmapbins=100, cmapbinsmult=None):
+```
+
+Generate color scale parameters including ticks, labels, and colormap.
+        Creates a gradient colormap from white→blue→green→yellow→dark red
+        with customizable tick positions and labels.
+
+**Example**:
+```python
+>>> p = plotter()
+            >>> 
+            >>> # Basic scale from 0 to 10
+            >>> scales = p.getScales(vmcbar=[0, 10])
+# ...
+```
 
 ---
 
@@ -41,6 +256,244 @@ Map data values to colors using a colormap.
         >>> import matplotlib.pyplot as plt
         >>> 
         >>> # Map values to colors
+# ...
+```
+
+---
+
+## onclicactivate
+
+```python
+def onclicactivate(self,**kwargs):
+```
+
+Activate mouse click event handling for the plot.
+
+---
+
+## onclick
+
+```python
+def onclick(self,event):
+```
+
+Mouse click event handler for data selection.
+
+---
+
+## onclick2
+
+```python
+def onclick2(self,event):
+```
+
+Alternative click handler for different interaction mode.
+
+---
+
+## onclick3
+
+```python
+def onclick3(self,event):
+```
+
+Third click handler variant for specialized interactions.
+
+---
+
+## onmove
+
+```python
+def onmove(self,event):
+```
+
+Mouse move event handler for interactive data display.
+
+---
+
+## onpress
+
+```python
+def onpress(self,event):
+```
+
+Keyboard press event handler for plot interaction.
+
+---
+
+## onpressActivate
+
+```python
+def onpressActivate(self):
+```
+
+Activate keyboard event handling for the plot.
+
+---
+
+## plotColorbar
+
+```python
+def plotColorbar(self,**kwargs):
+```
+
+Add colorbar to the plot with custom ticks and labels.
+            Creates a horizontal or vertical colorbar with formatted tick labels,
+            including support for inequality symbols and custom positioning.
+
+**Example**:
+```python
+>>> from plotlib import plotter
+                >>> import numpy as np
+                >>> 
+                >>> # Basic colorbar
+# ...
+```
+
+---
+
+## plotColormap
+
+```python
+def plotColormap(self,**kwargs):
+```
+
+Plot orientation density colormap with contours on stereographic projection.
+            Creates density maps from orientation data using spherical KDE or histograms,
+            with contour lines showing texture intensity.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> 
+                >>> # Create plotter with orientation data
+# ...
+```
+
+---
+
+## plotColormaps
+
+```python
+def plotColormaps(self,sel='all',**kwargs):
+```
+
+Plot multiple colormaps in multi-panel figure (typically 2x2).
+            Creates comparative visualization of different pole figures,
+            useful for showing texture evolution or multi-phase analysis.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> from scipy.spatial.transform import Rotation as R
+                >>> 
+# ...
+```
+
+---
+
+## plotDirsNorms
+
+```python
+def plotDirsNorms(self,**kwargs):
+```
+
+Plot crystallographic directions and plane normals on stereographic projection.
+            Displays Miller indices with appropriate notation, supports family notation,
+            and handles multiple phases with correspondence relationships.
+
+**Example**:
+```python
+>>> from plotlib import plotter
+                >>> import numpy as np
+                >>> 
+                >>> # Basic pole figure with cubic directions
+# ...
+```
+
+---
+
+## plotHist
+
+```python
+def plotHist():
+```
+
+Plot histogram of orientation data on stereographic projection.
+            Creates binned representation of texture with discrete color levels,
+            alternative to continuous colormap visualization.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> from scipy.spatial.transform import Rotation as R
+                >>> 
+# ...
+```
+
+---
+
+## plotProj
+
+```python
+def plotProj(self, **kwargs):
+```
+
+Create a stereographic projection (pole figure) with appropriate grid.
+        Sets up the figure, axes, and projection type (equal-area Schmidt net
+        or equal-angle Wulff net). Handles full sphere, hemisphere, or standard
+
+**Example**:
+```python
+>>> import matplotlib.pyplot as plt
+            >>> 
+            >>> # Equal-area projection, upper hemisphere
+            >>> p = plotter()
+# ...
+```
+
+---
+
+## plotScatter
+
+```python
+def plotScatter(self,**kwargs):
+```
+
+Create scatter plot of crystallographic orientations or data points.
+            Plots data points with color and size scaling based on additional parameters.
+            Useful for showing orientation distributions with properties.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> from scipy.spatial.transform import Rotation as R
+                >>> 
+# ...
+```
+
+---
+
+## plotScatterAsHist
+
+```python
+def plotScatterAsHist(self,**kwargs):
+```
+
+Display scatter plot data as histogram representation.
+            Converts scattered orientation points to binned histogram display,
+            useful for comparing discrete and continuous representations.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> from scipy.spatial.transform import Rotation as R
+                >>> 
 # ...
 ```
 
@@ -308,6 +761,7 @@ Plot planes on stereographic triangle.
         >>> plot_planes_on_stereotriangle(planes)
         >>> plt.title('Low-Index Planes')
         >>> plt.show()
+# ...
 ```
 
 ---
@@ -327,6 +781,7 @@ Plot plane normals on Wulff net (equal-angle projection).
         >>> planes = [(1,0,0), (0,1,0), (0,0,1), (1,1,1)]
         >>> plot_planes_on_wulffnet(planes, L)
         >>> plt.title('Planes on Wulff Net')
+# ...
 ```
 
 ---
@@ -377,6 +832,7 @@ Plot principal directions on Wulff net.
         >>> result = mohr_circles(strain)
         >>> plot_princip_dir_on_wulffnet(result['directions'])
         >>> plt.title('Principal Strain Axes')
+# ...
 ```
 
 ---
@@ -415,6 +871,58 @@ Plot multiple colormaps from a saved pickle file.
         >>> plotcolmaps('my_pole_figures.pkl')
         >>> # Creates 2x2 subplot with 4 pole figures
         >>> # With custom display
+# ...
+```
+
+---
+
+## processScatterData
+
+```python
+def processScatterData(self,**kwargs):
+```
+
+Process scatter plot data by transforming orientations to projection coordinates.
+            Converts orientation matrices to stereographic projection coordinates,
+            applies crystal symmetry, and prepares data for scatter plotting.
+
+**Example**:
+```python
+>>> import numpy as np
+                >>> from plotlib import plotter
+                >>> from scipy.spatial.transform import Rotation as R
+                >>> 
+# ...
+```
+
+---
+
+## scatterDataAnnot
+
+```python
+def scatterDataAnnot(self,**kwargs):
+```
+
+Annotate scatter plot data points with information.
+
+---
+
+## setAttributes
+
+```python
+def setAttributes(self, **kwargs):
+```
+
+Set or update plotter attributes dynamically.
+        This method allows flexible configuration of any plotter attribute
+        without needing to know the internal structure.
+
+**Example**:
+```python
+>>> p = plotter()
+            >>> 
+            >>> # Set single attribute
+            >>> p.setAttributes(cmap='viridis')
 # ...
 ```
 
