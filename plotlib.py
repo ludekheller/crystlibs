@@ -962,24 +962,28 @@ class plotter:
             gx,gy, gz, nummask, mask=genprojgrid(self.oris,#self.oris[:,datadevider[0]:datadevider[1]],
                                                     gdata=self.colmapdata[datadevider[0]:datadevider[1]],
                                                     nump=self.nump,proj=self.ProjType,method2='linear')
+            #print(gx)
             #print(self.nump)
             if self.sphere=='half' and self.cut2half:
+                
                 mask[(gy<0)]=True
                 nummask[(gy<0)]=0
                 #nummask[(gz==np.nan)]=0
-                idxs1=np.where(nummask.sum(axis=1))[0]
-                idxs2=np.where(nummask.sum(axis=0))[0]
+                idxs1=np.where(nummask.sum(axis=1)>1)[0]
+                idxs2=np.where(nummask.sum(axis=0)>0)[0]
                 #print(idxs1)
                 #print(idxs2)
                 self.nummask=nummask
                 gz=gz[np.ix_(idxs1,idxs2)]
                 gy=gy[np.ix_(idxs1,idxs2)]
                 gx=gx[np.ix_(idxs1,idxs2)]
+                #print('ok')
             if self.sphere=='triangle' and self.cut2triangle:
                 
                 oristri=genoritri(resolution=0.1,mesh="spherified_cube_edge")
                 grid_x22,grid_y22, nummask2, mask2=genprojgrid(oristri,#self.oris[:,datadevider[0]:datadevider[1]],
                                                                 nump=self.nump,proj=self.ProjType,minmax='full')
+                
                 nummask=nummask2
                 mask=mask2
                 gz.mask=mask2
@@ -1012,6 +1016,7 @@ class plotter:
             for title in titles:
                 exec(f'colormapdata["{title}"]={title}')  
             self.colormapdata.append(colormapdata)
+            #print(colormapdata)
         
 
     def onclicactivate(self,**kwargs):
