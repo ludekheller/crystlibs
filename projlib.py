@@ -1279,7 +1279,176 @@ def equalarea2xyz(projdir):
     print(alpha*180/np.pi)
     return x,y,z
 
-
+def equalarea_arr2xyz(projdir):
+    """
+    Convert 2D equal-area (Schmidt) projection coordinates to 3D unit vectors.
+    
+    Performs inverse stereographic projection from 2D projected points back to 
+    3D unit vectors on the sphere. This is the inverse operation of 
+    equalarea_directions().
+    
+    Mathematical Background:
+    For equal-area (Lambert azimuthal) projection:
+    - r = 2*sin(θ/2) where θ is the angle from projection pole
+    - φ is the azimuthal angle in the projection plane
+    The 3D unit vector is: (sin(θ)cos(φ), sin(θ)sin(φ), cos(θ))
+    
+    Input:
+        projdir: numpy array (2, N) - Projection coordinates [x, y]
+                 First row: x-coordinates in projection plane
+                 Second row: y-coordinates in projection plane
+                 Points should be within unit circle for upper hemisphere
+    
+    Output:
+        dirs: numpy array (3, N) - Unit direction vectors [x, y, z]
+              First row: x-components
+              Second row: y-components  
+              Third row: z-components
+              All vectors have unit length: x² + y² + z² = 1
+    
+    Usage Example:
+        >>> import numpy as np
+        >>> from projlib import equalarea2xyz, equalarea_directions
+        >>> 
+        >>> # Example 1: Convert single projected point back to 3D
+        >>> # Project [1,0,0] direction to 2D, then back to 3D
+        >>> original_dir = np.array([[1], [0], [0]])
+        >>> proj_coords = equalarea_directions(original_dir.T)  # Project to 2D
+        >>> recovered_dir = equalarea2xyz(proj_coords)  # Back to 3D
+        >>> 
+        >>> print("Original:", original_dir.T)
+        >>> print("Projected:", proj_coords)
+        >>> print("Recovered:", recovered_dir)
+        >>> # Should match original direction
+        
+        >>> # Example 2: Convert multiple projected points
+        >>> # Create a grid of projected points
+        >>> n_points = 100
+        >>> theta = np.linspace(0, 2*np.pi, n_points)
+        >>> r = 0.5  # Radius in projection plane
+        >>> proj_x = r * np.cos(theta)
+        >>> proj_y = r * np.sin(theta)
+        >>> proj_coords = np.vstack([proj_x, proj_y])  # Shape: (2, 100)
+        >>> 
+        >>> # Convert to 3D unit vectors
+        >>> dirs_3d = equalarea2xyz(proj_coords)  # Shape: (3, 100)
+        >>> 
+        >>> print(f"Input shape: {proj_coords.shape}")
+        >>> print(f"Output shape: {dirs_3d.shape}")
+        >>> # Verify unit length
+        >>> lengths = np.sqrt(dirs_3d[0]**2 + dirs_3d[1]**2 + dirs_3d[2]**2)
+        >>> print(f"All unit vectors: {np.allclose(lengths, 1.0)}")
+        
+        >>> # Example 3: Round-trip test for multiple directions
+        >>> # Start with 3D directions
+        >>> original_dirs = np.array([
+        ...     [1, 0, 0],
+        ...     [0, 1, 0],
+        ...     [0, 0, 1],
+        ...     [1, 1, 1],
+        ...     [1, 1, 0]
+        ... ]).T  # Shape: (3, 5)
+        >>> 
+        >>> # Normalize to unit vectors
+        >>> original_dirs = original_dirs / np.linalg.norm(original_dirs, axis=0)
+        >>> 
+        >>> # Project to 2D
+        >>> projected = equalarea_directions(original_dirs.T)  # Shape: (5, 2)
+        >>> 
+        >>> # Convert back to 3D
+        >>> recovered = equalarea2xyz(projected.T)  # Shape: (3, 5)
+        >>> 
+        >>> # Check if we recovered original directions
+        >>> print("Original vs Recovered:")
+        >>> for i in range(5):
+        ...     orig = original_dirs[:, i]
+        ...     rec = recovered[:, i]
+        ...     dot_product = np.dot(orig, rec)
+        ...     print(f"  Direction {i}: dot product = {dot_product:.6f}")
+        ...     # Should be close to 1.0 (parallel vectors)
+        
+        >>> # Example 4: Convert pole figure data
+        >>> # Simulate scattered pole figure measurements
+        >>> n_measurements = 500
+        >>> # Random points in projection plane (within unit circle)
+        >>> angle = np.random.rand(n_measurements) * 2 * np.pi
+        >>> radius = np.sqrt(np.random.rand(n_measurements))  # Uniform on disk
+        >>> proj_x = radius * np.cos(angle)
+        >>> proj_y = radius * np.sin(angle)
+        >>> proj_coords = np.vstack([proj_x, proj_y])
+        >>> 
+        >>> # Convert to 3D crystal directions
+        >>> crystal_dirs = equalarea2xyz(proj_coords)
+        >>> 
+        >>> # Now can use these for texture analysis
+        >>> print(f"Converted {n_measurements} pole figure points to 3D")
+        >>> print(f"Z-components range: [{crystal_dirs[2].min():.3f}, "
+        ...       f"{crystal_dirs[2].max():.3f}]")
+        >>> # Z should be in [0, 1] for upper hemisphere
+        
+        >>> # Example 5: Interactive pole figure point selection
+        >>> # User clicks on pole figure, get 3D direction
+        >>> import matplotlib.pyplot as plt
+        >>> from projlib import schmidtnet_half
+        >>> 
+        >>> # Setup pole figure
+        >>> fig, ax = plt.subplots(figsize=(8, 8))
+        >>> fig, ax = schmidtnet_half(ax=ax)
+        >>> 
+        >>> # Simulate click at position (0.3, 0.4)
+        >>> click_x, click_y = 0.3, 0.4
+        >>> click_coords = np.array([[click_x], [click_y]])
+        >>> 
+        >>> # Get corresponding 3D direction
+        >>> direction_3d = equalarea2xyz(click_coords)
+        >>> 
+        >>> print(f"Clicked at ({click_x}, {click_y})")
+        >>> print(f"Corresponds to direction: [{direction_3d[0,0]:.3f}, "
+        ...       f"{direction_3d[1,0]:.3f}, {direction_3d[2,0]:.3f}]")
+        >>> 
+        >>> # Plot the point
+        >>> ax.plot(click_x, click_y, 'ro', markersize=10)
+        >>> ax.text(click_x, click_y+0.05, 
+        ...         f'[{direction_3d[0,0]:.2f}, {direction_3d[1,0]:.2f}, '
+        ...         f'{direction_3d[2,0]:.2f}]', ha='center')
+    """
+    # Handle input as 2D array (2, N)
+    if projdir.ndim == 1:
+        # Single point - reshape to (2, 1)
+        projdir = projdir.reshape(2, 1)
+    
+    # Extract x and y coordinates
+    x_proj = projdir[0, :]  # Shape: (N,)
+    y_proj = projdir[1, :]  # Shape: (N,)
+    
+    # Calculate radial distance in projection plane
+    r = np.sqrt(x_proj**2 + y_proj**2)
+    
+    # Calculate polar angle (angle from north pole)
+    # For equal-area projection: r = 2*sin(theta/2)
+    # Therefore: theta = 2*arcsin(r/2)
+    theta = 2 * np.arcsin(r / 2)
+    
+    # Handle points at origin separately
+    at_origin = (r < 1e-10)
+    
+    # Calculate azimuthal angle
+    phi = np.arctan2(y_proj, x_proj)
+    
+    # Convert to 3D Cartesian coordinates
+    x = np.sin(theta) * np.cos(phi)
+    y = np.sin(theta) * np.sin(phi)
+    z = np.cos(theta)
+    
+    # Handle origin points (map to [0, 0, 1])
+    x[at_origin] = 0
+    y[at_origin] = 0
+    z[at_origin] = 1
+    
+    # Stack into 3xN array
+    dirs = np.vstack([x, y, z])
+    
+    return dirs
 
 def equalarea_directions(dirs):
 
@@ -2146,7 +2315,7 @@ def schmidt_regular_area_grid(ax,Na=72,Nr=20,plot=True):
     if plot:
         ax.plot(GridX,GridY,'.',color='r',markersize=1)
     
-    return GridX,GridY,GridR,GridPhi,AreaRatio
+    return GridX,GridY,GridR,GridPhi,AreaRatio, equalarea_arr2xyz(np.vstack((GridX,GridY)))
 
 
 def schmidt_regular_grid(ax,Na=72,Nr=20,plot=True):
