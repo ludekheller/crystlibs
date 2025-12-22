@@ -2009,6 +2009,144 @@ def schmidtnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./2
 
     return fig,ax
 
+def schmidt_regular_area_grid(ax,Na=72,Nr=20,plot=True):
+    """
+    Generate a regular grid on Schmidt (equal-area) stereographic projection.
+    
+    Creates a polar grid with radial and angular divisions that maintains approximately
+    equal area for each grid cell. The grid density increases toward the center to
+    compensate for the stereographic projection distortion.
+    
+    Input:
+        ax: matplotlib axis - Axis object for plotting
+        Na: int - Number of angular divisions at outermost radius (default: 72)
+                  Controls angular resolution; should be divisible by 8
+        Nr: int - Number of radial divisions (default: 20)
+                  Controls radial resolution from center to edge
+        plot: bool - If True, plot grid points on axis (default: True)
+    
+    Output:
+        GridX: list - X-coordinates of grid points in projection plane
+        GridY: list - Y-coordinates of grid points in projection plane
+        GridR: list - Radial distances of grid points from center
+        GridPhi: list - Angular positions of grid points in degrees [0, 360)
+        AreaRatio: list - Area ratio of each grid cell relative to total hemisphere
+                          Sum of all AreaRatio values equals 1.0
+    
+    Usage Example:
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy as np
+        >>> from projlib import schmidt_regular_grid, schmidtnet_half
+        >>> 
+        >>> # Create equal-area projection with regular grid
+        >>> fig, ax = plt.subplots(figsize=(8, 8))
+        >>> fig, ax = schmidtnet_half(ax=ax)
+        >>> 
+        >>> # Generate and plot grid
+        >>> GridX, GridY, GridR, GridPhi, AreaRatio = schmidt_regular_grid(
+        ...     ax, Na=72, Nr=20, plot=True
+        ... )
+        >>> 
+        >>> print(f"Total grid points: {len(GridX)}")
+        >>> print(f"Sum of area ratios: {sum(AreaRatio):.4f}")  # Should be ~1.0
+        >>> plt.title('Schmidt Net Regular Grid')
+        >>> plt.show()
+        
+        >>> # High-resolution grid for density calculations
+        >>> fig, ax = plt.subplots(figsize=(10, 10))
+        >>> fig, ax = schmidtnet_half(ax=ax)
+        >>> GridX, GridY, GridR, GridPhi, AreaRatio = schmidt_regular_grid(
+        ...     ax, Na=144, Nr=40, plot=True
+        ... )
+        >>> print(f"High-res grid points: {len(GridX)}")
+        
+        >>> # Use grid for texture analysis
+        >>> # Calculate pole density at each grid point
+        >>> fig, ax = plt.subplots()
+        >>> fig, ax = schmidtnet_half(ax=ax)
+        >>> GridX, GridY, GridR, GridPhi, AreaRatio = schmidt_regular_grid(
+        ...     ax, Na=72, Nr=20, plot=False
+        ... )
+        >>> 
+        >>> # Example: compute density from orientation data
+        >>> # density[i] = number of poles near (GridX[i], GridY[i])
+        >>> # weighted by AreaRatio[i]
+        >>> densities = np.random.rand(len(GridX)) * 100  # Example data
+        >>> scatter = ax.scatter(GridX, GridY, c=densities, s=20, 
+        ...                      cmap='jet', vmin=0, vmax=100)
+        >>> plt.colorbar(scatter, ax=ax, label='Density (MUD)')
+        >>> plt.title('Pole Figure Density Map')
+        
+        >>> # Coarse grid for quick visualization
+        >>> fig, ax = plt.subplots(figsize=(6, 6))
+        >>> fig, ax = schmidtnet_half(ax=ax)
+        >>> GridX, GridY, GridR, GridPhi, AreaRatio = schmidt_regular_grid(
+        ...     ax, Na=36, Nr=10, plot=True
+        ... )
+        >>> # Mark grid cells with their area ratios
+        >>> for i, (x, y, area) in enumerate(zip(GridX, GridY, AreaRatio)):
+        ...     if i % 50 == 0:  # Label every 50th point
+        ...         ax.text(x, y, f'{area:.4f}', fontsize=6, ha='center')
+        >>> plt.title('Grid with Area Ratios')
+        
+        >>> # Extract grid points in specific angular sector
+        >>> GridX, GridY, GridR, GridPhi, AreaRatio = schmidt_regular_grid(
+        ...     ax, Na=72, Nr=20, plot=False
+        ... )
+        >>> # Select points in 0-90 degree sector
+        >>> mask = (np.array(GridPhi) >= 0) & (np.array(GridPhi) <= 90)
+        >>> sector_points = sum(mask)
+        >>> sector_area = sum([a for a, m in zip(AreaRatio, mask) if m])
+        >>> print(f"Points in first quadrant: {sector_points}")
+        >>> print(f"Area fraction: {sector_area:.4f}")  # Should be ~0.25
+    """
+    dphi1=360/Na
+    phi1=np.linspace(0,360-dphi1,Na)
+    R=equalarea_directions(np.array([1,0,0]))[0,0]
+    TotalArea=np.pi*R**2
+    dr=R/(Nr+0.5)
+    r=np.linspace(0,R-dr/2,Nr+1)
+#    GridX=[0.];
+#    GridY=[0.];
+#    Weight= np.pi*(r[1]/2)**2/TotalArea
+    AreaRatio=[]
+    for ri in r:
+        Nari=int(Na*(ri/r[-1]))
+        
+        if Nari<8:
+            Nari=8
+        else:
+            Nari=Nari-Nari%8    
+        #print(Nari)
+        #Nari=8
+        dphi1=360./(Nari)
+        phi1=np.linspace(0,360-dphi1,Nari)
+        phi1=np.linspace(dphi1/2,360-dphi1/2,Nari)
+        #phi1=phi1[0:-1]
+        #print(2*np.pi*((ri+dr/2)**2/2-(ri-dr/2)**2/2))
+        #tot=0
+        for phi1i in phi1:        
+            if ri==0:
+                GridX=[0.];
+                GridPhi=[0.]
+                GridY=[0.];
+                GridR=[r[1]-dr/2]
+                GridR=[ri]
+                AreaRatio= [np.pi*(r[1]-dr/2.)**2/TotalArea]
+            else:
+                GridX.append(ri*np.cos(phi1i*np.pi/180.))
+                GridY.append(ri*np.sin(phi1i*np.pi/180.))
+                AreaRatio.append(dphi1*np.pi/180.*((ri+dr/2)**2/2.-(ri-dr/2)**2/2.)/TotalArea)
+                GridR.append(ri)
+                phi=np.arctan2(GridY[-1],GridX[-1])*180./np.pi
+                GridPhi.append(phi)
+                #tot+=dphi1*np.pi/180.*((ri+dr/2)**2/2-(ri-dr/2)**2/2)
+        #print(tot)
+    #sum(AreaRatio)
+    if plot:
+        ax.plot(GridX,GridY,'.',color='r',markersize=1)
+    
+    return GridX,GridY,GridR,GridPhi,AreaRatio
 
 
 def schmidt_regular_grid(ax,Na=72,Nr=20,plot=True):
