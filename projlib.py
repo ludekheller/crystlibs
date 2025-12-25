@@ -1178,6 +1178,7 @@ def equalarea_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
     #%varargin{1} arclength in deg
     #normals = np.transpose(np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]))
     #
+    tol=1e-10
     if len(normals.shape)==1:
         normals = np.expand_dims(normals,axis=1)
 
@@ -1214,10 +1215,12 @@ def equalarea_planes(normals,arclength=360.,iniangle=0.,hemisphere="both"):
             Ds=equalarea_intotriangle(Ccp)#[:,idxs])
         else:
             if hemisphere == "upper":
-                idxs = np.where(Ccp[2,:]>=0)[0]
-                Ds = equalarea_directions(Ccp[:,idxs])
+                #print(i)
+                idxs = np.where(Ccp[2,:]>=-tol)[0]
+                #print(np.diff(idxs))
+                Ds = equalarea_directions(Ccp[:,idxs[np.diff(idxs, prepend=[idxs[0]-1])==1]])
             elif hemisphere == "lower":
-                idxs = np.where(Ccp[2,:]<=0)[0]
+                idxs = np.where(Ccp[2,:]<=tol)[0]
                 Ds = equalarea_directions(Ccp[:,idxs])
         proj_planes.append(Ds)
     
