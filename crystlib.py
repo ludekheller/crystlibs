@@ -6431,7 +6431,7 @@ def niti_twinning(B2_symops,B2_recsymops,B19p_recsymops,B19p_symops,Uv,Parent_uv
     twin_systems[twintype]['dm_a']=[]
     twin_systems[twintype]['dm_m']=[]
  
-    twin_systems[twintype]['eta1_m'].append(np.array([1,0,2]))
+    twin_systems[twintype]['eta1_m'].append(np.array([-1,0,-2]))
     twin_systems[twintype]['K1_m'].append(np.array([2,0,-1]))
     twin_systems[twintype]['eta2_m'].append(np.array([1,0,0]))
     twin_systems[twintype]['K2_m'].append(np.array([0,0,-1]))
