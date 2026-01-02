@@ -17,6 +17,8 @@ Created on Wed Sep 11 10:07:07 2019
 import numpy as np
 import math
 from numba import njit
+import numba as nb
+
 
 # =====================================
 # Quaternion utilities
@@ -3150,3 +3152,350 @@ def Mat2Quat(umatsa): #orientation matrix to quaternion
     Q[3,:] *= 0.5 / np.sqrt(T)
     return Q
 
+"""
+Highly optimized disorientation computation specifically for cubic symmetry.
+
+This module provides specialized implementations that are significantly faster
+than the general algorithm by exploiting the specific structure of cubic symmetry.
+"""
+
+
+# Hard-coded cubic symmetry operations (24 proper rotations)
+# These are the 24 rotation matrices for point group O (432)
+CUBIC_SYM_24 = np.array([
+    # Identity
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    # 90° rotations around principal axes (z, y, x)
+    [[0, -1, 0], [1, 0, 0], [0, 0, 1]],
+    [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+    [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],
+    [[0, 0, 1], [0, 1, 0], [-1, 0, 0]],
+    [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
+    [[0, 0, -1], [0, 1, 0], [1, 0, 0]],
+    [[1, 0, 0], [0, 0, -1], [0, 1, 0]],
+    [[1, 0, 0], [0, -1, 0], [0, 0, -1]],
+    [[1, 0, 0], [0, 0, 1], [0, -1, 0]],
+    # 120° rotations around <111> directions
+    [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+    [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+    [[0, 0, -1], [-1, 0, 0], [0, 1, 0]],
+    [[0, -1, 0], [0, 0, 1], [-1, 0, 0]],
+    [[0, 0, -1], [1, 0, 0], [0, -1, 0]],
+    [[0, 1, 0], [0, 0, -1], [-1, 0, 0]],
+    [[0, 0, 1], [-1, 0, 0], [0, -1, 0]],
+    [[0, -1, 0], [0, 0, -1], [1, 0, 0]],
+    # 180° rotations around <110> directions
+    [[0, 1, 0], [1, 0, 0], [0, 0, -1]],
+    [[0, -1, 0], [-1, 0, 0], [0, 0, -1]],
+    [[-1, 0, 0], [0, 0, 1], [0, 1, 0]],
+    [[-1, 0, 0], [0, 0, -1], [0, -1, 0]],
+    [[0, 0, 1], [0, -1, 0], [1, 0, 0]],
+    [[0, 0, -1], [0, -1, 0], [-1, 0, 0]],
+], dtype=np.float64)
+
+# Cubic symmetry with inversion (48 operations, Laue group m-3m)
+# These are used when you want to include the inversion center
+CUBIC_SYM_48 = np.zeros((48, 3, 3), dtype=np.float64)
+CUBIC_SYM_48[:24] = CUBIC_SYM_24
+CUBIC_SYM_48[24:] = -CUBIC_SYM_24  # Add inversions
+
+
+@nb.njit(fastmath=True)
+def _matrix_multiply_3x3(A, B):
+    """Fast 3x3 matrix multiplication."""
+    C = np.empty((3, 3), dtype=np.float64)
+    for i in range(3):
+        for j in range(3):
+            C[i, j] = A[i, 0] * B[0, j] + A[i, 1] * B[1, j] + A[i, 2] * B[2, j]
+    return C
+
+
+@nb.njit(fastmath=True)
+def _trace_3x3(A):
+    """Fast trace computation for 3x3 matrix."""
+    return A[0, 0] + A[1, 1] + A[2, 2]
+
+
+@nb.njit(fastmath=True)
+def _misorientation_angle_from_matrix(Delta):
+    """
+    Compute misorientation angle from rotation matrix.
+    Uses: angle = arccos((trace(Delta) - 1) / 2)
+    """
+    trace_val = _trace_3x3(Delta)
+    cos_angle = (trace_val - 1.0) * 0.5
+    
+    # Clamp to avoid numerical issues
+    if cos_angle > 1.0:
+        cos_angle = 1.0
+    elif cos_angle < -1.0:
+        cos_angle = -1.0
+    
+    return np.arccos(cos_angle)
+
+
+@nb.njit(parallel=True, fastmath=True)
+def compute_cubic_disorientations_24(M):
+    """
+    Compute disorientations for cubic symmetry (24 operations).
+    
+    This is optimized specifically for cubic crystal symmetry (point group O, 432).
+    Uses only proper rotations (no inversion).
+    
+    Parameters:
+    -----------
+    M : ndarray, shape (m, 3, 3)
+        Array of orientation matrices (proper rotations)
+    
+    Returns:
+    --------
+    D : ndarray, shape (m, m)
+        Disorientation matrix in radians
+    """
+    m = M.shape[0]
+    D = np.zeros((m, m), dtype=np.float64)
+    
+    # Get symmetry operations
+    S = CUBIC_SYM_24
+    n_sym = 24
+    
+    # Precompute M^T
+    M_T = np.empty_like(M)
+    for i in range(m):
+        for k1 in range(3):
+            for k2 in range(3):
+                M_T[i, k1, k2] = M[i, k2, k1]
+    
+    # Precompute S^T
+    S_T = np.empty_like(S)
+    for i in range(n_sym):
+        for k1 in range(3):
+            for k2 in range(3):
+                S_T[i, k1, k2] = S[i, k2, k1]
+    
+    # Precompute all symmetry-transformed orientations
+    # M_S[i, si] = M[i] @ S[si]
+    M_S = np.empty((m, n_sym, 3, 3), dtype=np.float64)
+    for i in range(m):
+        for si in range(n_sym):
+            M_S[i, si] = _matrix_multiply_3x3(M[i], S[si])
+    
+    # Precompute all left-multiplied symmetry transformations
+    # S_M_T[i, si] = S_T[si] @ M_T[i]
+    S_M_T = np.empty((m, n_sym, 3, 3), dtype=np.float64)
+    for i in range(m):
+        for si in range(n_sym):
+            S_M_T[i, si] = _matrix_multiply_3x3(S_T[si], M_T[i])
+    
+    # Compute pairwise disorientations
+    for i in nb.prange(m):
+        for j in range(i, m):
+            if i == j:
+                D[i, j] = 0.0
+            else:
+                min_angle = np.pi
+                
+                # Try all symmetry combinations
+                for si in range(n_sym):
+                    for sj in range(n_sym):
+                        # Delta = S_T[si] @ M_T[i] @ M[j] @ S[sj]
+                        Delta = _matrix_multiply_3x3(S_M_T[i, si], M_S[j, sj])
+                        angle = _misorientation_angle_from_matrix(Delta)
+                        
+                        if angle < min_angle:
+                            min_angle = angle
+                            # Early termination for very small angles
+                            if angle < 1e-6:
+                                break
+                    
+                    if min_angle < 1e-6:
+                        break
+                
+                D[i, j] = min_angle
+                D[j, i] = min_angle
+    
+    return D
+
+
+@nb.njit(parallel=True, fastmath=True)
+def compute_cubic_disorientations_48(M):
+    """
+    Compute disorientations for cubic symmetry with inversion (48 operations).
+    
+    This is for Laue group m-3m (Oh), which includes inversion symmetry.
+    Use this when your material has a center of inversion.
+    
+    Parameters:
+    -----------
+    M : ndarray, shape (m, 3, 3)
+        Array of orientation matrices
+    
+    Returns:
+    --------
+    D : ndarray, shape (m, m)
+        Disorientation matrix in radians
+    """
+    m = M.shape[0]
+    D = np.zeros((m, m), dtype=np.float64)
+    
+    # Get symmetry operations
+    S = CUBIC_SYM_48
+    n_sym = 48
+    
+    # Precompute M^T
+    M_T = np.empty_like(M)
+    for i in range(m):
+        for k1 in range(3):
+            for k2 in range(3):
+                M_T[i, k1, k2] = M[i, k2, k1]
+    
+    # Precompute S^T
+    S_T = np.empty_like(S)
+    for i in range(n_sym):
+        for k1 in range(3):
+            for k2 in range(3):
+                S_T[i, k1, k2] = S[i, k2, k1]
+    
+    # Precompute all symmetry-transformed orientations
+    M_S = np.empty((m, n_sym, 3, 3), dtype=np.float64)
+    for i in range(m):
+        for si in range(n_sym):
+            M_S[i, si] = _matrix_multiply_3x3(M[i], S[si])
+    
+    # Precompute all left-multiplied symmetry transformations
+    S_M_T = np.empty((m, n_sym, 3, 3), dtype=np.float64)
+    for i in range(m):
+        for si in range(n_sym):
+            S_M_T[i, si] = _matrix_multiply_3x3(S_T[si], M_T[i])
+    
+    # Compute pairwise disorientations
+    for i in nb.prange(m):
+        for j in range(i, m):
+            if i == j:
+                D[i, j] = 0.0
+            else:
+                min_angle = np.pi
+                
+                # Try all symmetry combinations
+                for si in range(n_sym):
+                    for sj in range(n_sym):
+                        Delta = _matrix_multiply_3x3(S_M_T[i, si], M_S[j, sj])
+                        angle = _misorientation_angle_from_matrix(Delta)
+                        
+                        if angle < min_angle:
+                            min_angle = angle
+                            if angle < 1e-6:
+                                break
+                    
+                    if min_angle < 1e-6:
+                        break
+                
+                D[i, j] = min_angle
+                D[j, i] = min_angle
+    
+    return D
+
+
+@nb.njit(parallel=True, fastmath=True)
+def compute_cubic_disorientations_24_ultra_fast(M):
+    """
+    Ultra-fast version using maximum vectorization and manual loop unrolling.
+    
+    This version is optimized for maximum speed on modern CPUs.
+    Best for large datasets (m > 500).
+    
+    Parameters:
+    -----------
+    M : ndarray, shape (m, 3, 3)
+        Array of orientation matrices
+    
+    Returns:
+    --------
+    D : ndarray, shape (m, m)
+        Disorientation matrix in radians
+    """
+    m = M.shape[0]
+    D = np.zeros((m, m), dtype=np.float64)
+    
+    S = CUBIC_SYM_24
+    n_sym = 24
+    
+    # Precompute everything upfront
+    M_T = np.empty((m, 3, 3), dtype=np.float64)
+    for i in range(m):
+        for k1 in range(3):
+            for k2 in range(3):
+                M_T[i, k1, k2] = M[i, k2, k1]
+    
+    S_T = np.empty((n_sym, 3, 3), dtype=np.float64)
+    for i in range(n_sym):
+        for k1 in range(3):
+            for k2 in range(3):
+                S_T[i, k1, k2] = S[i, k2, k1]
+    
+    # Precompute M @ S for all combinations
+    M_S = np.empty((m, n_sym, 3, 3), dtype=np.float64)
+    for i in range(m):
+        for si in range(n_sym):
+            for k1 in range(3):
+                for k2 in range(3):
+                    M_S[i, si, k1, k2] = (M[i, k1, 0] * S[si, 0, k2] + 
+                                           M[i, k1, 1] * S[si, 1, k2] + 
+                                           M[i, k1, 2] * S[si, 2, k2])
+    
+    # Precompute S^T @ M^T for all combinations
+    S_M_T = np.empty((m, n_sym, 3, 3), dtype=np.float64)
+    for i in range(m):
+        for si in range(n_sym):
+            for k1 in range(3):
+                for k2 in range(3):
+                    S_M_T[i, si, k1, k2] = (S_T[si, k1, 0] * M_T[i, 0, k2] + 
+                                             S_T[si, k1, 1] * M_T[i, 1, k2] + 
+                                             S_T[si, k1, 2] * M_T[i, 2, k2])
+    
+    # Main computation loop
+    for i in nb.prange(m):
+        for j in range(i + 1, m):
+            min_angle = np.pi
+            
+            for si in range(n_sym):
+                # Load S_M_T[i, si] into local variables for better cache performance
+                a00 = S_M_T[i, si, 0, 0]
+                a01 = S_M_T[i, si, 0, 1]
+                a02 = S_M_T[i, si, 0, 2]
+                a10 = S_M_T[i, si, 1, 0]
+                a11 = S_M_T[i, si, 1, 1]
+                a12 = S_M_T[i, si, 1, 2]
+                a20 = S_M_T[i, si, 2, 0]
+                a21 = S_M_T[i, si, 2, 1]
+                a22 = S_M_T[i, si, 2, 2]
+                
+                for sj in range(n_sym):
+                    # Manual matrix multiplication and trace computation
+                    # trace = (A @ B)[0,0] + (A @ B)[1,1] + (A @ B)[2,2]
+                    trace = (a00 * M_S[j, sj, 0, 0] + a01 * M_S[j, sj, 1, 0] + a02 * M_S[j, sj, 2, 0] +
+                             a10 * M_S[j, sj, 0, 1] + a11 * M_S[j, sj, 1, 1] + a12 * M_S[j, sj, 2, 1] +
+                             a20 * M_S[j, sj, 0, 2] + a21 * M_S[j, sj, 1, 2] + a22 * M_S[j, sj, 2, 2])
+                    
+                    cos_angle = (trace - 1.0) * 0.5
+                    
+                    # Clamp
+                    if cos_angle > 1.0:
+                        cos_angle = 1.0
+                    elif cos_angle < -1.0:
+                        cos_angle = -1.0
+                    
+                    angle = np.arccos(cos_angle)
+                    
+                    if angle < min_angle:
+                        min_angle = angle
+                        if angle < 1e-6:
+                            break
+                
+                if min_angle < 1e-6:
+                    break
+            
+            D[i, j] = min_angle
+            D[j, i] = min_angle
+    
+    return D
