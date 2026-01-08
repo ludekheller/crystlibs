@@ -58,9 +58,10 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from orilib import *
+#from orilib import *
 from matplotlib.patches import Wedge
 from functools import reduce
+from crystlibs import  *
 try:
     import random
 except:
