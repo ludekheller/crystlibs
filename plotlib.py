@@ -20,10 +20,6 @@ Created on Tue Sep 26 13:39:06 2023
 """
 
 from projlib import *
-try:
-    from crystallography_functions import *
-except:
-    pass
 import numpy as np
 try:
     from scipy.interpolate import griddata
@@ -33,6 +29,7 @@ try:
     from wand.image import Image
 except:
     pass
+from crystlibs import  *
 import matplotlib.colors as mcolors
 import matplotlib
 import matplotlib.pyplot as plt

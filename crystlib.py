@@ -17,7 +17,7 @@ from matplotlib.patches import Wedge
 import math
 import sympy
 from scipy.spatial import ConvexHull
-from projlib import  *
+from crystlibs import  *
 
 
 

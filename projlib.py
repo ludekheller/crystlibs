@@ -58,7 +58,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from orilib import *
+from crystlibs import  *
 from matplotlib.patches import Wedge
 from functools import reduce
 try:
