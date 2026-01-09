@@ -43,7 +43,7 @@ import pickle as pickle
 from scipy.interpolate import griddata
 from spherical_kde import SphericalKDE
 from spherical_kde.distributions import (VonMisesFisher_distribution as VMF, VonMises_std)
-
+from numpy.linalg import inv 
 
 class plotter:
     """
