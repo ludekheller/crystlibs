@@ -408,7 +408,6 @@ def np_euler_matrix(ai, aj, ak):
         ai: float - First Euler angle (phi1) in radians
         aj: float - Second Euler angle (Phi) in radians
         ak: float - Third Euler angle (phi2) in radians
-    
     Output:
         g: numpy array (3, 3) - Rotation matrix
     
@@ -2473,6 +2472,52 @@ def misorimat_ini(umatsa):
     d[np.where(d2<d)]= d2[np.where(d2<d)]
     return d
 
+@njit
+def find_best_symmetric_quat(q, q_ref, symops, max_iter=10, tol=1e-6):
+    q_best = q.copy()
+    M_best = quat_to_mat(q_best)
+    min_ang = quat_misori_deg(q_best, q_ref)
+
+    for _ in range(max_iter):
+        improved = False
+        for s in range(symops.shape[0]):
+            q_sym = quat_mult(mat_to_quat(symops[s]), q)
+            q_sym /= np.linalg.norm(q_sym)
+            ang = quat_misori_deg(q_sym, q_ref)
+            if ang + tol < min_ang:
+                min_ang = ang
+                q_best = q_sym.copy()
+                M_best = quat_to_mat(q_best)
+                improved = True
+        if not improved:
+            break
+    return q_best, M_best, min_ang
+
+def get_avg_orientations(quaternions, symops, ref_idx=0, max_iter=10, tol=1e-6,q_ref=None):
+    #Compute an average orientation 
+    # store best-symmetric matrices for this cluster
+    no = quaternions.shape[0]
+    M_best_sym = np.zeros((no,3,3))
+    q_best_sym = np.zeros((no,4))
+
+    q_sum = np.zeros(4)
+    if q_ref is None:
+        q_ref = quaternions[ref_idx]
+
+    for j in range(no):
+        q_best, M_best, _ = find_best_symmetric_quat(quaternions[j], q_ref, symops, max_iter, tol)
+        if np.dot(q_best, q_ref) < 0:
+            q_best *= -1.0
+        q_sum += q_best
+        q_best_sym[j] = q_best
+        M_best_sym[j] = M_best
+
+    # average quaternion
+    q_mean = q_sum / np.linalg.norm(q_sum)
+    M_mean = quat_to_mat(q_mean)
+
+    
+    return q_mean, M_mean, M_best_sym, q_best_sym
 def misorimat(umatsa):
     """
     Calculate misorientation matrix between two orientations.

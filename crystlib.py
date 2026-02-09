@@ -134,7 +134,13 @@ def generate_hkls(hklmax, syms, hkls=[]):
     fam = {}
     for key in list(hkls2.keys()):
         fam.update(get_unique_families(tuple([tuple(array2tuple(hkl)) for hkl in hkls2[key]])))
-
+    new_keys=[]
+    old_keys=[]
+    for old_key in list(hkls2.keys()):
+        new_keys.append(list(get_unique_families(tuple([tuple(array2tuple(hkl)) for hkl in hkls2[old_key]])).keys())[0])
+        old_keys.append(old_key)
+    for old_key, new_key in zip(old_keys, new_keys):
+        hkls2[new_key] = hkls2.pop(old_key)
     return hkls, hkls2, fam
 
 
