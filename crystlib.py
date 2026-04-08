@@ -4559,7 +4559,8 @@ def select_plane(LatticeVectors,normal,eps=1e-1,shift=0.,Q=np.eye(3)):
             for points in vec.T:   
                 #point_proj_n = normal.dot(points/np.sqrt(np.sum(points**2,axis=0)))
                 point_proj_n = normal.dot(points)
-                
+                if not isinstance(point_proj_n, np.ndarray):
+                    point_proj_n = np.array([point_proj_n])
                 idxs = np.where(abs(point_proj_n-shift)<(eps))[0]
                 #print(point_proj_n)
                 if len(idxs)>0:
@@ -7106,6 +7107,7 @@ def gen_twinned_lattice_points(ParentLatticePoints,eta1,shear_angle,K1,shift=0.0
             if bvr is None:
                 twpoints.append(points+2*np.array([eta1]).T*np.tan(shear_angle/2)*(K1.dot(points)+shift))
             else:
+                #print(bvr*deta1*np.array([eta1]).T)
                 twpoints.append(points+bvr*deta1*np.array([eta1]).T*(np.modf(((K1.dot(points)+shift*np.sign(K1.dot(points)))/dK1))[1]))
         
         TwinnedPoints.append(twpoints)

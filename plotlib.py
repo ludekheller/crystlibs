@@ -2306,7 +2306,7 @@ def set_aspect_equal_3d(ax):
     
     
 
-def plot_lattice_plane(axl,PlanePoints,**kwargs):
+def plot_lattice_plane(axl,PlanePoints,facecolors=(0, 0, 0, 0.5),**kwargs):
 
     """
     Plot a crystallographic plane in 3D lattice.
@@ -3265,7 +3265,18 @@ def plot_lattice(Points,LatticeVectors,ax=None,colors=['r','b','g'],edgecolors=[
                 if plot:
                     ax.plot(vec[0,:], vec[1,:], vec[2,:],color=gridcolor,alpha=lalpha,linewidth=linewidth)
         LatticeVectorsNew.append(LatticeVectorNew)
+    if plot:  
+        ax.axis('auto')      
+    
+    if halfscp:
+        if atoms:
+            return fig,ax,LatticeVectorsNew,PointsNew
+        else:
+            return fig,ax,LatticeVectorsNew
+    else:
+        return fig,ax
 
+    #return fig,ax
 def plane_line_intersection(n,V0,P0,P1):
 
     """
@@ -3306,11 +3317,21 @@ def plane_line_intersection(n,V0,P0,P1):
         t = n·(p₀ - l₀) / (n·d)
         intersection = l₀ + t·d
     """
+
     # n: normal vector of the Plane 
     # V0: any point that belongs to the Plane 
     # P0: end point 1 of the segment P0P1
     # P1:  end point 2 of the segment P0P1
-            
+    
+
+
+    w = P0 - V0;
+    u = P1-P0;
+    N = -np.dot(n,w);
+    D = np.dot(n,u)
+    sI = N / D
+    I = P0+ sI*u
+    return I        
 #    normal=normal/np.sqrt(normal.dot(normal))
 #    PointsOut=[]    
 #    for Points1 in LatticePoints:
@@ -3328,16 +3349,16 @@ def plane_line_intersection(n,V0,P0,P1):
 #            PointsOut1.append(points[:,idxs])
 #        PointsOut.append(PointsOut1)
     #    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-    if plot:  
-        ax.axis('auto')      
-    
-    if halfscp:
-        if atoms:
-            return fig,ax,LatticeVectorsNew,PointsNew
-        else:
-            return fig,ax,LatticeVectorsNew
-    else:
-        return fig,ax
+    #if plot:  
+    #    ax.axis('auto')      
+   # 
+   # if halfscp:
+   #     if atoms:
+   #         return fig,ax,LatticeVectorsNew,PointsNew
+   #     else:
+   #         return fig,ax,LatticeVectorsNew
+   # else:
+   #     return fig,ax
 
 def plot_lattice_proj(LatticeVectors,normalproj,verticalproj, ax=None, linewidth=2,color='b',eps=1e-1,Q=np.eye(3),Qprojr=np.eye(2),shift=np.zeros(3),shiftproj=0,move=np.zeros(3),normal=np.array([0,0,0]),shifthalfspace=np.zeros(3),
                       halfspace='upper',shiftplot=np.array([0,0]),out=False):

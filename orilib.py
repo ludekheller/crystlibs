@@ -18,7 +18,7 @@ import numpy as np
 import math
 from numba import njit
 import numba as nb
-
+from numpy.linalg import norm
 
 # =====================================
 # Quaternion utilities
