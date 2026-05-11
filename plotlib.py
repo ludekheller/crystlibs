@@ -355,7 +355,7 @@ class plotter:
                 if self.dx2 is None: self.dx2 = -0.05
 
     def getScales(self, vmcbar, numticks=None, ticks=None, tickslabels=None, 
-                  geq=False, leq=False, cmapbins=100, cmapbinsmult=None):
+                  geq=False, leq=False, cmapbins=100, cmapbinsmult=None,cmap=None):
         """
         Generate color scale parameters including ticks, labels, and colormap.
         
@@ -418,11 +418,20 @@ class plotter:
         if tickslabels is None:
             tickslabels = []
             for tick in ticks:
-                if tick == round(tick):
-                    tickslabels.append(str(round(tick)))
+                #print(tick)
+                #print(abs(tick - round(tick)))
+                #if abs(tick)<1:
+                rthick = round(tick,3)
+                #else:
+                #    rthick = round(tick)
+                if np.abs(tick - rthick) < 1e-5:
+                    tickslabels.append(str(rthick))
+                    #print(str((rthick)))
+
                 else:
                     tickslabels.append(str(tick))
-        
+                    #print(str((tick)))
+                    #print(str((tick)))
         if geq:
             tickslabels[-1] = r'$\geq$' + tickslabels[-1]
         if leq:
@@ -430,12 +439,12 @@ class plotter:
         
         if cmapbinsmult is not None:
             cmapbins = (numticks - 1) * cmapbinsmult
-        
-        cmap = get_cmap([(1, 1, 1), mcolors.to_rgb('blue'), mcolors.to_rgb('green'),
+        if cmap is None:
+            cmap = get_cmap([(1, 1, 1), mcolors.to_rgb('blue'), mcolors.to_rgb('green'),
                         mcolors.to_rgb('yellow'), mcolors.to_rgb('darkred')], nbins=cmapbins)
         
         return {'tickslabels': tickslabels, 'vm': vmcolmap, 'vmbar': vmcbar, 
-                'cmap': cmap, 'ticks': ticks}
+                'cmap': cmap, 'ticks': ticks, 'cmapbins':cmapbins}
 
     def getFigparam(self, fontsize=None, save=False, phase='A,', figsize=None, **kwargs):
         """
