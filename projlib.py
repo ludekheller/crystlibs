@@ -1682,6 +1682,126 @@ def equalarea_directions(dirs):
 #         return proj_planes, points
 
 
+def polefigure_histogram(data, weights=None, equalarea=False, scale='sqrt', bins=256, hemi='upper'):
+    """
+    Compute a 2D histogram of projected pole directions on a
+    stereographic (Wulff) or equal-area (Schmidt) net, WITHOUT plotting
+    anything.
+
+    Parameters
+    ----------
+    data : (3, N) array
+        Cartesian direction vectors to project.
+    weights : (N,) array, optional
+        Per-point weight (e.g. cluster pixel size), forwarded to
+        np.histogram2d's weights. Default None (each point counts as 1).
+    equalarea, scale, bins, hemi : as before.
+
+    Returns
+    -------
+    hist, sp, extent : as before.
+    """
+    if scale not in ('sqrt', 'log', 'linear'):
+        raise ValueError(f"scale must be 'sqrt', 'log', or 'linear', got {scale!r}")
+    if hemi not in ('upper', 'lower'):
+        raise ValueError(f"hemi must be 'upper' or 'lower', got {hemi!r}")
+
+    if hemi == 'upper':
+        sel = data[2, :] >= 0
+    else:
+        sel = data[2, :] <= 0
+    data = data[:, sel]
+    if weights is not None:
+        weights = np.asarray(weights)[sel]
+
+    if equalarea:
+        sp = equalarea_directions(data)
+        R = 1.0
+    else:
+        sp = stereoprojection_directions(data)
+        R = np.sqrt(2)
+
+    hist, xedges, yedges = np.histogram2d(
+        sp[1, :], sp[0, :], bins=(bins, bins), range=[[-1, 1], [-1, 1]], weights=weights
+    )
+
+    if scale == 'sqrt':
+        hist = np.sqrt(hist)
+    elif scale == 'log':
+        hist = np.log1p(hist)
+
+    X, Y = np.meshgrid((xedges[:-1] + xedges[1:]) / 2.,
+                        (yedges[:-1] + yedges[1:]) / 2.)
+    outside = X**2 + Y**2 >= R
+    hist[outside] = np.nan
+
+    return hist, sp, (-1, 1, -1, 1)
+
+def polefigure_plot(hist, equalarea=False, nlevels=10, vmax=None, fig=None, ax=None,
+                     draw_net=True, return_val=False, **kwargs):
+    """
+    Draw a stereographic/equal-area net (optional) and contour-fill a
+    precomputed pole-figure histogram (from polefigure_histogram).
+
+    Parameters
+    ----------
+    hist : (bins, bins) ndarray
+        Precomputed histogram, as returned by polefigure_histogram
+        (NaN outside the net boundary already applied).
+    equalarea : bool, optional
+        Must match the equalarea flag used to compute `hist`. Default False.
+    nlevels : int, optional
+        Number of contour fill levels, linearly spaced between 0 and
+        vmax. Default 10.
+    vmax : float, optional
+        Upper bound for the contour level range. If None (default),
+        uses the histogram's own maximum (np.max(hist), ignoring NaN)
+        -- original behavior. Set explicitly to cap the color scale
+        below the true peak (e.g. a percentile of the histogram, or a
+        fixed value shared across multiple plots for comparability),
+        which is often necessary for very peaked data where the true
+        max otherwise crushes most of the colormap range into its
+        lowest color. Values above vmax are simply clipped to the top
+        color by contourf (via its own level handling), not an error.
+    fig : matplotlib Figure, optional
+        Kept for API symmetry; not otherwise used -- ax.figure is
+        always used. Ignored if ax is None (a new fig/ax is created).
+    ax : matplotlib Axes, optional
+        Axes to draw into. If None, a new fig/ax pair is created.
+    draw_net : bool, optional
+        If True (default), draw the net background before contouring.
+    return_val : bool, optional
+        Kept for API symmetry; no additional effect.
+    **kwargs
+        Passed through to ax.contourf (e.g. cmap, alpha). Do not pass
+        'levels' here -- set internally from nlevels/vmax.
+
+    Returns
+    -------
+    fig, ax : matplotlib Figure, Axes
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+    fig = ax.figure
+
+    if draw_net:
+        if equalarea:
+            fig, ax = schmidtnet(ax=ax, basedirs=False, facecolor='None')
+        else:
+            fig, ax = wulffnet(ax=ax, basedirs=False, facecolor='None')
+
+    if vmax is None:
+        finite = hist[np.isfinite(hist)]
+        vmax = np.max(finite) if finite.size > 0 else 1.0
+
+    lvls = np.linspace(0, vmax, nlevels)
+    kwargs['levels'] = lvls[1:]
+    kwargs.setdefault('extend', 'max')  # clip values above vmax to the top color, don't just cut them off
+
+    cs = ax.contourf(hist, extent=(-1, 1, -1, 1), **kwargs)
+
+    return fig, ax, cs
+
 def wulffnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
     """
     Draw stereographic (Wulff) net - full circle.
@@ -2727,6 +2847,42 @@ def ipf(gPhi1,gPHI,gPhi2,Dc,lattice,Na=72,Nr=20,syms=True):
     #plt.show()
     return fig,ax,cb,Intensity
         
+def stereotriangle_bbox(equalarea=False, margin=0.05):
+    """
+    Return tight axis limits (xlim, ylim) around the standard cubic
+    stereographic triangle drawn by stereotriangle(), computed directly
+    from its known corner directions [001], [111], [101] — not by
+    inspecting whatever else has been plotted on an axes.
+
+    Parameters
+    ----------
+    equalarea : bool, optional
+        Must match the equalarea flag used when calling stereotriangle()
+        (and the projection functions it uses internally), since corner
+        positions differ between equal-area and stereographic projection.
+    margin : float, optional
+        Fractional margin added around the triangle's bounding box.
+        Default 0.05 (5%).
+
+    Returns
+    -------
+    xlim, ylim : tuple of float
+        Ready to pass to ax.set_xlim(*xlim), ax.set_ylim(*ylim).
+    """
+    dirs = np.column_stack([[0, 0, 1], [1, 1, 1], [1, 0, 1]])
+    if equalarea:
+        proj_dirs = equalarea_directions(dirs)
+    else:
+        proj_dirs = stereoprojection_directions(dirs)
+
+    xs, ys = proj_dirs[0, :], proj_dirs[1, :]
+    xmin, xmax = xs.min(), xs.max()
+    ymin, ymax = ys.min(), ys.max()
+
+    mx = margin * max(xmax - xmin, 1e-6)
+    my = margin * max(ymax - ymin, 1e-6)
+
+    return (xmin - mx, xmax + mx), (ymin - my, ymax + my)
 
 def stereotriangle(ax=None,basedirs=False,equalarea=False,grid=False,resolution=None,gridmarkersize=None,gridmarkercol=None,gridzorder=None,mesh=False):
     """

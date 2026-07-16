@@ -25,7 +25,6 @@ from numpy.linalg import norm
 # =====================================
 
 @njit
-
 def mat_to_quat(R):
     """
     Convert a rotation matrix to a quaternion representation.
@@ -2815,102 +2814,107 @@ def disorimat_ini(umatsa,symops):
         d[np.where(d2<d)]= d2[np.where(d2<d)]
         ds.append(d)
 
-def disorimat(umatsa,symops,prnt=False,withfirst=False,eqmats=False):
+def disorimat(umatsa, symops, prnt=False, withfirst=False, eqmats=False):
     """
-    Calculate disorientation matrix considering crystal symmetry.
-    
-    Computes the minimum misorientation between two orientations by
-    considering all symmetrically equivalent variants. This is the
-    crystallographically meaningful misorientation.
-    
-    Input:
-        M1: numpy array (3, 3) - First orientation matrix
-        M2: numpy array (3, 3) - Second orientation matrix
-        symops: numpy array (Ns, 3, 3) - Crystal symmetry operations
-    
-    Output:
-        disori: numpy array (3, 3) - Disorientation matrix (minimum misorientation)
-        angle: float - Disorientation angle in degrees
-    
-    Usage Example:
+    Calculate the crystallographically meaningful disorientation between
+    orientation matrices, accounting for full crystal symmetry (proper
+    rotations plus their improper counterparts, both derived internally
+    from `symops`).
+
+    Input
+    -----
+    umatsa : numpy array (N, 3, 3)
+        Stack of N orientation matrices to compare.
+    symops : list of numpy array (3, 3)
+        Crystal symmetry operations (proper rotations only -- improper
+        counterparts are generated internally as -1*symop.T and appended,
+        do NOT pre-filter/pre-extend symops yourself). Must be a plain
+        Python list (this function appends to it internally via
+        copy.deepcopy + .append()), not a numpy array.
+    prnt : bool, optional
+        If True, print progress per symmetry operation. Default False.
+    withfirst : bool, optional
+        If False (default), computes each matrix's disorientation to
+        ITSELF under symmetry, comparing corresponding pairs elementwise
+        across the full stack (output length N) -- e.g. useful as a
+        vectorized "self-check" or when umatsa already contains
+        deliberately paired matrices at matching indices.
+        If True, compares EVERY matrix in umatsa (including the first)
+        against umatsa[0] as a SINGLE FIXED REFERENCE (output length N,
+        with output[0] the trivial 0deg self-comparison and output[1:]
+        each subsequent matrix's disorientation to umatsa[0]). This is
+        the mode for "compare N matrices to one reference" usage, e.g.
+        umatsa = np.array([M1, M2]) with withfirst=True and taking
+        result[1] for a single pairwise M1-vs-M2 disorientation, or
+        umatsa = np.concatenate([M_ref[None], M_others]) to compare many
+        matrices to one reference in a single call.
+    eqmats : bool, optional
+        If True, also return the best-matching symmetry-equivalent
+        matrices and full per-symop deviation array. Default False.
+
+    Output
+    ------
+    DS : numpy array (N,)
+        Disorientation angle (degrees) for each of the N input matrices,
+        per the withfirst semantics above.
+    (if eqmats=True, also returns:)
+    eq_mats : numpy array (N, 3, 3)
+        Best-matching symmetry-equivalent operation for each entry.
+    ds : list
+        Per-symmetry-operation deviation angles, before taking the
+        minimum -- one array per symmetry operation (len = 2*len(symops)).
+    DSidx : numpy array (N,)
+        Index into the extended symmetry-operation list (proper +
+        improper) of the best-matching operation for each entry.
+
+    Usage Example
+    -------------
         >>> import numpy as np
-        >>> 
-        >>> # EBSD grain orientations
-        >>> grain1_euler = np.radians([120, 45, 80])
-        >>> grain2_euler = np.radians([130, 50, 85])
-        >>> 
-        >>> M1 = np_euler_matrix(*grain1_euler)
-        >>> M2 = np_euler_matrix(*grain2_euler)
-        >>> 
-        >>> # Cubic symmetry (get from symmetry_elements function)
-        >>> symops = symmetry_elements('cubic')
-        >>> 
-        >>> # Calculate disorientation
-        >>> disori, angle = disorimat(M1, M2, symops)
-        >>> print(f"Grain boundary misorientation: {angle:.2f}°")
-        >>> 
-        >>> # Classify grain boundary type
+        >>> M1 = np_euler_matrix(*np.radians([120, 45, 80]))
+        >>> M2 = np_euler_matrix(*np.radians([130, 50, 85]))
+        >>> symops = list(symmetry_elements('cubic'))
+        >>> DS = disorimat(np.array([M1, M2]), symops, withfirst=True)
+        >>> angle = DS[1]
+        >>> print(f"Grain boundary misorientation: {angle:.2f} deg")
         >>> if angle < 15:
         ...     print("Low-angle grain boundary")
-        >>> elif angle > 15:
-        ...     print("High-angle grain boundary")
-        
-        >>> # Get disorientation axis
-        >>> axis, _ = np_ol_g_rtheta_rad(disori)
-        >>> print(f"Rotation axis: [{axis[0]:.3f}, {axis[1]:.3f}, {axis[2]:.3f}]")
     """
-    #print('test4')
     import copy
-    symops2=copy.deepcopy(symops)
+    symops2 = copy.deepcopy(symops)
     for symop in symops:
-        symops2.append(-1*symop.T)
+        symops2.append(-1 * symop.T)
 
-    Q=Mat2Quat(umatsa)
-    #print(Q.shape)
-    #Q[0,Q[0,:]<0]=-1*Q[0,Q[0,:]<0]
-    symq=Mat2Quat(symops2)
-    SQ=Qproduct(symq,Q)
-    SQ[1:4,:,:]=SQ[1:4,:,:]
-    SQinv=SQ.copy()
-    SQinv[1:4,:]=-1*SQinv[1:4,:]
-    #print(len(symops))
-    Qinv=Q.copy()
+    Q = Mat2Quat(umatsa)
+    symq = Mat2Quat(symops2)
+    SQ = Qproduct(symq, Q)
+    SQ[1:4, :, :] = SQ[1:4, :, :]
+    SQinv = SQ.copy()
+    SQinv[1:4, :] = -1 * SQinv[1:4, :]
+
+    Qinv = Q.copy()
     if withfirst:
-        Qinv=Qinv[:,0:1]
-    Qinv[1:4,:]=-1*Qinv[1:4,:]
-    
-    Qinv2=Q.copy()
-    Qinv2[0,:]=-1*Qinv2[0,:]
-    #Qinv[1:4,:]=-1*Qinv[1:4,:]
-    #symq=mat2quat(symops)
-    #SQ=Qproduct(symq,Qinv)
-    #print(SQ)
-    ds=[]
-    for i in range(0,SQ.shape[1]):
+        Qinv = Qinv[:, 0:1]
+    Qinv[1:4, :] = -1 * Qinv[1:4, :]
+
+    Qinv2 = Q.copy()
+    if withfirst:
+        Qinv2 = Qinv2[:, 0:1]
+    Qinv2[0, :] = -1 * Qinv2[0, :]
+
+    ds = []
+    for i in range(0, SQ.shape[1]):
         if prnt:
-            print("Symmetry operation {} of {}".format(str(i),str(SQ.shape[1])))
-        #print(np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)[0,1]*180.0/np.pi*2)
-        #d=np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Q)),axis=0)*180.0/np.pi*2
+            print("Symmetry operation {} of {}".format(str(i), str(SQ.shape[1])))
         if i < len(symops):
-            d=np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Qinv)),axis=0)*180.0/np.pi*2
+            d = np.linalg.norm(Qlog(Qproduct(SQ[:, i, :], Qinv)), axis=0) * 180.0 / np.pi * 2
         else:
-            d=np.linalg.norm(Qlog(Qproduct(SQ[:,i,:],Qinv2)),axis=0)*180.0/np.pi*2
-        #d2=np.linalg.norm(Qlog(Qproduct(SQinv[:,i,:],Q)),axis=0)*180.0/np.pi*2
-        
-        #d[np.where(d2<d)]= d2[np.where(d2<d)]
-        
+            d = np.linalg.norm(Qlog(Qproduct(SQ[:, i, :], Qinv2)), axis=0) * 180.0 / np.pi * 2
         ds.append(d)
-        #d=np.linalg.norm(Qlog(Qproduct(Qinv,SQ[:,i,:])),axis=0)*180.0/np.pi*2
-        #d2=np.linalg.norm(Qlog(Qproduct(-1*Qinv,SQ[:,i,:])),axis=0)*180.0/np.pi*2
-        #d[np.where(d2<d)]= d2[np.where(d2<d)]
-        #ds.append(d)
-    #print(ds)
-    #ddss.append(ds)
-    DS=np.amin(abs(np.array(ds)),axis=0)  
-    DSidx = np.argmin(abs(np.array(ds)),axis=0)
+
+    DS = np.amin(abs(np.array(ds)), axis=0)
+    DSidx = np.argmin(abs(np.array(ds)), axis=0)
     if eqmats:
-        return DS,np.array(symops2)[np.argmin(abs(np.array(ds)),axis=0)[:,0],:,:],ds, DSidx
-    
+        return DS, np.array(symops2)[np.argmin(abs(np.array(ds)), axis=0)[:, 0], :, :], ds, DSidx
     else:
         return DS
 

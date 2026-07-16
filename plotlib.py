@@ -1946,9 +1946,199 @@ class plotter:
             #self.ax2annot=[True]*len(self.ANNOTS)
         self.fig.canvas.mpl_connect('button_press_event', self.onclick)
 
+def stereaotriangle_hist(data, equalarea=False, scale='sqrt', nlevels=10, bins=256,
+                          fig=None, ax=None, return_val=False, **kwargs):
+    """
+    Plot a 2D histogram ("inverse pole figure density map") of
+    directions folded into the standard stereographic triangle.
 
+    Currently assumes CUBIC crystal symmetry, since the fundamental-zone
+    folding is performed internally by
+    equalarea_intotriangle_fast()/stereoprojection_intotriangle_fast()
+    and stereotriangle() — this function does not itself apply symmetry
+    operations.
 
+    Parameters
+    ----------
+    data : (3, N) array
+        Cartesian direction vectors, expressed in the CRYSTAL frame
+        (i.e. already transformed from sample to crystal coordinates
+        upstream — this function does not do that transform). Need not
+        be unit vectors; only direction matters. Column-major:
+        data[:, i] is the i-th direction.
+    equalarea : bool, optional
+        If True, use equalarea_intotriangle_fast() (Schmidt-style
+        equal-area folding). If False (default), use
+        stereoprojection_intotriangle_fast() (Wulff-style
+        stereographic folding).
+    scale : {'sqrt', 'log', 'linear'}, optional
+        Intensity scaling applied to the raw 2D histogram counts before
+        contouring. 'sqrt' (default) and 'log' compress high-density
+        peaks so lower-density regions remain visible; 'linear' plots
+        raw counts. 'log' uses log1p to stay finite at zero counts.
+    nlevels : int, optional
+        Number of contour fill levels, linearly spaced between 0 and the
+        (scaled) histogram maximum. Default 10.
+    bins : int, optional
+        Number of histogram bins per axis (bins x bins grid covering
+        [-1, 1] x [-1, 1]). Default 256.
+    fig : matplotlib Figure, optional
+        Kept for API symmetry with callers that pass fig/ax together;
+        not otherwise used — the axes' own figure (ax.figure) is always
+        used. Ignored entirely if ax is None (a new fig/ax is created).
+    ax : matplotlib Axes, optional
+        Axes to draw into. If None, a new fig/ax pair is created
+        internally by stereotriangle().
+    return_val : bool, optional
+        If True, also return (spsel, hist): the folded 2D triangle
+        points and the scaled histogram array.
+    **kwargs
+        Passed through to ax.contourf (e.g. cmap, alpha). Do not pass
+        'levels' here — it's set internally from nlevels.
 
+    Returns
+    -------
+    fig, ax : matplotlib Figure, Axes
+    spsel : (2, M) array, only if return_val=True
+        Folded 2D triangle coordinates used for the histogram (M <= N,
+        since only the upper-hemisphere, data[2,:] > 0, subset is used).
+    hist : (bins, bins) array, only if return_val=True
+        Scaled histogram.
+    """
+    if scale not in ('sqrt', 'log', 'linear'):
+        raise ValueError(f"scale must be 'sqrt', 'log', or 'linear', got {scale!r}")
+
+    fig, ax = stereotriangle(ax=ax, basedirs=False, equalarea=equalarea)
+
+    upper = data[:, data[2, :] > 0]
+
+    if equalarea:
+        spsel = equalarea_intotriangle_fast(data)
+    else:
+        spsel = stereoprojection_intotriangle_fast(data)
+
+    hist, xedges, yedges = np.histogram2d(
+        spsel[1, :], spsel[0, :], bins=(bins, bins), range=[[-1, 1], [-1, 1]]
+    )
+
+    if scale == 'sqrt':
+        hist = np.sqrt(hist)
+    elif scale == 'log':
+        hist = np.log1p(hist)
+    # 'linear': leave counts as-is
+
+    lvls = np.linspace(0, np.max(hist), nlevels)
+    kwargs['levels'] = lvls[1:]
+
+    ax.contourf(hist, extent=(-1, 1, -1, 1), **kwargs)
+
+    if return_val:
+        return fig, ax, spsel, hist
+    return fig, ax
+
+def polefigure_hist(data, equalarea=False, scale='sqrt', nlevels=10, bins=256,
+                     hemi='upper', fig=None, ax=None, return_val=False, **kwargs):
+    """
+    Plot a 2D histogram ("pole figure density map") of projected pole
+    directions on a stereographic (Wulff) or equal-area (Schmidt) net.
+
+    Parameters
+    ----------
+    data : (3, N) array
+        Cartesian direction vectors to project (need not be unit
+        vectors; only direction matters). Column-major: data[:, i] is
+        the i-th direction.
+    equalarea : bool, optional
+        If True, use an equal-area (Schmidt) projection via
+        equalarea_directions()/schmidtnet(). If False (default), use a
+        stereographic (Wulff) projection via
+        stereoprojection_directions()/wulffnet().
+    scale : {'sqrt', 'log', 'linear'}, optional
+        Intensity scaling applied to the raw 2D histogram counts before
+        contouring. 'sqrt' (default) and 'log' compress high-density
+        peaks so lower-density regions remain visible; 'linear' plots
+        raw counts.
+    nlevels : int, optional
+        Number of contour fill levels, linearly spaced between 0 and the
+        (scaled) histogram maximum. Default 10.
+    bins : int, optional
+        Number of histogram bins per axis (bins x bins grid covering
+        [-1, 1] x [-1, 1]). Default 256.
+    hemi : {'upper', 'lower'}, optional
+        Which hemisphere of `data` to project (filtered on data[2, :]
+        before projection). Default 'upper'.
+    fig : matplotlib Figure, optional
+        Kept for API symmetry with callers that pass fig/ax together;
+        not otherwise used — the axes' own figure (ax.figure) is always
+        used, so a passed-in fig can never disagree with a passed-in ax.
+        Ignored entirely if ax is None (a new fig/ax pair is created).
+    ax : matplotlib Axes, optional
+        Axes to draw into. If None, a new fig/ax pair is created via
+        plt.subplots().
+    return_val : bool, optional
+        If True, also return (sp, hist): the projected 2D points and the
+        scaled histogram array.
+    **kwargs
+        Passed through to ax.contourf (e.g. cmap, alpha). Do not pass
+        'levels' here — it's set internally from nlevels.
+
+    Returns
+    -------
+    fig, ax : matplotlib Figure, Axes
+    sp : (2, N) array, only if return_val=True
+        Projected 2D coordinates used for the histogram.
+    hist : (bins, bins) array, only if return_val=True
+        Scaled histogram, with points outside the net's boundary circle
+        set to 0.
+    """
+    if scale not in ('sqrt', 'log', 'linear'):
+        raise ValueError(f"scale must be 'sqrt', 'log', or 'linear', got {scale!r}")
+    if hemi not in ('upper', 'lower'):
+        raise ValueError(f"hemi must be 'upper' or 'lower', got {hemi!r}")
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    fig = ax.figure  # always resolve from ax, so passed-in fig can't disagree
+
+    if hemi == 'upper':
+        data = data[:, data[2, :] >= 0]
+    else:
+        data = data[:, data[2, :] <= 0]
+
+    if equalarea:
+        fig, ax = schmidtnet(ax=ax, basedirs=False, facecolor='None')
+        sp = equalarea_directions(data)
+        R = 1.0
+    else:
+        fig, ax = wulffnet(ax=ax, basedirs=False, facecolor='None')
+        sp = stereoprojection_directions(data)
+        R = np.sqrt(2)
+
+    hist, xedges, yedges = np.histogram2d(
+        sp[1, :], sp[0, :], bins=(bins, bins), range=[[-1, 1], [-1, 1]]
+    )
+
+    if scale == 'sqrt':
+        hist = np.sqrt(hist)
+    elif scale == 'log':
+        hist = np.log1p(hist)
+    # 'linear': leave counts as-is
+
+    lvls = np.linspace(0, np.max(hist), nlevels)
+    kwargs['levels'] = lvls[1:]
+
+    X, Y = np.meshgrid((xedges[:-1] + xedges[1:]) / 2.,
+                        (yedges[:-1] + yedges[1:]) / 2.)
+    outside = X**2 + Y**2 >= R
+
+    hist_masked = hist.copy()
+    hist_masked[outside] = np.nan
+    ax.contourf(hist_masked, extent=(-1, 1, -1, 1), **kwargs)
+    hist[outside] = 0.0
+
+    if return_val:
+        return fig, ax, sp, hist
+    return fig, ax
 # =====================================
 # Standalone Utility Functions
 # =====================================
