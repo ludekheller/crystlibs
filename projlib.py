@@ -1802,94 +1802,82 @@ def polefigure_plot(hist, equalarea=False, nlevels=10, vmax=None, fig=None, ax=N
 
     return fig, ax, cs
 
-def wulffnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
+def wulffnet(ax=None, basedirs=False, facecolor=(210./255., 235./255., 255./255.), **kwargs):
     """
     Draw stereographic (Wulff) net - full circle.
-    
+
     Input:
         ax: matplotlib axis - Existing axis (default: None)
         basedirs: bool - Plot base directions (default: False)
         facecolor: tuple - Background color RGB
-    
+        **kwargs: additional keyword arguments forwarded to the grid
+            line ax.plot(...) calls (e.g. linewidth, color, linestyle,
+            alpha) -- merged with defaults {'color': (0.5,0.5,0.5),
+            'linewidth': 0.5, 'linestyle': '--'}; any key you pass
+            overrides the corresponding default.
+
     Output:
         fig, ax: matplotlib figure and axis
     """
-    if ax==None:
+    if ax is None:
         fig, ax = plt.subplots()
     else:
-        fig=ax.get_figure()
+        fig = ax.get_figure()
+
+    grid_kwargs = dict(color=(0.5, 0.5, 0.5), linewidth=0.5, linestyle='--', markersize=10,markeredgewidth=2.)
+    grid_kwargs.update(kwargs)
+
     if basedirs:
-        basicdirections = np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]);
-        basicdirections = np.array([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,1,1],[-1,1,1],[1,-1,1],[-1,-1,1],[0,1,1],[1,0,1]]);
-        #basicdirections = [1,0,0;0,1,0;0,0,1;1,1,0;1,1,1;0,1,1;1,0,1;1,1,-2;-1,-1,2;1,-1,0;-1,1,0];
-        basicdirectionstext = np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1]]);
-        basicdirectionstext = np.array([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,1,1],[-1,1,1],[1,-1,1],[-1,-1,1],[0,1,1],[1,0,1]]);
-        #basicdirectionstext = [1,0,0;0,1,0;0,0,1;1,1,0;1,1,1;0,1,1;1,0,1;1,1,-2;-1,-1,2;1,-1,0;-1,1,0];
+        basicdirections = np.array([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,1,1],[-1,1,1],[1,-1,1],[-1,-1,1],[0,1,1],[1,0,1]])
+        basicdirectionstext = np.array([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,1,1],[-1,1,1],[1,-1,1],[-1,-1,1],[0,1,1],[1,0,1]])
 
-
-
-    #longitude lines
-    #fig, ax = plt.subplots()
     ax.tick_params(
-        axis='both',
-        which='both',
-        bottom=False,
-        top=False,
-        left=False,
-        labelbottom=False,
-        labelleft=False)
-    ax.plot(0, 0, 'k+')
+        axis='both', which='both',
+        bottom=False, top=False, left=False,
+        labelbottom=False, labelleft=False)
+    ax.plot(0, 0, 'k+', markersize=grid_kwargs['markersize'], markeredgewidth=grid_kwargs['markeredgewidth'])
     circ = plt.Circle((0, 0), 1.0, facecolor=facecolor, edgecolor='black')
     ax.add_patch(circ)
 
-    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-  # equal aspect ratio
-    ax.axis('off')  # remove the box
-    ##plt.show()
-    
-    t=np.linspace(0,180,180*2+1)*np.pi/180;
-    xc = np.sin(t);
-    yc = np.cos(t);
-    AltitudeAngle = np.linspace(0,180,37)*np.pi/180;
+    ax.set_aspect('equal', adjustable='box')
+    ax.axis('off')
+
+    t = np.linspace(0, 180, 180 * 2 + 1) * np.pi / 180
+    xc = np.sin(t)
+    yc = np.cos(t)
+    AltitudeAngle = np.linspace(0, 180, 37) * np.pi / 180
     for an in AltitudeAngle:
         RotY = passive_rotation(an, 'y')
-        Ccp = np.matmul(RotY,np.vstack((xc,yc,np.zeros(yc.shape))))
-
+        Ccp = np.matmul(RotY, np.vstack((xc, yc, np.zeros(yc.shape))))
         proj_dirs = stereoprojection_directions(Ccp)
-        ax.plot(proj_dirs[0,:],proj_dirs[1,:],color=(0.5,0.5,0.5),linewidth=0.5,linestyle='--')
+        ax.plot(proj_dirs[0, :], proj_dirs[1, :], **grid_kwargs)
 
-    #Latitude Lines
-    LatitudeAngle = np.linspace(-90,90,37)*np.pi/180; 
-    #t=np.linspace(0,180,360*2+1)*np.pi/180;
-    zc = np.sin(t);
-    xc = np.cos(t);
-    for an in LatitudeAngle:#[0.]:#LatitudeAngle:
-        Rmeridian = np.cos(an);
-        px = Rmeridian*xc;
-        py = np.sin(an)*np.ones(t.shape);
-        pz = Rmeridian*zc;
+    LatitudeAngle = np.linspace(-90, 90, 37) * np.pi / 180
+    zc = np.sin(t)
+    xc = np.cos(t)
+    for an in LatitudeAngle:
+        Rmeridian = np.cos(an)
+        px = Rmeridian * xc
+        py = np.sin(an) * np.ones(t.shape)
+        pz = Rmeridian * zc
+        proj_dirs = stereoprojection_directions(np.vstack((px, py, pz)))
+        ax.plot(proj_dirs[0, :], proj_dirs[1, :], **grid_kwargs)
 
-        proj_dirs = stereoprojection_directions(np.vstack((px,py,pz)))
-
-        ax.plot(proj_dirs[0,:],proj_dirs[1,:],color=(0.5,0.5,0.5),linewidth=0.5,linestyle='--')
-    
     if basedirs:
-        an=45.*np.pi/180.;
-        an=0.*np.pi/180.;
+        an = 0. * np.pi / 180.
         Rotz = active_rotation(an, 'z')
-        an=np.arccos(1/np.sqrt(3));
-        an=0.*np.pi/180.;
+        an = 0. * np.pi / 180.
         Rotx = active_rotation(an, 'x')
-        dirs = np.matmul(np.matmul(Rotx,Rotz),np.transpose(basicdirections))
+        dirs = np.matmul(np.matmul(Rotx, Rotz), np.transpose(basicdirections))
         proj_dirs = stereoprojection_directions(dirs)
-        ax.plot(proj_dirs[0,:],proj_dirs[1,:],color='b',marker='o',linestyle='')
-        for diri,proj_diri in zip(basicdirectionstext,np.transpose(proj_dirs)):
-            ax.text(0.03+proj_diri[0],0.03+proj_diri[1],str(diri))
+        ax.plot(proj_dirs[0, :], proj_dirs[1, :], color='b', marker='o', linestyle='')
+        for diri, proj_diri in zip(basicdirectionstext, np.transpose(proj_dirs)):
+            ax.text(0.03 + proj_diri[0], 0.03 + proj_diri[1], str(diri))
 
-    ax.set_xlim((-1.05,1.05))
-    ax.set_ylim((-1.05,1.05))
+    ax.set_xlim((-1.05, 1.05))
+    ax.set_ylim((-1.05, 1.05))
 
-    return fig,ax
+    return fig, ax
 
 
 def wulffnet_half(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
@@ -2089,91 +2077,81 @@ def wulffnet_quarter(ax=None,basedirs=False):
     return fig,ax
 
 
-def schmidtnet(ax=None,basedirs=False,facecolor=(210./255.,235./255.,255./255.)):
+
+def schmidtnet(ax=None, basedirs=False, facecolor=(210./255., 235./255., 255./255.), **kwargs):
     """
     Draw equal-area (Schmidt) net - full circle.
-    
+
     Input:
         ax: matplotlib axis - Existing axis (default: None)
         basedirs: bool - Plot base directions (default: False)
         facecolor: tuple - Background color RGB
-    
+        **kwargs: additional keyword arguments forwarded to the grid
+            line ax.plot(...) calls (e.g. linewidth, color, linestyle,
+            alpha) -- merged with defaults {'color': (0.5,0.5,0.5),
+            'linewidth': 0.5, 'linestyle': '--'}; any key you pass
+            overrides the corresponding default.
+
     Output:
         fig, ax: matplotlib figure and axis
     """
-    if ax==None:
+    if ax is None:
         fig, ax = plt.subplots()
     else:
-        fig=ax.get_figure()
+        fig = ax.get_figure()
+
+    grid_kwargs = dict(color=(0.5, 0.5, 0.5), linewidth=0.5, linestyle='--',markersize=10, markeredgewidth=2)
+    grid_kwargs.update(kwargs)
 
     if basedirs:
-        basicdirections = np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1],[1,0,2]]);
-        #basicdirections = [1,0,0;0,1,0;0,0,1;1,1,0;1,1,1;0,1,1;1,0,1;1,1,-2;-1,-1,2;1,-1,0;-1,1,0];
-        basicdirectionstext = np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1],[1,0,2]]);
-        #basicdirectionstext = [1,0,0;0,1,0;0,0,1;1,1,0;1,1,1;0,1,1;1,0,1;1,1,-2;-1,-1,2;1,-1,0;-1,1,0];
+        basicdirections = np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1],[1,0,2]])
+        basicdirectionstext = np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,1,1],[0,1,1],[1,0,1],[1,0,2]])
 
-
-
-    #longitude lines
-    #fig, ax = plt.subplots()
     ax.tick_params(
-        axis='both',
-        which='both',
-        bottom=False,
-        top=False,
-        left=False,
-        labelbottom=False,
-        labelleft=False)
-    ax.plot(0, 0, 'k+')
-    equaarea_factor = 2./np.sqrt(2)
-    circ = plt.Circle((0, 0), equaarea_factor*1.0, facecolor=facecolor, edgecolor='black')
+        axis='both', which='both',
+        bottom=False, top=False, left=False,
+        labelbottom=False, labelleft=False)
+    ax.plot(0, 0, 'k+',markersize=grid_kwargs['markersize'], markeredgewidth=grid_kwargs['markeredgewidth'])
+    equaarea_factor = 2. / np.sqrt(2)
+    circ = plt.Circle((0, 0), equaarea_factor * 1.0, facecolor=facecolor, edgecolor='black')
     ax.add_patch(circ)
 
-    ax.set_aspect('equal',adjustable='box')  # equal aspect ratio
-    ax.axis('off')  # remove the box
-    #plt.show()
-    
-    t=np.linspace(0,180,180*2+1)*np.pi/180;
-    xc = np.sin(t);
-    yc = np.cos(t);
-    AltitudeAngle = np.linspace(0,180,37)*np.pi/180;
+    ax.set_aspect('equal', adjustable='box')
+    ax.axis('off')
+
+    t = np.linspace(0, 180, 180 * 2 + 1) * np.pi / 180
+    xc = np.sin(t)
+    yc = np.cos(t)
+    AltitudeAngle = np.linspace(0, 180, 37) * np.pi / 180
     for an in AltitudeAngle:
         RotY = passive_rotation(an, 'y')
-        Ccp = np.matmul(RotY,np.vstack((xc,yc,np.zeros(yc.shape))))
-
+        Ccp = np.matmul(RotY, np.vstack((xc, yc, np.zeros(yc.shape))))
         proj_dirs = equalarea_directions(Ccp)
-        ax.plot(proj_dirs[0,:],proj_dirs[1,:],color=(0.5,0.5,0.5),linewidth=0.5,linestyle='--')
+        ax.plot(proj_dirs[0, :], proj_dirs[1, :], **grid_kwargs)
 
-    #Latitude Lines
-    LatitudeAngle = np.linspace(-90,90,37)*np.pi/180; 
-    #t=np.linspace(0,180,360*2+1)*np.pi/180;
-    zc = np.sin(t);
-    xc = np.cos(t);
-    for an in LatitudeAngle:#[0.]:#LatitudeAngle:
-        Rmeridian = np.cos(an);
-        px = Rmeridian*xc;
-        py = np.sin(an)*np.ones(t.shape);
-        pz = Rmeridian*zc;
+    LatitudeAngle = np.linspace(-90, 90, 37) * np.pi / 180
+    zc = np.sin(t)
+    xc = np.cos(t)
+    for an in LatitudeAngle:
+        Rmeridian = np.cos(an)
+        px = Rmeridian * xc
+        py = np.sin(an) * np.ones(t.shape)
+        pz = Rmeridian * zc
+        proj_dirs = equalarea_directions(np.vstack((px, py, pz)))
+        ax.plot(proj_dirs[0, :], proj_dirs[1, :], **grid_kwargs)
 
-        proj_dirs = equalarea_directions(np.vstack((px,py,pz)))
-
-        ax.plot(proj_dirs[0,:],proj_dirs[1,:],color=(0.5,0.5,0.5),linewidth=0.5,linestyle='--')
-    
     if basedirs:
-        an=45.*np.pi/180.;
-        an=0.*np.pi/180.;
+        an = 0. * np.pi / 180.
         Rotz = active_rotation(an, 'z')
-        an=np.arccos(1/np.sqrt(3));
-        an=0.*np.pi/180.;
+        an = 0. * np.pi / 180.
         Rotx = active_rotation(an, 'x')
-        dirs = np.matmul(np.matmul(Rotx,Rotz),np.transpose(basicdirections))
+        dirs = np.matmul(np.matmul(Rotx, Rotz), np.transpose(basicdirections))
         proj_dirs = equalarea_directions(dirs)
-        ax.plot(proj_dirs[0,:],proj_dirs[1,:],color='b',marker='o',linestyle='')
-        for diri,proj_diri in zip(basicdirectionstext,np.transpose(proj_dirs)):
-            ax.text(0.03+proj_diri[0],0.03+proj_diri[1],str(diri))
+        ax.plot(proj_dirs[0, :], proj_dirs[1, :], color='b', marker='o', linestyle='')
+        for diri, proj_diri in zip(basicdirectionstext, np.transpose(proj_dirs)):
+            ax.text(0.03 + proj_diri[0], 0.03 + proj_diri[1], str(diri))
 
-    return fig,ax
-
+    return fig, ax
 
 
 def wulffnet_regular_grid(ax,dangle):
