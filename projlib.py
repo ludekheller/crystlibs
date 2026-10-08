@@ -3323,8 +3323,79 @@ def stereoprojection_intotriangle_ini(dirs,eps=1.0e-5):
 #                        print(proj_dirs[:,inc])
                         #break
     return proj_dirs
+def stereoprojection_intotriangle_fast(dirs, eps=1.0e-5, geteqdirs=False, geteqmats=False,
+                                         Rin=None, symops=None):
+    """
+    Fast mapping of directions into standard triangle.
 
-def stereoprojection_intotriangle_fast(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,Rin=None,symops=None):
+    Input:
+        dirs: numpy array (3, N) - Direction vectors
+        eps, geteqdirs, geteqmats, Rin, symops: Optional parameters
+
+    Output:
+        proj: numpy array (2, N) - Projection coordinates
+    """
+    #print("ok")
+    etamax = np.arctan2(1, 1) * 180. / np.pi
+    if len(dirs.shape) == 1:
+        dirs = np.expand_dims(dirs, axis=1)
+    if symops is None:
+        symops = symmetry_elements('cubic')
+
+    n_total = dirs.shape[1]
+    eqmats = np.array([np.eye(3) for _ in range(n_total)])
+    eqdirs = np.zeros(dirs.shape)
+    Rout = np.zeros(eqmats.shape)
+    RTout = np.zeros(eqmats.shape)
+
+    # working set: indices (into the ORIGINAL n_total array) not yet resolved
+    remaining_idx = np.arange(n_total)
+    working_dirs = dirs.copy()
+
+    for sym in symops:
+        if remaining_idx.size == 0:
+            break
+
+        datas = sym.dot(working_dirs)
+        local_idxs = np.where((datas[0, :] >= 0) & (datas[1, :] >= 0) & (datas[2, :] >= 0))[0]
+        if local_idxs.size == 0:
+            continue
+
+        eta = np.arctan2(datas[0, local_idxs], np.abs(datas[2, local_idxs])) * 180. / np.pi
+        chi = np.arctan2(datas[1, local_idxs], datas[0, local_idxs]) * 180. / np.pi
+        local_idxs = local_idxs[np.where((eta <= etamax) & (chi <= etamax))[0]]
+        if local_idxs.size == 0:
+            continue
+
+        global_idxs = remaining_idx[local_idxs]  # map back to ORIGINAL indices
+        eqmats[global_idxs, :, :] = sym
+        eqdirs[:, global_idxs] = datas[:, local_idxs]
+
+        if Rin is not None:
+            Rout[global_idxs, :, :] = np.einsum('ij,njk->nik', sym, Rin[global_idxs])
+            RTout[global_idxs, :, :] = np.transpose(Rout[global_idxs, :, :], (0, 2, 1))
+
+        # remove resolved pixels from the working set (this is the fix --
+        # the original had this idea in a comment but never implemented it)
+        keep_mask = np.ones(remaining_idx.size, dtype=bool)
+        keep_mask[local_idxs] = False
+        remaining_idx = remaining_idx[keep_mask]
+        working_dirs = working_dirs[:, keep_mask]
+
+    proj_dirs = stereoprojection_directions(eqdirs)
+    out = {}
+    if Rin is not None:
+        out['Rout'] = Rout
+        out['RTout'] = RTout
+    if geteqdirs:
+        out['eqdirs'] = eqdirs
+    if geteqmats:
+        out['eqmats'] = eqmats
+    if len(out) > 0:
+        return proj_dirs, out
+    else:
+        return proj_dirs
+def stereoprojection_intotriangle_fast_ini(dirs,eps=1.0e-5,geteqdirs=False,geteqmats=False,Rin=None,symops=None):
     """
     Fast mapping of directions into standard triangle.
     
